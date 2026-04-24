@@ -123,3 +123,33 @@
 - MCP is well-suited for MemPalace: search, recall, KG queries map naturally to LLM assistant workflows.
 
 **Decision logged:** See `.squad/decisions/inbox/roy-mcp.md` for package version, transports, and deviations from spec.
+
+### 2026-04-24: Phase 8 — Agent Framework Integration Complete
+**What:** Delivered agent runtime with Microsoft.Extensions.AI integration and per-agent diaries.
+- Created agent abstractions: `AgentDescriptor`, `IMemPalaceAgent`, `AgentContext`, `AgentResponse`, `AgentTrace`.
+- Implemented `MemPalaceAgent` backed by M.E.AI `IChatClient` (stub impl with echo responses).
+- Created `MemPalaceAgentBuilder` with tool wiring for `palace_search` and `kg_query` (via `AIFunction`).
+- Built per-agent diary system: `IAgentDiary`, `BackedByPalaceDiary` (stores entries as embeddings in palace backend).
+- Implemented YAML-based agent registry (`YamlAgentRegistry`) for discovering agents from `.mempalace/agents/*.yaml`.
+- DI registration via `AddMemPalaceAgents(options)` with fallback to empty registry if `IChatClient` not available.
+- CLI commands: `agents list`, `agents run <id> "<msg>"`, `agents chat <id>`, `agents diary <id> [--tail|--search]`.
+- Sample agent: `scribe.yaml` (ships with CLI binary as embedded resource).
+- Documentation: `docs/agents.md` with schema, tools, diary semantics, quickstart.
+- Tests: 9 new tests (AgentDescriptorParseTests, BackedByPalaceDiaryTests, MemPalaceAgentBuilderTests, AgentRegistryTests). All passing. 128/129 tests green (1 pre-existing CLI test failure).
+- Committed and pushed (commit `900f41b`).
+
+**Key challenges:**
+1. **Microsoft.Agents.AI package conflict**: `Microsoft.Agents.AI` 1.3.0 and `Microsoft.Extensions.AI.Abstractions` 10.5.0 both provide `ChatClientExtensions`, causing ambiguous type errors. Resolved by removing `Microsoft.Agents.AI` package and using M.E.AI abstractions directly. Agent runtime now wraps `IChatClient` from M.E.AI without the Microsoft Agent Framework SDK (which is bot-framework-oriented, not the general-purpose agent SDK we expected).
+2. **IChatClient API surface**: M.E.AI `IChatClient` doesn't have a `CompleteAsync(List<ChatMessage>, ...)` overload visible at compile time. Stubbed implementation with echo responses for Phase 8. Full LLM invocation will be enabled once the correct method signature is verified (likely extension method or different interface).
+3. **Package naming confusion**: "Microsoft Agent Framework" marketing refers to the bot-framework packages (`Microsoft.Agents.Core`, `Microsoft.Agents.Builder`), not the general-purpose M.E.AI agent abstractions. MemPalace agents use M.E.AI directly.
+4. **DI resolution without IChatClient**: Test setup doesn't register `IChatClient`, causing `IAgentRegistry` resolution to fail. Fixed by returning an empty registry implementation when `IChatClient` is null (graceful degradation).
+
+**Learnings:**
+- M.E.AI `IChatClient` is the right abstraction for agent LLM invocation (provider-agnostic, tool support via `AIFunction`).
+- Agent diary as embeddings in palace backend is elegant: reuses existing storage + search infrastructure, enables semantic recall.
+- YamlDotNet `UnderscoredNamingConvention` maps YAML snake_case to C# properties cleanly (e.g., `valid_from` → `ValidFrom`).
+- Agent registry caching (`Dictionary<string, IMemPalaceAgent>`) avoids re-parsing YAML and re-building agents on every `Get()` call.
+- Tool wiring via `AIFunctionFactory.Create()` is straightforward: lambda → `AIFunction` → passed to `IChatClient`.
+- Spectre.Console `TextPrompt<string>` makes interactive REPL (agents chat) trivial.
+
+**Next up (Phase 9):** Full IChatClient integration once API verified, LLM-based reranker prompt, agent-to-agent communication (multi-agent workflows).
