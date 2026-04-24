@@ -6,24 +6,24 @@ The `mempalace` command-line interface provides tools for initializing, mining, 
 
 | Command | Description | Phase |
 |---------|-------------|-------|
-| `mempalace init` | Initialize a new palace | Phase 4 |
-| `mempalace mine` | Mine memories from files or conversations | Phase 4 |
-| `mempalace search` | Search for memories | Phase 4 |
-| `mempalace wake-up` | Load context summary for new session | Phase 4 |
-| `mempalace agents list` | List all agents in the palace | Phase 8 |
-| `mempalace kg add` | Add a relationship to the knowledge graph | Phase 6 |
-| `mempalace kg query` | Query the knowledge graph | Phase 6 |
-| `mempalace kg timeline` | View entity timeline | Phase 6 |
+| `mempalacenet init` | Initialize a new palace | Phase 4 |
+| `mempalacenet mine` | Mine memories from files or conversations | Phase 4 |
+| `mempalacenet search` | Search for memories | Phase 4 |
+| `mempalacenet wake-up` | Load context summary for new session | Phase 4 |
+| `mempalacenet agents list` | List all agents in the palace | Phase 8 |
+| `mempalacenet kg add` | Add a relationship to the knowledge graph | Phase 6 |
+| `mempalacenet kg query` | Query the knowledge graph | Phase 6 |
+| `mempalacenet kg timeline` | View entity timeline | Phase 6 |
 
 ---
 
-## `mempalace init`
+## `mempalacenet init`
 
 Initialize a new memory palace at the specified path.
 
 **Usage:**
 ```bash
-mempalace init <path> [--name <name>]
+mempalacenet init <path> [--name <name>]
 ```
 
 **Arguments:**
@@ -35,13 +35,13 @@ mempalace init <path> [--name <name>]
 **Examples:**
 ```bash
 # Initialize in current directory
-mempalace init .
+mempalacenet init .
 
 # Initialize in a specific directory
-mempalace init ./my-palace
+mempalacenet init ./my-palace
 
 # Initialize with a custom name
-mempalace init ./my-palace --name "My Memory Palace"
+mempalacenet init ./my-palace --name "My Memory Palace"
 ```
 
 **Exit Codes:**
@@ -50,13 +50,13 @@ mempalace init ./my-palace --name "My Memory Palace"
 
 ---
 
-## `mempalace mine`
+## `mempalacenet mine`
 
 Mine memories from files or conversations and store them in the palace.
 
 **Usage:**
 ```bash
-mempalace mine <path> [--mode <mode>] [--wing <wing>]
+mempalacenet mine <path> [--mode <mode>] [--wing <wing>]
 ```
 
 **Arguments:**
@@ -69,13 +69,13 @@ mempalace mine <path> [--mode <mode>] [--wing <wing>]
 **Examples:**
 ```bash
 # Mine files from a project directory
-mempalace mine ./my-project
+mempalacenet mine ./my-project
 
 # Mine conversation transcripts
-mempalace mine ~/.claude/projects --mode convos
+mempalacenet mine ~/.claude/projects --mode convos
 
 # Mine into a specific wing
-mempalace mine ./docs --mode files --wing documentation
+mempalacenet mine ./docs --mode files --wing documentation
 ```
 
 **Exit Codes:**
@@ -84,13 +84,13 @@ mempalace mine ./docs --mode files --wing documentation
 
 ---
 
-## `mempalace search`
+## `mempalacenet search`
 
 Search for memories using semantic search.
 
 **Usage:**
 ```bash
-mempalace search <query> [--wing <wing>] [--rerank] [--top-k <n>]
+mempalacenet search <query> [--wing <wing>] [--rerank] [--top-k <n>]
 ```
 
 **Arguments:**
@@ -104,13 +104,13 @@ mempalace search <query> [--wing <wing>] [--rerank] [--top-k <n>]
 **Examples:**
 ```bash
 # Basic search
-mempalace search "vector databases"
+mempalacenet search "vector databases"
 
 # Search with reranking
-mempalace search "CLI design patterns" --rerank
+mempalacenet search "CLI design patterns" --rerank
 
 # Search in a specific wing with custom result count
-mempalace search "authentication" --wing code --top-k 5
+mempalacenet search "authentication" --wing code --top-k 5
 ```
 
 **Exit Codes:**
@@ -119,18 +119,18 @@ mempalace search "authentication" --wing code --top-k 5
 
 ---
 
-## `mempalace wake-up`
+## `mempalacenet wake-up`
 
 Load a context summary for a new session, showing recent activity and relevant memories.
 
 **Usage:**
 ```bash
-mempalace wake-up
+mempalacenet wake-up
 ```
 
 **Examples:**
 ```bash
-mempalace wake-up
+mempalacenet wake-up
 ```
 
 **Exit Codes:**
@@ -139,18 +139,18 @@ mempalace wake-up
 
 ---
 
-## `mempalace agents list`
+## `mempalacenet agents list`
 
 List all agents that have wings in the palace.
 
 **Usage:**
 ```bash
-mempalace agents list
+mempalacenet agents list
 ```
 
 **Examples:**
 ```bash
-mempalace agents list
+mempalacenet agents list
 ```
 
 **Exit Codes:**
@@ -159,13 +159,13 @@ mempalace agents list
 
 ---
 
-## `mempalace kg add`
+## `mempalacenet kg add`
 
 Add a relationship to the knowledge graph.
 
 **Usage:**
 ```bash
-mempalace kg add <subject> <predicate> <object> [--valid-from <time>] [--valid-to <time>]
+mempalacenet kg add <subject> <predicate> <object> [--valid-from <time>] [--valid-to <time>]
 ```
 
 **Arguments:**
@@ -180,10 +180,10 @@ mempalace kg add <subject> <predicate> <object> [--valid-from <time>] [--valid-t
 **Examples:**
 ```bash
 # Add a simple relationship
-mempalace kg add Tyrell worked-on MemPalace.Core
+mempalacenet kg add Tyrell worked-on MemPalace.Core
 
 # Add a relationship with temporal bounds
-mempalace kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00 --valid-to 2026-04-24T16:00:00
+mempalacenet kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00 --valid-to 2026-04-24T16:00:00
 ```
 
 **Exit Codes:**
@@ -192,13 +192,13 @@ mempalace kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00 --vali
 
 ---
 
-## `mempalace kg query`
+## `mempalacenet kg query`
 
 Query the knowledge graph using pattern matching.
 
 **Usage:**
 ```bash
-mempalace kg query <pattern> [--at <time>]
+mempalacenet kg query <pattern> [--at <time>]
 ```
 
 **Arguments:**
@@ -210,13 +210,13 @@ mempalace kg query <pattern> [--at <time>]
 **Examples:**
 ```bash
 # Find who worked on a project
-mempalace kg query "? worked-on MemPalace.Core"
+mempalacenet kg query "? worked-on MemPalace.Core"
 
 # Find what someone worked on
-mempalace kg query "Tyrell worked-on ?"
+mempalacenet kg query "Tyrell worked-on ?"
 
 # Query at a specific time
-mempalace kg query "? worked-on ?" --at 2026-04-24T12:00:00
+mempalacenet kg query "? worked-on ?" --at 2026-04-24T12:00:00
 ```
 
 **Exit Codes:**
@@ -225,13 +225,13 @@ mempalace kg query "? worked-on ?" --at 2026-04-24T12:00:00
 
 ---
 
-## `mempalace kg timeline`
+## `mempalacenet kg timeline`
 
 View the timeline of events for a specific entity.
 
 **Usage:**
 ```bash
-mempalace kg timeline <entity> [--from <time>] [--to <time>]
+mempalacenet kg timeline <entity> [--from <time>] [--to <time>]
 ```
 
 **Arguments:**
@@ -244,10 +244,10 @@ mempalace kg timeline <entity> [--from <time>] [--to <time>]
 **Examples:**
 ```bash
 # View full timeline
-mempalace kg timeline Tyrell
+mempalacenet kg timeline Tyrell
 
 # View timeline for a specific period
-mempalace kg timeline MemPalace.Core --from 2026-04-24 --to 2026-04-25
+mempalacenet kg timeline MemPalace.Core --from 2026-04-24 --to 2026-04-25
 ```
 
 **Exit Codes:**
@@ -300,7 +300,7 @@ Configuration can be overridden using environment variables with the `MEMPALACE_
 Example:
 ```bash
 export MEMPALACE_EMBEDDER__MODEL=nomic-embed-text
-mempalace search "vector databases"
+mempalacenet search "vector databases"
 ```
 
 ---

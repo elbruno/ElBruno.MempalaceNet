@@ -26,7 +26,7 @@ internal sealed class MineCommand : AsyncCommand<MineSettings>
     {
         var panel = new Panel($"[yellow]TODO(phase4): implementation pending[/]\n\nWill mine: [blue]{settings.Path}[/]\nMode: [blue]{settings.Mode}[/]\nWing: [blue]{settings.Wing ?? "(auto-detect)"}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace mine[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet mine[/]"),
             Border = BoxBorder.Rounded
         };
         

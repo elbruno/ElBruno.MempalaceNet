@@ -21,7 +21,7 @@ internal sealed class KgQueryCommand : AsyncCommand<KgQuerySettings>
     {
         var panel = new Panel($"[yellow]TODO(phase6): implementation pending[/]\n\nPattern: [blue]{settings.Pattern}[/]\nAt time: [blue]{settings.At ?? "(current)"}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace kg query[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet kg query[/]"),
             Border = BoxBorder.Rounded
         };
         

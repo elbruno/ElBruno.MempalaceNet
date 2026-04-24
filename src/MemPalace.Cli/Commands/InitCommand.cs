@@ -21,7 +21,7 @@ internal sealed class InitCommand : AsyncCommand<InitSettings>
     {
         var panel = new Panel($"[yellow]TODO(phase4): implementation pending[/]\n\nWill initialize palace at: [blue]{settings.Path}[/]\nName: [blue]{settings.Name ?? "(default)"}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace init[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet init[/]"),
             Border = BoxBorder.Rounded
         };
         

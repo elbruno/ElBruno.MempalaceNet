@@ -25,7 +25,7 @@ internal sealed class KgTimelineCommand : AsyncCommand<KgTimelineSettings>
     {
         var panel = new Panel($"[yellow]TODO(phase6): implementation pending[/]\n\nEntity: [blue]{settings.Entity}[/]\nFrom: [blue]{settings.From ?? "(earliest)"}[/]\nTo: [blue]{settings.To ?? "(latest)"}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace kg timeline[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet kg timeline[/]"),
             Border = BoxBorder.Rounded
         };
         

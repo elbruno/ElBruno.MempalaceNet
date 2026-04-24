@@ -165,10 +165,14 @@ docs/
 
 ---
 
-## Hard Questions to Watch
-- **Vector backend choice** (Phase 2): `sqlite-vec` vs SK connector vs Qdrant.NET.
-- **Embedder default** (Phase 3): Ollama nomic-embed-text vs an Onnx local model bundled via `Microsoft.ML.OnnxRuntime` (zero external runtime).
-- **CLI framework** (Phase 5): Spectre.Console.Cli vs `System.CommandLine` (Microsoft official, but still preview-ish).
-- **MCP package** (Phase 7): the `ModelContextProtocol` NuGet is preview — confirm versioning rules.
+## Hard Questions — Decisions
 
-These get raised explicitly at the start of their phase and will pause for Bruno's input if not pre-decided.
+Decided by Bruno (2026-04):
+
+- **Vector backend choice** (Phase 2): ~~`sqlite-vec` vs SK connector vs Qdrant.NET~~ → **No SK** (Semantic Kernel is out of scope). Tyrell shipped pure-managed BLOB storage + cosine in-process for v0.1; upgrade path to `sqlite-vec` or Qdrant when scale demands it.
+- **Embedder default** (Phase 3): ~~Ollama vs ONNX~~ → **`ElBruno.LocalEmbeddings`** (ONNX-based, zero external runtime, exposes `IEmbeddingGenerator<string, Embedding<float>>` so it plugs straight into our M.E.AI seam). Ollama and OpenAI providers remain available as opt-in.
+- **CLI framework** (Phase 5): **Spectre.Console.Cli** ✅
+- **MCP package** (Phase 7): **Use the preview** `ModelContextProtocol` NuGet. Pin and revisit at v0.1 release.
+
+### Other locked decisions
+- **CLI tool name:** `mempalacenet` (binary, command, examples, docs).

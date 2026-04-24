@@ -9,7 +9,7 @@ internal sealed class AgentsListCommand : AsyncCommand
     {
         var panel = new Panel("[yellow]TODO(phase8): implementation pending[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace agents list[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet agents list[/]"),
             Border = BoxBorder.Rounded
         };
         

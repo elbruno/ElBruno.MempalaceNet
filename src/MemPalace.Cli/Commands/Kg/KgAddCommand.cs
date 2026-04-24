@@ -33,7 +33,7 @@ internal sealed class KgAddCommand : AsyncCommand<KgAddSettings>
     {
         var panel = new Panel($"[yellow]TODO(phase6): implementation pending[/]\n\nWill add relationship:\n[blue]{settings.Subject}[/] --[green]{settings.Predicate}[/]--> [blue]{settings.Object}[/]\nValid from: [blue]{settings.ValidFrom ?? "(now)"}[/]\nValid to: [blue]{settings.ValidTo ?? "(indefinite)"}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace kg add[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet kg add[/]"),
             Border = BoxBorder.Rounded
         };
         

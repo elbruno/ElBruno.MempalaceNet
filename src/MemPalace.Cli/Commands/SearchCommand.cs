@@ -31,7 +31,7 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
     {
         var panel = new Panel($"[yellow]TODO(phase4): implementation pending[/]\n\nQuery: [blue]{settings.Query}[/]\nWing: [blue]{settings.Wing ?? "(all)"}[/]\nRerank: [blue]{settings.Rerank}[/]\nTop-K: [blue]{settings.TopK}[/]")
         {
-            Header = new PanelHeader("[bold green]mempalace search[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet search[/]"),
             Border = BoxBorder.Rounded
         };
         

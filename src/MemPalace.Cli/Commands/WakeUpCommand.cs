@@ -15,7 +15,7 @@ internal sealed class WakeUpCommand : AsyncCommand
 • Active wings: code, conversations, docs
 • Memory count: 1,247")
         {
-            Header = new PanelHeader("[bold green]mempalace wake-up[/]"),
+            Header = new PanelHeader("[bold green]mempalacenet wake-up[/]"),
             Border = BoxBorder.Rounded
         };
         

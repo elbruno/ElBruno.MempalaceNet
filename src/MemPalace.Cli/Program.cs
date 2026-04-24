@@ -37,27 +37,27 @@ internal static class Program
 
         app.Configure(config =>
         {
-            config.SetApplicationName("mempalace");
+            config.SetApplicationName("mempalacenet");
 
             // Root commands
             config.AddCommand<InitCommand>("init")
                 .WithDescription("Initialize a new palace")
-                .WithExample("mempalace init ./my-palace")
-                .WithExample("mempalace init ./my-palace --name \"My Palace\"");
+                .WithExample("mempalacenet init ./my-palace")
+                .WithExample("mempalacenet init ./my-palace --name \"My Palace\"");
 
             config.AddCommand<MineCommand>("mine")
                 .WithDescription("Mine memories from files or conversations")
-                .WithExample("mempalace mine ./project --mode files")
-                .WithExample("mempalace mine ~/.claude/projects --mode convos --wing conversations");
+                .WithExample("mempalacenet mine ./project --mode files")
+                .WithExample("mempalacenet mine ~/.claude/projects --mode convos --wing conversations");
 
             config.AddCommand<SearchCommand>("search")
                 .WithDescription("Search for memories")
-                .WithExample("mempalace search \"vector databases\"")
-                .WithExample("mempalace search \"CLI design\" --wing code --rerank --top-k 5");
+                .WithExample("mempalacenet search \"vector databases\"")
+                .WithExample("mempalacenet search \"CLI design\" --wing code --rerank --top-k 5");
 
             config.AddCommand<WakeUpCommand>("wake-up")
                 .WithDescription("Load context summary for new session")
-                .WithExample("mempalace wake-up");
+                .WithExample("mempalacenet wake-up");
 
             // Agents branch
             config.AddBranch("agents", agents =>
@@ -66,7 +66,7 @@ internal static class Program
                 
                 agents.AddCommand<AgentsListCommand>("list")
                     .WithDescription("List all agents in the palace")
-                    .WithExample("mempalace agents list");
+                    .WithExample("mempalacenet agents list");
             });
 
             // Knowledge graph branch
@@ -76,18 +76,18 @@ internal static class Program
                 
                 kg.AddCommand<KgAddCommand>("add")
                     .WithDescription("Add a relationship to the knowledge graph")
-                    .WithExample("mempalace kg add Tyrell worked-on MemPalace.Core")
-                    .WithExample("mempalace kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00");
+                    .WithExample("mempalacenet kg add Tyrell worked-on MemPalace.Core")
+                    .WithExample("mempalacenet kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00");
 
                 kg.AddCommand<KgQueryCommand>("query")
                     .WithDescription("Query the knowledge graph")
-                    .WithExample("mempalace kg query \"? worked-on MemPalace.Core\"")
-                    .WithExample("mempalace kg query \"Tyrell worked-on ?\" --at 2026-04-24");
+                    .WithExample("mempalacenet kg query \"? worked-on MemPalace.Core\"")
+                    .WithExample("mempalacenet kg query \"Tyrell worked-on ?\" --at 2026-04-24");
 
                 kg.AddCommand<KgTimelineCommand>("timeline")
                     .WithDescription("View entity timeline")
-                    .WithExample("mempalace kg timeline Tyrell")
-                    .WithExample("mempalace kg timeline MemPalace.Core --from 2026-04-24");
+                    .WithExample("mempalacenet kg timeline Tyrell")
+                    .WithExample("mempalacenet kg timeline MemPalace.Core --from 2026-04-24");
             });
         });
 
