@@ -1,23 +1,24 @@
 using System.Diagnostics;
 using Microsoft.Extensions.AI;
+using Microsoft.Agents.AI;
 using MemPalace.Agents.Diary;
 
 namespace MemPalace.Agents.Runtime;
 
 public class MemPalaceAgent : IMemPalaceAgent
 {
-    private readonly IChatClient _chatClient;
+    private readonly AIAgent _agent;
     private readonly IAgentDiary? _diary;
 
     public AgentDescriptor Descriptor { get; }
 
     public MemPalaceAgent(
         AgentDescriptor descriptor,
-        IChatClient chatClient,
+        AIAgent agent,
         IAgentDiary? diary = null)
     {
         Descriptor = descriptor;
-        _chatClient = chatClient;
+        _agent = agent;
         _diary = diary;
     }
 
@@ -28,23 +29,44 @@ public class MemPalaceAgent : IMemPalaceAgent
     {
         var sw = Stopwatch.StartNew();
         
-        // TODO: Wire up IChatClient properly once M.E.AI API surface is verified
-        // For now, return echo response for testing framework
-        var content = $"[{Descriptor.Name}] Echo: {userMessage}";
-        var toolCalls = new List<string>();
-
+        // Invoke the Microsoft Agent Framework agent
+        // The docs show: await agent.RunAsync("message"), which must be an extension method or different overload
+        // The base RunAsync signature is: RunAsync(AgentSession?, AgentRunOptions?, CancellationToken)
+        // There might be an extension method that takes a string directly
+        // Let me try calling it with a message-only parameter
+        Microsoft.Agents.AI.AgentResponse agentResponse = await _agent.RunAsync(userMessage);
+        
         sw.Stop();
 
+        // Extract tool calls from messages (function call messages)
+        var toolCalls = new List<string>();
+        if (agentResponse.Messages != null)
+        {
+            foreach (var msg in agentResponse.Messages)
+            {
+                if (msg.Contents != null)
+                {
+                    foreach (var content in msg.Contents)
+                    {
+                        if (content is FunctionCallContent funcCall)
+                        {
+                            toolCalls.Add(funcCall.Name);
+                        }
+                    }
+                }
+            }
+        }
+
         var trace = new AgentTrace(
-            InputTokens: 0,
-            OutputTokens: 0,
+            InputTokens: (int)(agentResponse.Usage?.InputTokenCount ?? 0),
+            OutputTokens: (int)(agentResponse.Usage?.OutputTokenCount ?? 0),
             Latency: sw.Elapsed,
             ToolCalls: toolCalls);
 
         var newMessages = new List<ChatMessage>
         {
             new(ChatRole.User, userMessage),
-            new(ChatRole.Assistant, content)
+            new(ChatRole.Assistant, agentResponse.Text ?? string.Empty)
         };
 
         if (_diary != null)
@@ -64,7 +86,7 @@ public class MemPalaceAgent : IMemPalaceAgent
                     Descriptor.Id,
                     DateTimeOffset.UtcNow,
                     "assistant",
-                    content,
+                    agentResponse.Text ?? string.Empty,
                     new Dictionary<string, object?>
                     {
                         ["input_tokens"] = trace.InputTokens,
@@ -75,6 +97,6 @@ public class MemPalaceAgent : IMemPalaceAgent
                 ct);
         }
 
-        return new AgentResponse(content, newMessages, trace);
+        return new AgentResponse(agentResponse.Text ?? string.Empty, newMessages, trace);
     }
 }

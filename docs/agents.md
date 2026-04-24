@@ -1,6 +1,31 @@
 # MemPalace.NET Agents
 
-MemPalace.NET supports autonomous AI agents backed by Microsoft.Extensions.AI, with persistent per-agent diaries and access to palace search and knowledge graph tools.
+MemPalace.NET supports autonomous AI agents backed by **Microsoft Agent Framework (`Microsoft.Agents.AI` 1.3.0)**, with persistent per-agent diaries and access to palace search and knowledge graph tools.
+
+## Prerequisites
+
+Agents require an `IChatClient` from Microsoft.Extensions.AI to be registered in DI. Without it, agent commands will fail with a clear error message.
+
+**Example registration:**
+
+```csharp
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
+
+// Register an OpenAI chat client
+services.AddChatClient(builder => builder
+    .Use(new OpenAIChatClient("gpt-4", Environment.GetEnvironmentVariable("OPENAI_API_KEY"))));
+
+// Or register any other IChatClient implementation
+```
+
+## Agent Runtime
+
+MemPalace agents are powered by `ChatClientAgent` from Microsoft Agent Framework, which wraps an `IChatClient` and provides:
+- **Tool calling** via `AIFunction` (converts MCP tools to AI functions)
+- **Automatic function invocation** (the agent decides when to call tools)
+- **Usage tracking** (input/output tokens from the underlying model)
+- **Structured responses** via `AgentResponse` (text, messages, usage)
 
 ## Agent Descriptor Schema
 
@@ -32,29 +57,40 @@ wing: assistants  # Optional: organize agents by wing/namespace
 
 ## Agent Tools
 
-Agents automatically have access to these MemPalace tools (if services are registered):
+Agents automatically have access to MemPalace tools (if the corresponding services are registered in DI). Tools are converted to `AIFunction`s via `AIFunctionFactory.Create(...)` from Microsoft.Extensions.AI.
 
 ### `palace_search`
 
-Search for memories in the palace.
+Search for memories in the palace. Available if `ISearchService` is registered.
 
 **Parameters:**
-- `query` (string): Search query text
-- `collection` (string, default="default"): Collection to search
-- `topK` (int, default=5): Number of results
+- `query` (string, required): Search query text
+- `collection` (string, default="default"): Collection to search in
+- `topK` (int, default=5): Number of results to return
 
-**Returns:** Top-K search results with scores and document text.
+**Description for LLM:** "Search for memories in the palace matching the query"
+
+**Returns:** Top-K search results formatted as `[score] document` per line.
 
 ### `kg_query`
 
-Query the knowledge graph for relationships.
+Query the knowledge graph for relationships. Available if `IKnowledgeGraph` is registered.
 
 **Parameters:**
-- `subject` (string): Subject entity (e.g., "agent:tyrell") or empty for wildcard
-- `predicate` (string): Relationship predicate (e.g., "worked-on") or empty for wildcard
-- `obj` (string): Object entity or empty for wildcard
+- `subject` (string, nullable): Subject entity (e.g., "agent:roy") or null for wildcard
+- `predicate` (string, nullable): Relationship predicate (e.g., "worked-on") or null for wildcard
+- `object` (string, nullable): Object entity (e.g., "project:MemPalace.Mcp") or null for wildcard
 
-**Returns:** Matching triples.
+**Description for LLM:** "Query the knowledge graph for entity relationships (triples). Use null for wildcards."
+
+**Returns:** Matching triples formatted as `subject predicate object` per line.
+
+## NuGet Packages
+
+- **Microsoft.Agents.AI** 1.3.0 — Agent Framework base types (`ChatClientAgent`, `AIAgent`, `AgentResponse`)
+- **Microsoft.Extensions.AI.Abstractions** 10.5.0 — `IChatClient`, `ChatMessage`, `ChatOptions`, `AITool`, `AIFunction`
+- **Microsoft.Extensions.Hosting** 10.0.7 — DI and hosting abstractions
+- **YamlDotNet** 16.3.0 — YAML parsing for agent descriptors
 
 ## Agent Diary
 

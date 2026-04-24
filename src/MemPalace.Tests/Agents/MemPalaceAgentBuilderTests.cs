@@ -27,6 +27,13 @@ public sealed class MemPalaceAgentBuilderTests
     public async Task InvokeAsync_RecordsTurnToDiary()
     {
         var chatClient = Substitute.For<IChatClient>();
+        var chatResponse = new ChatResponse(new ChatMessage(ChatRole.Assistant, "Test response"))
+        {
+            Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 20 }
+        };
+        chatClient.GetResponseAsync(Arg.Any<IEnumerable<ChatMessage>>(), Arg.Any<ChatOptions>(), Arg.Any<CancellationToken>())
+            .Returns(chatResponse);
+        
         var diary = Substitute.For<IAgentDiary>();
         var builder = new MemPalaceAgentBuilder(diary: diary);
 
@@ -41,7 +48,7 @@ public sealed class MemPalaceAgentBuilderTests
         var response = await agent.InvokeAsync("Hello", ctx);
 
         Assert.NotNull(response);
-        Assert.Contains("Echo", response.Content);
+        Assert.NotEmpty(response.Content);
         
         await diary.Received(2).AppendAsync(
             "test",
@@ -53,6 +60,13 @@ public sealed class MemPalaceAgentBuilderTests
     public async Task InvokeAsync_ReturnsTraceWithLatency()
     {
         var chatClient = Substitute.For<IChatClient>();
+        var chatResponse = new ChatResponse(new ChatMessage(ChatRole.Assistant, "Test response"))
+        {
+            Usage = new UsageDetails { InputTokenCount = 10, OutputTokenCount = 20 }
+        };
+        chatClient.GetResponseAsync(Arg.Any<IEnumerable<ChatMessage>>(), Arg.Any<ChatOptions>(), Arg.Any<CancellationToken>())
+            .Returns(chatResponse);
+        
         var builder = new MemPalaceAgentBuilder();
 
         var descriptor = new AgentDescriptor("test", "Test", "You are a test", "Do testing", null);
@@ -68,5 +82,7 @@ public sealed class MemPalaceAgentBuilderTests
         Assert.NotNull(response.Trace);
         Assert.True(response.Trace.Latency.TotalMilliseconds >= 0);
         Assert.NotNull(response.Trace.ToolCalls);
+        Assert.Equal(10, response.Trace.InputTokens);
+        Assert.Equal(20, response.Trace.OutputTokens);
     }
 }

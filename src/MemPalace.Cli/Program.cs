@@ -42,6 +42,11 @@ internal static class Program
         services.AddMemPalaceKnowledgeGraph(o => 
             o.DatabasePath = Path.Combine(palaceDir, "mempalace-kg.db"));
         
+        // Register IChatClient if configured
+        // Users must register an IChatClient for agents to work (e.g., via AddChatClient or AddOpenAIChatClient)
+        // Example: services.AddOpenAIChatClient("model", Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
+        // Without IChatClient, agent commands will fail with a clear error message.
+        
         // Register Agents
         services.AddMemPalaceAgents(o =>
             o.AgentsPath = Path.Combine(Directory.GetCurrentDirectory(), ".mempalace", "agents"));

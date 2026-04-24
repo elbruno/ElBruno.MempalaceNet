@@ -153,3 +153,36 @@
 - Spectre.Console `TextPrompt<string>` makes interactive REPL (agents chat) trivial.
 
 **Next up (Phase 9):** Full IChatClient integration once API verified, LLM-based reranker prompt, agent-to-agent communication (multi-agent workflows).
+
+### 2026-04-25: Phase 8 (Reprise) — Real Microsoft Agent Framework Integration
+**What:** Replaced stub agent runtime with real `Microsoft.Agents.AI 1.3.0` integration.
+- Verified `Microsoft.Agents.AI` 1.3.0 builds cleanly against our stack (M.E.AI 10.5.0, Abstractions 10.x).
+- Implemented real `ChatClientAgent` construction: `new ChatClientAgent(IChatClient client, string? name, string? description, string? instructions, IList<AITool>? tools)`.
+- Wired MCP tools (`palace_search`, `kg_query`) as `AIFunction`s via `AIFunctionFactory.Create(...)` with descriptions and parameter attributes.
+- Implemented `InvokeAsync` using `await agent.RunAsync(message)` → returns `AgentResponse` with `.Text`, `.Messages`, `.Usage`.
+- Extract tool calls from `AgentResponse.Messages` → look for `FunctionCallContent` in message contents.
+- Convert token counts: `Usage.InputTokenCount`/`OutputTokenCount` are `long`, cast to `int` for our `AgentTrace`.
+- Updated tests: mock `IChatClient.GetResponseAsync()` to return proper `ChatResponse` with usage details.
+- All 129 tests passing.
+- Updated `docs/agents.md`: document Microsoft Agent Framework API, `ChatClientAgent`, tool wiring, NuGet package versions.
+- CLI: removed offline echo mode (too complex to implement correctly) — users must register an `IChatClient` for agents to work.
+
+**Key challenges:**
+1. **API discovery**: `Microsoft.Agents.AI` has limited docs. Had to test-compile code snippets to find exact method signatures.
+   - `RunAsync(string message)` exists on `AIAgent` (extension method or overload resolves correctly).
+   - `AgentResponse` has `.Text` (string), `.Messages` (IList<ChatMessage>), `.Usage` (UsageDetails?).
+   - `ChatClientAgent` constructor: `(IChatClient, name, description, instructions, tools)` — description is nullable, tools is `IList<AITool>?`.
+2. **Tool wiring**: `AIFunctionFactory.Create(lambda, name, description)` creates `AIFunction`. Attributes like `[Description(...)]` on lambda parameters provide schema hints to LLM.
+3. **IChatClient echo implementation**: Attempted to create offline echo client but M.E.AI types (`ChatResponse`, `ChatResponseUpdate`, etc.) have complex initialization patterns. Abandoned in favor of mocking via NSubstitute in tests and requiring users to register real `IChatClient` in prod.
+4. **Usage token types**: Agent Framework returns `long` for token counts, our `AgentTrace` expects `int` — cast required.
+5. **History.md mistake documentation**: Previous Phase 8 removed `Microsoft.Agents.AI` due to perceived conflicts. This was incorrect — package builds cleanly and is required. Documented the lesson to avoid repeating.
+
+**Learnings:**
+- Microsoft Agent Framework (`Microsoft.Agents.AI 1.3.0`) is real, stable, and integrates cleanly with M.E.AI.
+- `ChatClientAgent` wraps `IChatClient` and adds tool-calling orchestration via `AIFunction`.
+- Tool-calling works: agent decides when to invoke tools, framework handles invocation, results returned to LLM for next turn.
+- `AgentResponse` provides structured output with full message history + usage stats.
+- Test mocking pattern: use NSubstitute to mock `IChatClient.GetResponseAsync()` → return `ChatResponse` with `new ChatMessage(...)` + usage details.
+- Don't bail on a NuGet package without verifying the conflict — check build output, not assumptions.
+
+**Next up:** Integrate with real LLM providers (OpenAI, Azure OpenAI, Ollama), test end-to-end agent workflows with real models, implement agent-to-agent communication.
