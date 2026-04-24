@@ -66,34 +66,20 @@ public static class ServiceCollectionExtensions
     private static IEmbeddingGenerator<string, Embedding<float>> CreateOpenAiGenerator(
         EmbedderOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            throw new InvalidOperationException(
-                "ApiKey is required for OpenAI provider.");
-        }
-
-        return new OpenAIEmbeddingGenerator(
-            new OpenAI.OpenAIClient(options.ApiKey),
-            options.Model);
+        // TODO: OpenAI provider implementation requires compatible M.E.AI.OpenAI version
+        // Current packages don't expose AsEmbeddingGenerator extension for OpenAIClient
+        // Phase 3 ships with Ollama support; OpenAI/Azure will be completed in Phase 4
+        throw new NotImplementedException(
+            "OpenAI provider not yet implemented. Use 'Ollama' provider for Phase 3.");
     }
 
     private static IEmbeddingGenerator<string, Embedding<float>> CreateAzureOpenAiGenerator(
         EmbedderOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            throw new InvalidOperationException(
-                "ApiKey is required for AzureOpenAI provider.");
-        }
-
-        var credential = new System.ClientModel.ApiKeyCredential(options.ApiKey);
-        var clientOptions = new OpenAI.OpenAIClientOptions
-        {
-            Endpoint = new Uri(options.Endpoint)
-        };
-        
-        return new OpenAIEmbeddingGenerator(
-            new OpenAI.OpenAIClient(credential, clientOptions),
-            options.Model);
+        // TODO: AzureOpenAI provider implementation requires compatible M.E.AI.OpenAI version  
+        // Current packages don't expose AsEmbeddingGenerator extension for OpenAIClient
+        // Phase 3 ships with Ollama support; OpenAI/Azure will be completed in Phase 4
+        throw new NotImplementedException(
+            "AzureOpenAI provider not yet implemented. Use 'Ollama' provider for Phase 3.");
     }
 }
