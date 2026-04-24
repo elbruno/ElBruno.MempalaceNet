@@ -36,7 +36,7 @@ MemPalace.NET v0.1.0 is the first public release of the .NET port of [MemPalace]
 
 ```bash
 # Install CLI tool
-dotnet tool install -g mempalacenet --version 0.1.0
+dotnet tool install -g mempalacenet --version 0.1.0-preview.1
 
 # Initialize a palace
 mempalacenet init ~/my-palace

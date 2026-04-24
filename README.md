@@ -17,7 +17,7 @@ A **.NET port** of [MemPalace](https://github.com/MemPalace/mempalace) — local
 
 ```bash
 # Install the CLI tool
-dotnet tool install -g mempalacenet --version 0.1.0
+dotnet tool install -g mempalacenet --version 0.1.0-preview.1
 
 # Initialize a new palace
 mempalacenet init ~/my-palace

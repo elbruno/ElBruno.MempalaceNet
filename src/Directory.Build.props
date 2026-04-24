@@ -13,7 +13,7 @@
     <PackageProjectUrl>https://github.com/elbruno/mempalacenet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/elbruno/mempalacenet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.1.0</Version>
+    <Version>0.1.0-preview.1</Version>
     <PackageTags>ai;agents;memory;rag;mcp;dotnet;embeddings;palace</PackageTags>
   </PropertyGroup>
 
