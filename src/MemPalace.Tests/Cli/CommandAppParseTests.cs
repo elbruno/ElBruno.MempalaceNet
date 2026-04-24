@@ -1,7 +1,9 @@
 using MemPalace.Cli.Commands;
 using MemPalace.Cli.Commands.Kg;
 using MemPalace.Cli.Infrastructure;
+using MemPalace.KnowledgeGraph;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Spectre.Console.Cli;
 
 namespace MemPalace.Tests.Cli;
@@ -11,6 +13,15 @@ public sealed class CommandAppParseTests
     private static CommandApp CreateApp()
     {
         var services = new ServiceCollection();
+        var fakeKg = Substitute.For<IKnowledgeGraph>();
+        fakeKg.QueryAsync(Arg.Any<TriplePattern>(), Arg.Any<DateTimeOffset?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<TemporalTriple>>(Array.Empty<TemporalTriple>()));
+        fakeKg.TimelineAsync(Arg.Any<EntityRef>(), Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<TimelineEvent>>(Array.Empty<TimelineEvent>()));
+        fakeKg.AddAsync(Arg.Any<TemporalTriple>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1L));
+        fakeKg.CountAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(0));
+        services.AddSingleton<IKnowledgeGraph>(fakeKg);
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);
 
@@ -98,7 +109,7 @@ public sealed class CommandAppParseTests
     public void KgAddCommand_ParsesTripleArguments()
     {
         var app = CreateApp();
-        var result = app.Run(["kg", "add", "subject", "predicate", "object"]);
+        var result = app.Run(["kg", "add", "agent:tyrell", "worked-on", "project:MemPalace.Core"]);
         Assert.Equal(0, result);
     }
 
@@ -106,7 +117,7 @@ public sealed class CommandAppParseTests
     public void KgQueryCommand_ParsesPattern()
     {
         var app = CreateApp();
-        var result = app.Run(["kg", "query", "? worked-on Project"]);
+        var result = app.Run(["kg", "query", "? worked-on project:MemPalace.Core"]);
         Assert.Equal(0, result);
     }
 
@@ -114,7 +125,7 @@ public sealed class CommandAppParseTests
     public void KgTimelineCommand_ParsesEntity()
     {
         var app = CreateApp();
-        var result = app.Run(["kg", "timeline", "Tyrell"]);
+        var result = app.Run(["kg", "timeline", "agent:tyrell"]);
         Assert.Equal(0, result);
     }
 }

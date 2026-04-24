@@ -56,8 +56,44 @@ public sealed class FileSystemMiner : IMiner
                 if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#'))
                     continue;
                     
-                // .gitignore patterns are exclusions
-                matcher.AddExclude(trimmed);
+                // Translate gitignore syntax into FileSystemGlobbing glob syntax.
+                // Gitignore semantics differ from glob; we cover the common cases:
+                //   "name/"      => "**/name/**"   (directory anywhere, recursive)
+                //   "name"       => "**/name" + "**/name/**"  (file or dir anywhere)
+                //   "/name"      => "name" + "name/**"        (anchored at root)
+                //   "name/file"  => path is taken as-is (no leading slash)
+                //   "*.ext"      => "**/*.ext"
+                var negated = trimmed.StartsWith('!');
+                if (negated) trimmed = trimmed.Substring(1).Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                void Apply(string pat)
+                {
+                    if (negated) matcher.AddInclude(pat);
+                    else matcher.AddExclude(pat);
+                }
+
+                if (trimmed.StartsWith('/'))
+                {
+                    var rooted = trimmed.TrimStart('/').TrimEnd('/');
+                    Apply(rooted);
+                    Apply(rooted + "/**");
+                }
+                else if (trimmed.EndsWith('/'))
+                {
+                    var dir = trimmed.TrimEnd('/');
+                    Apply("**/" + dir + "/**");
+                }
+                else if (trimmed.Contains('/'))
+                {
+                    Apply(trimmed);
+                    Apply(trimmed + "/**");
+                }
+                else
+                {
+                    Apply("**/" + trimmed);
+                    Apply("**/" + trimmed + "/**");
+                }
             }
         }
 
@@ -68,7 +104,14 @@ public sealed class FileSystemMiner : IMiner
         foreach (var file in result.Files)
         {
             ct.ThrowIfCancellationRequested();
-            
+
+            // Skip VCS metadata files that are not actual content.
+            var fileName = Path.GetFileName(file.Path);
+            if (fileName is ".gitignore" or ".gitattributes" or ".gitmodules")
+                continue;
+            if (file.Path.Replace('\\', '/').Contains("/.git/"))
+                continue;
+
             var fullPath = Path.Combine(ctx.SourcePath, file.Path);
             var extension = Path.GetExtension(fullPath);
             

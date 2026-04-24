@@ -216,7 +216,7 @@ public sealed class SqliteKnowledgeGraph : IKnowledgeGraph
         
         var whereClauses = new List<string>
         {
-            "(s_type = @type AND s_id = @id) OR (o_type = @type AND o_id = @id)"
+            "((s_type = @type AND s_id = @id) OR (o_type = @type AND o_id = @id))"
         };
 
         cmd.Parameters.AddWithValue("@type", entity.Type);
