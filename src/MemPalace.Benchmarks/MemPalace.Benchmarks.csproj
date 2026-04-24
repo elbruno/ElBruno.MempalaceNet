@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>mempalacenet-bench</AssemblyName>
+    <RootNamespace>MemPalace.Benchmarks</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>mempalacenet-bench</ToolCommandName>
+    
+    <PackageId>mempalacenet-bench</PackageId>
+    <Description>Benchmark tool for MemPalace.NET testing search quality on LongMemEval and other memory datasets.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MemPalace.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="datasets-synthetic\**\*.jsonl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.49.1" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MemPalace.Core\MemPalace.Core.csproj" />
+    <ProjectReference Include="..\MemPalace.Backends.Sqlite\MemPalace.Backends.Sqlite.csproj" />
+    <ProjectReference Include="..\MemPalace.Ai\MemPalace.Ai.csproj" />
+    <ProjectReference Include="..\MemPalace.Mining\MemPalace.Mining.csproj" />
+    <ProjectReference Include="..\MemPalace.Search\MemPalace.Search.csproj" />
+    <ProjectReference Include="..\MemPalace.KnowledgeGraph\MemPalace.KnowledgeGraph.csproj" />
+  </ItemGroup>
+
+</Project>

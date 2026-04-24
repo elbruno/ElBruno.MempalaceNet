@@ -1,0 +1,5 @@
+{"id": "cm-q1", "question": "What is the capital of France?", "expected_answer": "The capital of France is Paris, known for the Eiffel Tower.", "relevant_memory_ids": ["cm-m1"], "metadata": {"turn": 1}}
+{"id": "cm-q2", "question": "How tall is Mount Everest?", "expected_answer": "Mount Everest is 8,849 meters tall, the highest peak on Earth.", "relevant_memory_ids": ["cm-m2"], "metadata": {"turn": 2}}
+{"id": "cm-q3", "question": "Who wrote Romeo and Juliet?", "expected_answer": "William Shakespeare wrote Romeo and Juliet in the 1590s.", "relevant_memory_ids": ["cm-m3"], "metadata": {"turn": 3}}
+{"id": "cm-q4", "question": "What is photosynthesis?", "expected_answer": "Photosynthesis is the process plants use to convert sunlight into energy.", "relevant_memory_ids": ["cm-m4"], "metadata": {"turn": 4}}
+{"id": "cm-q5", "question": "When did World War II end?", "expected_answer": "World War II ended in 1945 with the surrender of Japan.", "relevant_memory_ids": ["cm-m5"], "metadata": {"turn": 5}}

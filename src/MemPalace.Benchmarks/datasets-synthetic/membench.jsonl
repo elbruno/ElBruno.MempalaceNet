@@ -1,0 +1,5 @@
+{"id": "mb-q1", "question": "What is the speed of light?", "expected_answer": "The speed of light in vacuum is approximately 299,792 kilometers per second.", "relevant_memory_ids": ["mb-m1"], "metadata": {"category": "physics"}}
+{"id": "mb-q2", "question": "Who invented the telephone?", "expected_answer": "Alexander Graham Bell is credited with inventing the telephone in 1876.", "relevant_memory_ids": ["mb-m2"], "metadata": {"category": "history"}}
+{"id": "mb-q3", "question": "What is DNA?", "expected_answer": "DNA is deoxyribonucleic acid, the molecule that carries genetic information.", "relevant_memory_ids": ["mb-m3"], "metadata": {"category": "biology"}}
+{"id": "mb-q4", "question": "How many planets are in our solar system?", "expected_answer": "Our solar system has eight planets orbiting the Sun.", "relevant_memory_ids": ["mb-m4"], "metadata": {"category": "astronomy"}}
+{"id": "mb-q5", "question": "What is machine learning?", "expected_answer": "Machine learning is AI that enables systems to learn from data without explicit programming.", "relevant_memory_ids": ["mb-m5"], "metadata": {"category": "computer_science"}}

@@ -1,0 +1,5 @@
+{"id": "loco-q1", "question": "What was discussed about project deadlines?", "expected_answer": "The team agreed to extend the deadline by one week.", "relevant_memory_ids": ["loco-m1"], "metadata": {"episode": 1}}
+{"id": "loco-q2", "question": "Who volunteered to lead the presentation?", "expected_answer": "Sarah volunteered to prepare and lead the client presentation.", "relevant_memory_ids": ["loco-m2"], "metadata": {"episode": 2}}
+{"id": "loco-q3", "question": "What bug was found in the authentication module?", "expected_answer": "A race condition was discovered that could leak session tokens.", "relevant_memory_ids": ["loco-m3"], "metadata": {"episode": 3}}
+{"id": "loco-q4", "question": "What framework did the team decide to use?", "expected_answer": "The team chose React with TypeScript for the frontend.", "relevant_memory_ids": ["loco-m4"], "metadata": {"episode": 4}}
+{"id": "loco-q5", "question": "When is the code review scheduled?", "expected_answer": "Code review is scheduled for Friday afternoon at 2 PM.", "relevant_memory_ids": ["loco-m5"], "metadata": {"episode": 5}}

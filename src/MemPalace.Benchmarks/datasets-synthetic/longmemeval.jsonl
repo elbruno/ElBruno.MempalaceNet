@@ -1,0 +1,5 @@
+{"id": "lme-q1", "question": "What did Alice say about the weather?", "expected_answer": "Alice mentioned it was sunny yesterday.", "relevant_memory_ids": ["lme-m1"], "metadata": {"session_id": "s1", "turn": 1}}
+{"id": "lme-q2", "question": "What food does Bob like?", "expected_answer": "Bob likes pizza and pasta.", "relevant_memory_ids": ["lme-m2"], "metadata": {"session_id": "s1", "turn": 2}}
+{"id": "lme-q3", "question": "Where did Carol go on vacation?", "expected_answer": "Carol went to Hawaii for two weeks.", "relevant_memory_ids": ["lme-m3"], "metadata": {"session_id": "s2", "turn": 1}}
+{"id": "lme-q4", "question": "What is Dave's favorite hobby?", "expected_answer": "Dave enjoys playing guitar and singing.", "relevant_memory_ids": ["lme-m4"], "metadata": {"session_id": "s2", "turn": 2}}
+{"id": "lme-q5", "question": "What car does Eve drive?", "expected_answer": "Eve drives a red Tesla Model 3.", "relevant_memory_ids": ["lme-m5"], "metadata": {"session_id": "s3", "turn": 1}}
