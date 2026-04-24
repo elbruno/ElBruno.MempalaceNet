@@ -1,0 +1,37 @@
+# Squad: ignore runtime state (logs, inbox, sessions)
+.squad/orchestration-log/
+.squad/log/
+.squad/decisions/inbox/
+.squad/sessions/
+# Squad: SubSquad activation file (local to this machine)
+.squad-workstream
+# Squad-local config (not for repo)
+.copilot/
+
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+[Dd]ebug/
+[Rr]elease/
+*.pdb
+TestResults/
+artifacts/
+project.lock.json
+*.nupkg
+
+## Tooling
+.idea/
+.vscode/
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local data
+*.db
+*.sqlite
+*.sqlite3

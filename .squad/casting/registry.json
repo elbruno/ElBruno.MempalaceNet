@@ -1,0 +1,11 @@
+{
+  "agents": [
+    { "persistent_name": "Deckard", "universe": "Blade Runner", "role": "Lead / Architect", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Tyrell", "universe": "Blade Runner", "role": "Core Engine Dev", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Roy", "universe": "Blade Runner", "role": "AI / Agent Integration", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Rachael", "universe": "Blade Runner", "role": "CLI / UX Dev", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Bryant", "universe": "Blade Runner", "role": "Tester / QA", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Scribe", "universe": "—", "role": "Session Logger", "created_at": "2026-04-24", "legacy_named": false, "status": "active" },
+    { "persistent_name": "Ralph", "universe": "—", "role": "Work Monitor", "created_at": "2026-04-24", "legacy_named": false, "status": "active" }
+  ]
+}
