@@ -1,9 +1,11 @@
 using MemPalace.Cli.Commands;
+using MemPalace.Cli.Commands.Agents;
 using MemPalace.Cli.Commands.Kg;
 using MemPalace.Cli.Infrastructure;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mining;
 using MemPalace.Search;
+using MemPalace.Agents;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -39,6 +41,10 @@ internal static class Program
         var palaceDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MemPalace");
         services.AddMemPalaceKnowledgeGraph(o => 
             o.DatabasePath = Path.Combine(palaceDir, "mempalace-kg.db"));
+        
+        // Register Agents
+        services.AddMemPalaceAgents(o =>
+            o.AgentsPath = Path.Combine(Directory.GetCurrentDirectory(), ".mempalace", "agents"));
         
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases
@@ -84,6 +90,19 @@ internal static class Program
                 agents.AddCommand<AgentsListCommand>("list")
                     .WithDescription("List all agents in the palace")
                     .WithExample("mempalacenet agents list");
+                
+                agents.AddCommand<AgentsRunCommand>("run")
+                    .WithDescription("Run an agent with a one-shot message")
+                    .WithExample("mempalacenet agents run scribe \"What is MemPalace?\"");
+                
+                agents.AddCommand<AgentsChatCommand>("chat")
+                    .WithDescription("Start an interactive chat with an agent")
+                    .WithExample("mempalacenet agents chat scribe");
+                
+                agents.AddCommand<AgentsDiaryCommand>("diary")
+                    .WithDescription("View or search an agent's diary")
+                    .WithExample("mempalacenet agents diary scribe --tail 10")
+                    .WithExample("mempalacenet agents diary scribe --search \"knowledge graph\"");
             });
 
             // Knowledge graph branch

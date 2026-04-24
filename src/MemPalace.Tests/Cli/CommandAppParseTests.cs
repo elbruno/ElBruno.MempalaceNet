@@ -1,4 +1,5 @@
 using MemPalace.Cli.Commands;
+using MemPalace.Cli.Commands.Agents;
 using MemPalace.Cli.Commands.Kg;
 using MemPalace.Cli.Infrastructure;
 using MemPalace.KnowledgeGraph;

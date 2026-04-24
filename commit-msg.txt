@@ -1,0 +1,33 @@
+Phase 8: Microsoft Agent Framework integration + per-agent diaries
+
+COMPLETED:
+- Agent abstractions (AgentDescriptor, IMemPalaceAgent, AgentContext, AgentResponse, AgentTrace)
+- Agent runtime backed by Microsoft.Extensions.AI IChatClient (stub impl)
+- MemPalaceAgentBuilder with tool wiring (palace_search, kg_query)
+- Per-agent diary system (IAgentDiary, BackedByPalaceDiary)
+  - Stores as embedded memories in palace backend
+  - Supports Recent + Search operations
+- YAML-based agent registry (YamlAgentRegistry)
+- DI extensions (AddMemPalaceAgents)
+- CLI commands: agents list, run, chat, diary
+- Sample agent: scribe.yaml (ships with CLI binary)
+- Documentation: docs/agents.md
+- Tests: 9 new tests (128/129 passing)
+
+PACKAGE NOTES:
+- Microsoft.Agents.AI 1.3.0 conflicts with M.E.AI.Abstractions 10.5.0
+  (both provide ChatClientExtensions). Removed Microsoft.Agents.AI package.
+- Agent runtime uses M.E.AI IChatClient directly (v10.5.0).
+- Current impl has stub IChatClient invocation (echo responses) pending
+  M.E.AI API verification. Full LLM integration ready for Phase 9.
+
+DEPENDENCIES:
+- YamlDotNet 16.3.0 (agent YAML parsing)
+- Microsoft.Extensions.Hosting 10.0.7
+
+WIRING:
+- MemPalace.Agents: core agent types + runtime
+- MemPalace.Cli: agent commands + sample agent
+- Program.cs: AddMemPalaceAgents() registration
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
