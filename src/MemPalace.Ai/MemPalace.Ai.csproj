@@ -4,7 +4,15 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <PackageId>MemPalace.Ai</PackageId>
+    <Description>Microsoft.Extensions.AI integration for MemPalace.NET with ONNX embeddings (ElBruno.LocalEmbeddings) and Ollama/OpenAI support.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MemPalace.Core\MemPalace.Core.csproj" />

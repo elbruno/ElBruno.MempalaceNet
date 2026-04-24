@@ -43,22 +43,26 @@ docs/
 
 ---
 
-## Phase 0 — Scaffold & Repo (active)
-**Owner:** Deckard
+## Phase 0 — Scaffold & Repo
+**Owner:** Deckard  
+**Status:** ✅ Done (commit 2b8d2fc)
+
 - [x] Squad team set up
 - [x] LICENSE (MIT), README, .gitignore, .gitattributes
 - [x] `docs/PLAN.md`
-- [ ] Create private repo `elbruno/mempalacenet`
-- [ ] First push (scaffold only)
-- [ ] `MemPalace.sln` with empty project stubs
-- [ ] CI workflow: build + test on push (`.github/workflows/ci.yml`)
+- [x] Create private repo `elbruno/mempalacenet`
+- [x] First push (scaffold only)
+- [x] `MemPalace.sln` with empty project stubs
+- [x] CI workflow: build + test on push (`.github/workflows/ci.yml`)
 
 **Exit criteria:** repo exists on GitHub, CI green on empty solution.
 
 ---
 
 ## Phase 1 — Core Domain & Backend Contract
-**Owner:** Tyrell · Reviewer: Deckard, Bryant
+**Owner:** Tyrell · Reviewer: Deckard, Bryant  
+**Status:** ✅ Done (commit c0622dd)
+
 - Port `BaseBackend` / `BaseCollection` / `QueryResult` / `GetResult` / errors → C# interfaces and records (`MemPalace.Core`)
 - Port `PalaceRef` value object
 - Define `IEmbedder` seam (lives in Core; implementation in `MemPalace.Ai`)
@@ -70,7 +74,9 @@ docs/
 ---
 
 ## Phase 2 — SQLite Backend (default)
-**Owner:** Tyrell · Reviewer: Deckard, Bryant
+**Owner:** Tyrell · Reviewer: Deckard, Bryant  
+**Status:** ✅ Done (commit f9ea617)
+
 - `MemPalace.Backends.Sqlite` using `Microsoft.Data.Sqlite`
 - Vector storage: try [`sqlite-vec`](https://github.com/asg017/sqlite-vec) extension; fallback to BLOB column + brute-force cosine
 - Collection schema with embedder identity stored alongside vectors
@@ -82,7 +88,9 @@ docs/
 ---
 
 ## Phase 3 — AI Integration (embeddings + rerank)
-**Owner:** Roy · Reviewer: Deckard
+**Owner:** Roy · Reviewer: Deckard  
+**Status:** ✅ Done (commit a1a265f)
+
 - `MemPalace.Ai` wraps `Microsoft.Extensions.AI`'s `IEmbeddingGenerator<string, Embedding<float>>`
 - Default provider: **Ollama** (`Microsoft.Extensions.AI.Ollama`) with `nomic-embed-text`
 - Optional providers: OpenAI, Azure OpenAI (config-gated)
@@ -94,7 +102,9 @@ docs/
 ---
 
 ## Phase 4 — Mining & Search Pipeline
-**Owners:** Tyrell + Roy
+**Owners:** Tyrell + Roy  
+**Status:** ✅ Done (commit 0b2bda2)
+
 - Ingestion: project files (markdown, code), conversation transcripts (Claude / generic JSONL)
 - Auto-routing into wings/rooms/drawers with explicit `--wing` override
 - Search: raw semantic, hybrid (keyword boosting + temporal proximity + preference patterns), optional rerank
@@ -105,7 +115,9 @@ docs/
 ---
 
 ## Phase 5 — CLI
-**Owner:** Rachael · Reviewer: Deckard
+**Owner:** Rachael · Reviewer: Deckard  
+**Status:** ✅ Done (commit 93d4f96)
+
 - `mempalace init <path>` — initialize palace
 - `mempalace mine <path> [--mode files|convos] [--wing X]`
 - `mempalace search <query> [--wing X] [--rerank]`
@@ -118,7 +130,9 @@ docs/
 ---
 
 ## Phase 6 — Knowledge Graph
-**Owner:** Tyrell + Roy · Reviewer: Deckard
+**Owner:** Tyrell + Roy · Reviewer: Deckard  
+**Status:** ✅ Done (commit 6e9916d)
+
 - Temporal entity-relationship graph (SQLite-backed)
 - Validity windows per relationship
 - Operations: `add`, `query`, `invalidate`, `timeline`
@@ -128,7 +142,9 @@ docs/
 ---
 
 ## Phase 7 — MCP Server
-**Owner:** Roy · Reviewer: Deckard
+**Owner:** Roy · Reviewer: Deckard  
+**Status:** ✅ Done (commit 7e213e5)
+
 - `MemPalace.Mcp` using `ModelContextProtocol` package
 - Initial 10–12 tools (palace read/write, KG ops, agent diary read)
 - Then expand toward parity with Python's 29-tool surface
@@ -138,7 +154,9 @@ docs/
 ---
 
 ## Phase 8 — Agent Framework Integration
-**Owner:** Roy · Reviewer: Deckard
+**Owner:** Roy · Reviewer: Deckard  
+**Status:** ✅ Done (commit 12dc957)
+
 - `MemPalace.Agents` using **Microsoft Agent Framework** (`Microsoft.Agents.AI`)
 - Each specialist agent gets its own wing + diary in the palace
 - `mempalace_list_agents` discoverability
@@ -148,7 +166,9 @@ docs/
 ---
 
 ## Phase 9 — Benchmarks & Parity
-**Owner:** Bryant · Reviewer: Deckard
+**Owner:** Bryant · Reviewer: Deckard  
+**Status:** 🚧 In progress (Bryant)
+
 - LongMemEval harness (R@5)
 - LoCoMo harness (R@10)
 - ConvoMem / MemBench harnesses
@@ -159,7 +179,9 @@ docs/
 ---
 
 ## Phase 10 — Polish & v0.1
-**Owner:** Deckard
+**Owner:** Deckard  
+**Status:** 🚧 In progress (this commit)
+
 - README hardened, docs/ complete, NuGet packaging metadata
 - Tag `v0.1.0`, GitHub release notes
 

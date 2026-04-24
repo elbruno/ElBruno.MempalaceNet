@@ -4,7 +4,15 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <PackageId>MemPalace.Backends.Sqlite</PackageId>
+    <Description>SQLite backend for MemPalace.NET with managed BLOB vector storage and cosine similarity search.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MemPalace.Core\MemPalace.Core.csproj" />

@@ -9,7 +9,15 @@
     <RootNamespace>MemPalace.Cli</RootNamespace>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>mempalacenet</ToolCommandName>
+    
+    <PackageId>mempalacenet</PackageId>
+    <Description>Command-line tool for MemPalace.NET — local-first AI memory with wings/rooms/drawers hierarchy.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="MemPalace.Tests" />

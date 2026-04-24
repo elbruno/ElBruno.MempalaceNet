@@ -2,6 +2,7 @@
   <Project Path="MemPalace.Agents/MemPalace.Agents.csproj" />
   <Project Path="MemPalace.Ai/MemPalace.Ai.csproj" />
   <Project Path="MemPalace.Backends.Sqlite/MemPalace.Backends.Sqlite.csproj" />
+  <Project Path="MemPalace.Benchmarks/MemPalace.Benchmarks.csproj" />
   <Project Path="MemPalace.Cli/MemPalace.Cli.csproj" />
   <Project Path="MemPalace.Core/MemPalace.Core.csproj" />
   <Project Path="MemPalace.KnowledgeGraph/MemPalace.KnowledgeGraph.csproj" />
