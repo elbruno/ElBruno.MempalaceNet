@@ -29,6 +29,10 @@ internal static class Program
         // TODO(phase3): Register local embedder (default)
         // services.AddMemPalaceAi(); // Uses Local provider by default
         
+        // Register mining and search
+        services.AddMemPalaceMining();
+        services.AddMemPalaceSearch();
+        
         // Register Knowledge Graph
         var palaceDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MemPalace");
         services.AddMemPalaceKnowledgeGraph(o => 

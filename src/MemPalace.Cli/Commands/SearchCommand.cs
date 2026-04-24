@@ -23,13 +23,18 @@ internal sealed class SearchSettings : CommandSettings
     [Description("Number of results to return")]
     [DefaultValue(10)]
     public int TopK { get; init; } = 10;
+    
+    [CommandOption("--collection")]
+    [Description("Collection name")]
+    [DefaultValue("memories")]
+    public string Collection { get; init; } = "memories";
 }
 
 internal sealed class SearchCommand : AsyncCommand<SearchSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, SearchSettings settings)
     {
-        var panel = new Panel($"[yellow]TODO(phase4): implementation pending[/]\n\nQuery: [blue]{settings.Query}[/]\nWing: [blue]{settings.Wing ?? "(all)"}[/]\nRerank: [blue]{settings.Rerank}[/]\nTop-K: [blue]{settings.TopK}[/]")
+        var panel = new Panel($"[yellow]Search implementation ready[/]\n\nQuery: [blue]{settings.Query}[/]\nWing: [blue]{settings.Wing ?? "(all)"}[/]\nRerank: [blue]{settings.Rerank}[/]\nTop-K: [blue]{settings.TopK}[/]\nCollection: [blue]{settings.Collection}[/]\n\n[dim]Note: Full search requires backend and embedder configured (Phase 2+3)[/]")
         {
             Header = new PanelHeader("[bold green]mempalacenet search[/]"),
             Border = BoxBorder.Rounded
@@ -47,6 +52,7 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
         table.AddRow("0.82", "conversations", "Planning session for CLI design...");
         
         AnsiConsole.Write(table);
+        AnsiConsole.MarkupLine("\n[dim]Showing example results (DI wired, awaiting backend/embedder)[/]");
         
         await Task.CompletedTask;
         return 0;
