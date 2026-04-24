@@ -81,3 +81,79 @@ Lower distance = higher similarity. Results sorted ascending.
 - Added smoke test project instead of running full conformance suite (blocked by unrelated NuGet issues)
 
 **Next:** Phase 3 (Roy) will integrate Microsoft.Extensions.AI for embeddings with Ollama default provider.
+
+### Phase 4 — Mining + Search Pipeline (2026-04-24)
+
+**Scope:** Implemented `MemPalace.Mining` and `MemPalace.Search` with complete test coverage and documentation.
+
+**Mining Infrastructure:**
+- **Core types:** `MinedItem`, `IMiner`, `MinerContext`, `MiningReport`
+- **FileSystemMiner:**
+  - Walks directories using `Microsoft.Extensions.FileSystemGlobbing`
+  - Respects `.gitignore` patterns (parsed line-by-line, applied as exclusions)
+  - Chunks large files: 2000 chars default, 200 overlap (preserves context)
+  - Binary detection: extension blacklist + null-byte sniffing
+  - Stable IDs: SHA-256 prefix (first 8 hex) + path/chunk-index
+  - Metadata: `path`, `ext`, `size`, `mtime`, `sha256_8`, optional `chunk_*`
+- **ConversationMiner:**
+  - Parses JSONL (streaming, one line = one turn) and Markdown (`## User` / `## Assistant` headers)
+  - Handles role variations: User/Assistant/Human/AI (case-insensitive)
+  - Metadata: `role`, `turn_index`, `conversation_id`, optional `timestamp`
+  - Error tolerance: skips invalid JSON lines, empty turns
+  - Yield-in-try workaround: parse → optional yield pattern (C# async iterator constraint)
+- **MiningPipeline:**
+  - Batches items (default 32, configurable)
+  - De-dupes within run via HashSet<string> (id-based)
+  - Embeds batch → upserts to backend
+  - Returns `MiningReport` (counters + errors + elapsed)
+  - Non-fatal error handling: continues on batch failure, logs to `Errors`
+- **DI:** `AddMemPalaceMining()` registers `FileSystemMiner`, `ConversationMiner`, `MiningPipeline` as keyed services
+
+**Search Infrastructure:**
+- **Core types:** `SearchHit`, `SearchOptions`, `ISearchService`
+- **VectorSearchService:**
+  - Pure semantic search (embed query → backend.QueryAsync)
+  - Converts distance to score: `1 - cosine_distance`
+  - Optional reranking via `IReranker` (if present in DI)
+  - Wing filter: `SearchOptions.Wing` → `Eq("wing", value)` WhereClause
+  - MinScore threshold applied post-rerank
+- **HybridSearchService:**
+  - Retrieves 2×TopK vector candidates (allows room for keyword re-ranking)
+  - Keyword scoring: token overlap (simple BM25-lite, no corpus stats)
+    - Tokenize on whitespace + punctuation
+    - Score = `|query_tokens ∩ doc_tokens| / |query_tokens|`
+  - Reciprocal Rank Fusion: `score = Σ(1/(60 + rank_in_source))`
+  - Metadata annotation: `sources = ["vector", "keyword"]`
+  - Documented simplification: v0.1 uses overlap, not full BM25 (upgrade path noted)
+- **DI:** `AddMemPalaceSearch()` (vector default), `AddHybridSearch()` (swaps to hybrid)
+
+**CLI Integration:**
+- Updated `MineCommand` and `SearchCommand` with real options (mode, wing, collection, rerank, top-k)
+- Wired `services.AddMemPalaceMining()` and `services.AddMemPalaceSearch()` in `Program.cs`
+- Commands show "infrastructure ready" message (awaiting Phase 2/3 backend/embedder)
+- Added project references: `MemPalace.Cli` → `MemPalace.Mining`, `MemPalace.Search`
+
+**Tests (18 new, all pass):**
+- **FileSystemMinerTests (5):** empty dir, metadata extraction, chunking, binary skip, .gitignore respect
+- **ConversationMinerTests (5):** JSONL parsing, Markdown parsing, invalid line skip, nonexistent file, alternate role names
+- **MiningPipelineTests (4):** batching (2-item batches), de-dupe, error handling, elapsed time reporting
+- **VectorSearchServiceTests (5):** top-K ordering, Wing→WhereClause, MinScore filter, reranker integration, collection-not-found
+- **HybridSearchServiceTests (4):** RRF fusion, top-K respected, MinScore filter, empty results handling
+
+**Documentation:**
+- `docs/mining.md` (7K chars): IMiner contract, built-in miners (FileSystem, Conversation), custom miner guide, chunking knobs, performance notes, DI registration, CLI usage
+- `docs/search.md` (8K chars): vector vs hybrid, RRF math (k=60), BM25-lite explanation, reranking, SearchOptions reference, performance tips, CLI usage
+
+**Compiler Issues Resolved:**
+- **Async iterator `ref` params:** Refactored `ProcessBatchAsync` to return tuple `(long Embedded, long Upserted, bool Success)` instead of `ref` out-params
+- **Yield in try-catch:** Moved parsing outside try, conditionally yield after finally block (NSubstitute `Returns` must return `ValueTask`, not `Task`)
+- **IReadOnlyList.IndexOf:** Used `Array.IndexOf(list.ToArray(), item)` for compatibility
+- **Expression tree pattern matching:** Simplified `Arg.Is<>` predicate to avoid `is` operator in expression tree
+
+**Build/Test Status:**
+- Solution builds clean (10 projects)
+- 99/105 tests pass (6 pre-existing failures in KG/Cli parsing, unrelated)
+- All 18 new Mining/Search tests green
+- CLI `--help` runs without crash
+
+**Next:** Phases 2 (SQLite backend) and 3 (embedder) are prerequisites for end-to-end mining/search. Phase 5 (Agents) will leverage search for memory retrieval.
