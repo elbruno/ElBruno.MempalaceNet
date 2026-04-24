@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <Authors>Bruno Capuano</Authors>
+    <Company>elbruno</Company>
+    <RepositoryUrl>https://github.com/elbruno/mempalacenet</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- TreatWarningsAsErrors for library projects only -->
+  <PropertyGroup Condition="'$(OutputType)' != 'Exe' and '$(IsPackable)' != 'false'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
