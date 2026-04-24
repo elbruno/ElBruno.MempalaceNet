@@ -24,9 +24,10 @@ public sealed class MeaiEmbedder : IEmbedder
     }
 
     /// <summary>
-    /// Model identity combining provider and model (e.g., "ollama:nomic-embed-text").
+    /// Model identity combining provider and model (e.g., "ollama:nomic-embed-text" or "local:sentence-transformers/all-MiniLM-L6-v2").
+    /// For local provider, the full HuggingFace model ID is used.
     /// </summary>
-    public string ModelIdentity => $"{_providerName}:{_modelName}";
+    public string ModelIdentity => $"{_providerName.ToLowerInvariant()}:{_modelName}";
 
     /// <summary>
     /// Embedding dimensions (inferred from first embedding call).

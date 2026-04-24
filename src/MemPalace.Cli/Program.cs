@@ -25,8 +25,8 @@ internal static class Program
         // TODO(phase2): Register SQLite backend once available
         // services.AddMemPalaceSqliteBackend();
         
-        // TODO(phase3): Register M.E.AI embedder once available
-        // services.AddMemPalaceEmbedder();
+        // TODO(phase3): Register local embedder (default)
+        // services.AddMemPalaceAi(); // Uses Local provider by default
         
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases

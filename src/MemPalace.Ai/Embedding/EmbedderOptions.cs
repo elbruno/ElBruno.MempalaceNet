@@ -6,22 +6,31 @@ namespace MemPalace.Ai.Embedding;
 public sealed record EmbedderOptions
 {
     /// <summary>
-    /// Embedding provider (Ollama, OpenAI, or AzureOpenAI).
+    /// Embedding provider (Local, Ollama, OpenAI, or AzureOpenAI).
     /// </summary>
-    public string Provider { get; set; } = "Ollama";
+    public string Provider { get; set; } = "Local";
 
     /// <summary>
-    /// Model name (e.g., "nomic-embed-text" for Ollama).
+    /// Model name.
+    /// - Local: HuggingFace model ID (default: "sentence-transformers/all-MiniLM-L6-v2")
+    /// - Ollama: model name (e.g., "nomic-embed-text")
+    /// - OpenAI/AzureOpenAI: deployment/model name
     /// </summary>
-    public string Model { get; set; } = "nomic-embed-text";
+    public string Model { get; set; } = "sentence-transformers/all-MiniLM-L6-v2";
 
     /// <summary>
-    /// API endpoint (defaults to local Ollama).
+    /// API endpoint (for Ollama/OpenAI/AzureOpenAI, ignored for Local).
     /// </summary>
     public string Endpoint { get; set; } = "http://localhost:11434";
 
     /// <summary>
-    /// API key for cloud providers (optional for Ollama).
+    /// API key for cloud providers (not used for Local or Ollama).
     /// </summary>
     public string? ApiKey { get; set; }
+
+    /// <summary>
+    /// Maximum sequence length for tokenization (Local embedder only).
+    /// Default is 256 for all-MiniLM-L6-v2.
+    /// </summary>
+    public int MaxSequenceLength { get; set; } = 256;
 }
