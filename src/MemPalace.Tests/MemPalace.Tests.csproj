@@ -28,6 +28,8 @@
     <ProjectReference Include="..\MemPalace.KnowledgeGraph\MemPalace.KnowledgeGraph.csproj" />
     <ProjectReference Include="..\MemPalace.Mining\MemPalace.Mining.csproj" />
     <ProjectReference Include="..\MemPalace.Search\MemPalace.Search.csproj" />
+    <ProjectReference Include="..\MemPalace.Agents\MemPalace.Agents.csproj" />
+    <ProjectReference Include="..\MemPalace.Mcp\MemPalace.Mcp.csproj" />
   </ItemGroup>
 
 </Project>

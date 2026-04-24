@@ -1,3 +1,4 @@
+using MemPalace.Agents.Registry;
 using MemPalace.Cli.Commands;
 using MemPalace.Cli.Commands.Agents;
 using MemPalace.Cli.Commands.Kg;
@@ -23,6 +24,11 @@ public sealed class CommandAppParseTests
             .Returns(Task.FromResult(1L));
         fakeKg.CountAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(0));
         services.AddSingleton<IKnowledgeGraph>(fakeKg);
+
+        var fakeRegistry = Substitute.For<IAgentRegistry>();
+        fakeRegistry.List().Returns(Array.Empty<MemPalace.Agents.AgentDescriptor>());
+        services.AddSingleton<IAgentRegistry>(fakeRegistry);
+
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);
 
