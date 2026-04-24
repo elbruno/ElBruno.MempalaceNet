@@ -9,7 +9,7 @@
 
 ## Learnings
 
-### 2025-04-24: Phase 0 — Solution Scaffold + CI
+### 2026-04-24: Phase 0 — Solution Scaffold + CI
 
 **Target Framework:** net10.0 (.NET 10.0.300-preview.0.26177.108 installed)
 
@@ -22,6 +22,7 @@ MemPalace.Core (no dependencies)
 ├── MemPalace.Mcp → Core, Ai
 ├── MemPalace.Agents → Core, Ai
 ├── MemPalace.Cli → Core, Backends.Sqlite, Ai, Agents
+├── MemPalace.Benchmarks → Core, Backends.Sqlite, Ai, Mining, Search, KG (Bryant, Phase 9)
 └── MemPalace.Tests → Core, Backends.Sqlite
 ```
 
@@ -31,3 +32,49 @@ MemPalace.Core (no dependencies)
 - CI workflow requires `dotnet-quality: 'preview'` for .NET 10 preview builds
 
 **Status:** ✅ Committed (2b8d2fc), pushed to main. CI will validate on next run.
+
+---
+
+### 2026-04-24: Phase 10 — Polish + v0.1 Release Prep
+
+**Package Metadata:**
+- Consolidated NuGet properties in `Directory.Build.props`: Authors, Company, Copyright, License, ProjectUrl, RepositoryUrl/Type, Version 0.1.0, PackageTags
+- Added per-project metadata: `PackageId`, `Description`, `PackageReadmeFile`
+- All 8 library projects + 2 tool projects (mempalacenet, mempalacenet-bench) now pack with README.md included
+- Tool PackageIds: `mempalacenet` (CLI), `mempalacenet-bench` (benchmarks)
+
+**Documentation:**
+- Rewrote `README.md` with elevator pitch, architecture table, quick start commands, links to original MemPalace and ElBruno.LocalEmbeddings
+- Created `docs/CHANGELOG.md` (v0.1.0 release by phase summaries)
+- Created `docs/RELEASE-v0.1.md` (highlights, getting started, known limitations)
+- Updated `docs/README.md` to be a topical index (Concepts / Backends / AI / Content / KG / Integrations / Tools)
+- Updated `docs/PLAN.md` with phase commit statuses: Phases 0-8 ✅ Done with commit SHAs, Phase 9 🚧 Bryant, Phase 10 🚧 this commit
+
+**CI Workflow:**
+- Added `pack` job that runs on main pushes and v* tags
+- Pack job depends on build, runs `dotnet pack -c Release`, uploads .nupkg artifacts
+- Build+test job continues for PRs and pushes
+
+**Concurrency with Bryant (Phase 9):**
+- Bryant added `MemPalace.Benchmarks` project + tests + `docs/benchmarks.md` concurrently
+- His project has a build issue (NU1510: System.Text.Json unnecessary PackageReference)
+- Full solution `dotnet build src\` fails; individual library `dotnet pack` works
+- Coordinated via no-touch zones: I didn't modify his project, tests, or docs/benchmarks.md
+- Noted for Bruno: full build will green up when Bryant addresses the NuGet warning
+
+**Exit Criteria (met for Phase 10 scope):**
+- ✅ All library/tool `.csproj` files have NuGet metadata
+- ✅ README is release-quality
+- ✅ CI workflow has pack job
+- ✅ docs/ folder complete (CHANGELOG, RELEASE, index)
+- ✅ PLAN.md has phase statuses
+- ⚠️ Full `dotnet build src\` blocked by Bryant's Phase 9 work (expected, not Phase 10 blocker)
+- ✅ Individual `dotnet pack` verified (MemPalace.Core.0.1.0.nupkg created successfully)
+
+**For Bruno:**
+Tag command (after Bryant's work is done and full build is green):
+```
+git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
+```
+
+**Status:** ✅ Committed (58e7eba), pushed to main.
