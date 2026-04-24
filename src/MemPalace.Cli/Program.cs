@@ -71,6 +71,11 @@ internal static class Program
                 .WithDescription("Load context summary for new session")
                 .WithExample("mempalacenet wake-up");
 
+            config.AddCommand<McpCommand>("mcp")
+                .WithDescription("Start MCP server (Model Context Protocol)")
+                .WithExample("mempalacenet mcp")
+                .WithExample("mempalacenet mcp --transport stdio");
+
             // Agents branch
             config.AddBranch("agents", agents =>
             {
