@@ -2,6 +2,8 @@ using MemPalace.Cli.Commands;
 using MemPalace.Cli.Commands.Kg;
 using MemPalace.Cli.Infrastructure;
 using MemPalace.KnowledgeGraph;
+using MemPalace.Mining;
+using MemPalace.Search;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
