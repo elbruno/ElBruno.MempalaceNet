@@ -1,6 +1,7 @@
 using MemPalace.Cli.Commands;
 using MemPalace.Cli.Commands.Kg;
 using MemPalace.Cli.Infrastructure;
+using MemPalace.KnowledgeGraph;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -27,6 +28,11 @@ internal static class Program
         
         // TODO(phase3): Register local embedder (default)
         // services.AddMemPalaceAi(); // Uses Local provider by default
+        
+        // Register Knowledge Graph
+        var palaceDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MemPalace");
+        services.AddMemPalaceKnowledgeGraph(o => 
+            o.DatabasePath = Path.Combine(palaceDir, "mempalace-kg.db"));
         
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases
@@ -76,18 +82,18 @@ internal static class Program
                 
                 kg.AddCommand<KgAddCommand>("add")
                     .WithDescription("Add a relationship to the knowledge graph")
-                    .WithExample("mempalacenet kg add Tyrell worked-on MemPalace.Core")
-                    .WithExample("mempalacenet kg add Tyrell worked-on Phase1 --valid-from 2026-04-24T10:00:00");
+                    .WithExample("mempalacenet kg add agent:Tyrell worked-on project:MemPalace.Core")
+                    .WithExample("mempalacenet kg add agent:Tyrell worked-on phase:Phase1 --valid-from 2026-04-24T10:00:00");
 
                 kg.AddCommand<KgQueryCommand>("query")
                     .WithDescription("Query the knowledge graph")
-                    .WithExample("mempalacenet kg query \"? worked-on MemPalace.Core\"")
-                    .WithExample("mempalacenet kg query \"Tyrell worked-on ?\" --at 2026-04-24");
+                    .WithExample("mempalacenet kg query \"? worked-on project:MemPalace.Core\"")
+                    .WithExample("mempalacenet kg query \"agent:Tyrell worked-on ?\" --at 2026-04-24");
 
                 kg.AddCommand<KgTimelineCommand>("timeline")
                     .WithDescription("View entity timeline")
-                    .WithExample("mempalacenet kg timeline Tyrell")
-                    .WithExample("mempalacenet kg timeline MemPalace.Core --from 2026-04-24");
+                    .WithExample("mempalacenet kg timeline agent:Tyrell")
+                    .WithExample("mempalacenet kg timeline project:MemPalace.Core --from 2026-04-24");
             });
         });
 

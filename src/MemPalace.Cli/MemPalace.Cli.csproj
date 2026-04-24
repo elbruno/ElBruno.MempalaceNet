@@ -29,6 +29,7 @@
     <ProjectReference Include="..\MemPalace.Backends.Sqlite\MemPalace.Backends.Sqlite.csproj" />
     <ProjectReference Include="..\MemPalace.Ai\MemPalace.Ai.csproj" />
     <ProjectReference Include="..\MemPalace.Agents\MemPalace.Agents.csproj" />
+    <ProjectReference Include="..\MemPalace.KnowledgeGraph\MemPalace.KnowledgeGraph.csproj" />
   </ItemGroup>
 
 </Project>

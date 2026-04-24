@@ -6,5 +6,7 @@
   <Project Path="MemPalace.Core/MemPalace.Core.csproj" />
   <Project Path="MemPalace.KnowledgeGraph/MemPalace.KnowledgeGraph.csproj" />
   <Project Path="MemPalace.Mcp/MemPalace.Mcp.csproj" />
+  <Project Path="MemPalace.Mining/MemPalace.Mining.csproj" />
+  <Project Path="MemPalace.Search/MemPalace.Search.csproj" />
   <Project Path="MemPalace.Tests/MemPalace.Tests.csproj" />
 </Solution>

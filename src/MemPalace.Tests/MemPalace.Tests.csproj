@@ -25,6 +25,9 @@
     <ProjectReference Include="..\MemPalace.Backends.Sqlite\MemPalace.Backends.Sqlite.csproj" />
     <ProjectReference Include="..\MemPalace.Ai\MemPalace.Ai.csproj" />
     <ProjectReference Include="..\MemPalace.Cli\MemPalace.Cli.csproj" />
+    <ProjectReference Include="..\MemPalace.KnowledgeGraph\MemPalace.KnowledgeGraph.csproj" />
+    <ProjectReference Include="..\MemPalace.Mining\MemPalace.Mining.csproj" />
+    <ProjectReference Include="..\MemPalace.Search\MemPalace.Search.csproj" />
   </ItemGroup>
 
 </Project>
