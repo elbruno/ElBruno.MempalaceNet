@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MemPalace.Core" Version="0.1.0-preview.1" />
+    <PackageReference Include="MemPalace.Backends.Sqlite" Version="0.1.0-preview.1" />
+    <PackageReference Include="MemPalace.Ai" Version="0.1.0-preview.1" />
+    <PackageReference Include="MemPalace.KnowledgeGraph" Version="0.1.0-preview.1" />
+    <PackageReference Include="MemPalace.Search" Version="0.1.0-preview.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SampleDocs\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
