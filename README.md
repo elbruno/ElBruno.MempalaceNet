@@ -87,6 +87,7 @@ Full documentation lives in [`docs/`](docs/):
 - **[Agents](docs/agents.md)** — Agent Framework integration, diary management, agent discovery
 - **[CLI](docs/cli.md)** — command reference, configuration, examples
 - **[Benchmarks](docs/benchmarks.md)** — reproducibility, dataset sources, R@5 parity
+- **[GitHub Copilot Skill](docs/COPILOT_SKILL.md)** — integration guide, pattern library, code generation hints
 
 ## Development
 

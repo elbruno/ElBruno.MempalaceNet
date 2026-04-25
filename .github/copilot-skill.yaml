@@ -1,0 +1,116 @@
+# GitHub Copilot Skill Manifest for MemPalace.NET
+# Reference: https://github.com/github/copilot-skills-documentation
+
+name: MemPalaceNet
+displayName: MemPalace.NET
+version: 0.5.0-preview.1
+author: Bruno Capuano (@elbruno)
+description: "Local-first AI memory library for semantic knowledge management, agent diaries, and temporal validity"
+longDescription: |
+  MemPalace.NET is a .NET port of MemPalace — local-first AI memory that stores everything verbatim, 
+  searches semantically, and organizes knowledge through a wings/rooms/drawers hierarchy. 
+  
+  Features:
+  - Local-first by default with ONNX embeddings (no API keys)
+  - Microsoft.Extensions.AI and Microsoft Agent Framework integration
+  - MCP server for tool exposure
+  - Temporal knowledge graph with validity windows
+  - SQLite backend with cosine similarity
+
+# Category for skill marketplace
+category: "Knowledge Management"
+
+# Tags for discoverability
+tags:
+  - semantic-memory
+  - rag
+  - knowledge-graph
+  - local-first
+  - dotnet
+  - embeddings
+  - agent-framework
+  - mcp-server
+  - sqlite
+  - temporal-knowledge
+
+# Links
+homepage: https://github.com/elbruno/mempalacenet
+repository: https://github.com/elbruno/mempalacenet
+documentation: https://github.com/elbruno/mempalacenet/blob/main/docs/COPILOT_SKILL.md
+nuget: https://www.nuget.org/packages/mempalacenet
+license: MIT
+
+# Placeholder icon (replace with actual URL when available)
+icon: https://raw.githubusercontent.com/elbruno/mempalacenet/main/docs/promotional-materials/images/mempalace-icon.png
+
+# Capabilities exposed by this skill
+capabilities:
+  - name: "Semantic Search"
+    description: "Search stored memories using natural language queries with vector embeddings"
+    
+  - name: "Knowledge Graph Queries"
+    description: "Query temporal entity relationships with validity windows and graph traversal"
+    
+  - name: "Agent Memory Integration"
+    description: "Provide persistent memory diaries for multi-turn agent conversations"
+    
+  - name: "RAG Context Injection"
+    description: "Retrieve relevant context for LLM prompts using hybrid search and reranking"
+    
+  - name: "Local-First Privacy"
+    description: "Run entirely locally without external API calls using ONNX embeddings"
+    
+  - name: "MCP Server"
+    description: "Expose palace operations as Model Context Protocol tools"
+
+# Integration points
+integration:
+  mcp:
+    enabled: true
+    serverCommand: "mempalacenet mcp-server --palace-path {PALACE_PATH}"
+    description: "Start the MCP server to expose memory operations as tools"
+    
+  nuget:
+    packageId: "mempalacenet"
+    version: "0.5.0-preview.1"
+    
+  cli:
+    enabled: true
+    installCommand: "dotnet tool install -g mempalacenet --version 0.5.0-preview.1"
+    commands:
+      - init
+      - mine
+      - search
+      - wake-up
+      - kg
+
+# Pattern library reference
+patterns:
+  - name: "Semantic Search for Context Injection"
+    file: "docs/SKILL_PATTERNS.md#semantic-search-for-context-injection"
+    
+  - name: "Agent Diaries for State Persistence"
+    file: "docs/SKILL_PATTERNS.md#agent-diaries-for-state-persistence"
+    
+  - name: "Knowledge Graph Queries"
+    file: "docs/SKILL_PATTERNS.md#knowledge-graph-queries"
+    
+  - name: "Local-First Privacy"
+    file: "docs/SKILL_PATTERNS.md#local-first-privacy"
+    
+  - name: "Hybrid Search with Reranking"
+    file: "docs/SKILL_PATTERNS.md#hybrid-search-with-reranking"
+
+# Prerequisites and requirements
+requirements:
+  - ".NET 8.0 SDK or later"
+  - "SQLite 3.40+ (included in runtime)"
+  - "Optional: ONNX Runtime for local embeddings"
+
+# Copilot instruction hints
+copilotInstructions:
+  file: ".github/copilot-instructions.md"
+  
+# Status
+status: preview
+publishedAt: 2025-01-01T00:00:00Z

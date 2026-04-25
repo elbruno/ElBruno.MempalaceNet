@@ -567,3 +567,114 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ v0.5.0-preview.1 Release Created. NuGet publishing workflow in progress (run 24937436814).
 
+---
+
+### 2026-04-25: Skill Publishing Analysis (Strategic Assessment)
+
+**Task:** Analyze whether MemPalace.NET should be published as a GitHub Copilot Skill or Claude Code Skill. Provide comprehensive assessment covering domain fit, AI integration, documentation, maturity, and skill format options.
+
+**Context:**
+- Bruno Capuano requested strategic analysis of skill publishing viability
+- Current state: v0.5.0-preview.1, 152 tests passing, MCP server implemented (7 tools), solid documentation
+- Question: Is MemPalace.NET ready for skill publication? Which formats make sense?
+
+**Analysis Approach:**
+1. Evaluated domain fit (horizontal vs. vertical capability, pain point clarity)
+2. Assessed AI integration potential (teachable APIs, code generation feasibility)
+3. Reviewed documentation completeness (examples, architecture, "when to use")
+4. Examined maturity level (API stability, test coverage, known limitations)
+5. Researched skill publication formats (GitHub Copilot Skills, MCP directory, custom integration)
+
+**Key Findings:**
+
+**Domain Fit: ⭐⭐⭐⭐ (4/5)**
+- Vertical/specialized capability (AI memory, RAG) targeting AI/agent developers
+- Clear pain point: semantic memory for AI agents and knowledge management
+- Good discoverability via tags (ai, agents, memory, rag, mcp)
+- MCP integration is major discoverability boost
+
+**AI Integration: ⭐⭐⭐⭐⭐ (5/5)**
+- Clear, teachable APIs (IBackend, ICollection, IEmbedder)
+- DI-friendly extensions (AddMemPalaceAi, AddMemPalaceMining, AddMemPalaceSearch)
+- Runnable examples exist (SimpleMemoryAgent, SemanticKnowledgeGraph)
+- MCP server enables direct tool invocation by AI assistants
+
+**Documentation: ⭐⭐⭐⭐⭐ (5/5)**
+- Excellent coverage (examples, architecture, CLI, MCP, AI integration)
+- Clear "when to use" story (4 use cases documented)
+- API well-documented (XML comments, README examples)
+- Minor gaps: no anti-patterns guide, no migration guide
+
+**Maturity: ⭐⭐⭐ (3/5)**
+- v0.5.0-preview.1 is still preview (API may change)
+- Strong test coverage (152 tests)
+- Known limitations (O(n) vector search, token overlap keyword search)
+- Sufficient for community adoption, not yet enterprise-ready
+
+**Skill Format Research:**
+
+1. **GitHub Copilot Skills:**
+   - Format: `.github/skills/<name>/SKILL.md` with YAML frontmatter + instructions
+   - Not a marketplace item, but a reusable instruction set
+   - Works with VS Code, Copilot CLI, Copilot cloud agent
+   - Low effort, high value
+
+2. **MCP Community Directory:**
+   - MemPalace.NET already has MCP server (7 tools implemented)
+   - Can submit to community directory (not core repo)
+   - Increases discoverability for Claude Desktop, VS Code, Copilot CLI
+
+3. **Custom Integration:**
+   - `.copilot/instructions.md` for project-specific guidance
+   - Easy to update, but not reusable outside repo
+
+**Recommendations:**
+
+1. ✅ **Immediate: Create GitHub Copilot Skill** (1-2 hours effort)
+   - Create `.github/skills/mempalacenet/SKILL.md` teaching usage patterns
+   - Focus on "how to use" rather than "what it is"
+   - Include common patterns, anti-patterns, quick start
+   - Low effort, high value, no external approval needed
+
+2. ✅ **Immediate: Submit to MCP Community Directory** (1-2 hours effort)
+   - MCP server already implemented and documented
+   - Submit to community listings (not core repo)
+   - Increases discoverability for MCP-compatible tools
+
+3. ⚠️ **Defer to v1.0: Marketplace Publishing**
+   - Wait for API stabilization before aggressive marketing
+   - Preview status may deter enterprise adoption
+   - Address known limitations first (sqlite-vec, BM25, wake-up)
+
+4. 💡 **Alternative: "MemPalace Patterns" Skill** (Recommended)
+   - Teach patterns rather than just promote library
+   - Pattern 1: Simple memory storage
+   - Pattern 2: Hybrid search with reranking
+   - Pattern 3: Temporal knowledge graph
+   - Pattern 4: Agent diaries
+   - Include anti-patterns (embedder mixing, scale limits)
+
+**Strategic Positioning:**
+- MemPalace.NET is well-positioned for skill publication
+- Strong foundation: MCP integration, clear APIs, good docs, solid tests
+- Timing matters: Community adoption now, enterprise adoption at v1.0
+- Focus on teaching patterns, not just library promotion
+
+**Deliverable:** Comprehensive analysis document created at `.squad/decisions/inbox/deckard-skill-analysis.md` (19.8 KB, ~500 lines)
+
+**Analysis Structure:**
+- Executive Summary (recommendation: publish selectively with strategic timing)
+- Current State Assessment (5 dimensions evaluated)
+- Skill Format Analysis (3 options with pros/cons/feasibility)
+- Recommendation (4 options with rationale)
+- Next Steps (action items, owners, timelines)
+- Timeline (immediate, short-term, medium-term)
+
+**Next Actions for Bruno:**
+1. Review analysis document at `.squad/decisions/inbox/deckard-skill-analysis.md`
+2. Decide on Copilot skill creation (recommended: yes, 1-2 hours)
+3. Decide on MCP directory submission (recommended: yes, 1-2 hours)
+4. Consider "MemPalace Patterns" skill (focus on teaching patterns)
+
+**Status:** ✅ Analysis complete. Document delivered. Awaiting Bruno's decision on skill creation.
+
