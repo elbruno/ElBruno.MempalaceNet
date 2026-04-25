@@ -378,3 +378,46 @@
 
 **Next steps:** Bruno to review, publish to DEV.to, coordinate HN/Reddit/social launch timing for maximum reach.
 
+---
+
+### 2026-04-25: Ollama Provider Removal for v0.6.0 Stable Release
+
+**What:** Removed Ollama support entirely from v0.6.0 stable release. Implementation complete: removed factory method, provider switch case, 3 test scenarios, updated package description and benchmark documentation. All 150+ tests passing post-removal.
+
+**Rationale:** 
+- **Vestigial:** Ollama provider existed before ElBruno.LocalEmbeddings (ONNX) became the superior default. Default implementation (ONNX embeddings via M.E.AI) already provides local-first, no API keys, better performance.
+- **Zero production impact:** No shipped code uses Ollama; all tests pass after removal. ONNX provider remains unchanged as default.
+- **Preview dependency blocker:** `Microsoft.Extensions.AI.Ollama` is in preview state (v9.1.0-preview), which NuGet validation rejects for stable releases.
+- **Clean release:** Eliminating preview dependency allows v0.6.0 stable to publish without NuGet validation warnings.
+- **Future upgrade path:** Documented plan to restore Ollama in v0.7.0-preview once stable `Microsoft.Extensions.AI.Ollama` version is available.
+
+**Files Changed (8 total):**
+1. `src/MemPalace.Ai/GeneratorFactory.cs` — Removed commented-out `CreateOllamaGenerator()` method
+2. `src/MemPalace.Ai/GeneratorFactory.cs` — Removed Ollama case from provider switch statement
+3. `src/MemPalace.Ai.Tests/GeneratorFactoryTests.cs` — Removed 3 Ollama-specific test cases
+4. `Directory.Build.props` — Removed Ollama from PackageTags
+5. `docs/ai.md` — Updated provider documentation (removed Ollama section, focused on ONNX/OpenAI)
+6. `docs/benchmarks.md` — Removed Ollama benchmark notes
+7. `RELEASE_NOTES.md` — Added deprecation note
+8. `src/MemPalace.Ai/ServiceCollectionExtensions.cs` — Updated comments
+
+**Documentation Note Added:**
+> *Ollama support temporarily removed in v0.6.0 (stable release) due to Microsoft.Extensions.AI.Ollama being in preview. Will be restored in v0.7.0-preview once a stable version is available. Use Local (ONNX) provider for local embeddings in the meantime.*
+
+**Quality Assurance:**
+- ✅ All 150+ unit tests passing after removal
+- ✅ No dead code references remain
+- ✅ Documentation consistent with available providers (ONNX/OpenAI only)
+- ✅ Migration path clearly documented for future restoration
+- ✅ CI run #37 green after changes (resolved from failed run #36)
+
+**Impact on Users:**
+- **v0.6.0 stable users:** No impact — ONNX provider is default, fully supported, production-ready
+- **Future v0.7.0-preview users:** Can restore Ollama once M.E.AI.Ollama reaches stable status
+- **Backward compatibility:** Zero breaking changes; existing code using ONNX/OpenAI unaffected
+
+**Key Learning:**
+- Preview dependencies in transitive NuGet chain can block stable releases — manage preview package lifecycle carefully
+- Removing vestigial code is net positive (less surface area, clearer intent, faster build)
+- Clear documentation of deprecation + restoration plan maintains trust with users
+

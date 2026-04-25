@@ -244,3 +244,115 @@
 
 **Rationale:** Credibility validation essential for enterprise adoption. Benchmark infrastructure ready; just needs real-dataset execution. 91% threshold accommodates embedder variance (MiniLM vs Nomic dimensionality). Effort: 1.5 hours for v0.6.0 deliverables (Spikes 1-2); full CI integration in v0.6.0+ (optional).
 
+---
+
+### 2026-04-25: Ollama Provider Removal Decision
+
+**By:** Bruno Capuano (via Copilot Coordinator)
+
+**What:** Remove Ollama support entirely from v0.6.0 stable release. Ollama provider is vestigial (superseded by ElBruno.LocalEmbeddings ONNX provider), has zero impact on production code (default ONNX remains unaffected), and its preview status (`Microsoft.Extensions.AI.Ollama`) blocks stable release builds with NuGet validation.
+
+**Rationale:** (1) Ollama is vestigial — ONNX provider is superior default with local-first (no API keys), better performance. (2) Zero production impact — no shipping code uses Ollama, all tests pass after removal. (3) Clean release — eliminates NuGet preview dependency issue. (4) Future upgrade path — document Ollama as "planned for future release once stable version available."
+
+**Changes:** Removed 8 files total: commented-out factory method, provider switch case, 3 test scenarios, package description references, benchmark documentation.
+
+**Documentation:** Added note: *"Ollama support temporarily removed in v0.6.0 (stable release) due to Microsoft.Extensions.AI.Ollama being in preview. Will be restored in v0.7.0-preview once a stable version is available. Use Local (ONNX) provider for local embeddings in the meantime."*
+
+---
+
+### 2026-04-25: Phase 9 & 10 Readiness Report
+
+**By:** Deckard (Lead / Architect)
+
+**What:** v0.1.0 architecturally complete and release-ready once Phase 9 test blocker is fixed. All scope items for Phases 9-10 exist in codebase. Phase 9 (Benchmarks) harness complete with one nullable reference test error (easily fixed). Phase 10 (Polish) complete.
+
+**Status:** ✅ Complete for tagging and release. One small test fix needed (5 minutes). Build passes individually; one failing nullable reference in test project.
+
+---
+
+### 2026-04-25: Release v0.5.0 Professional NuGet Edition
+
+**By:** Deckard (Lead / Architect)
+
+**What:** Complete v0.5.0 release execution: feature branch merged to main (no-ff strategy), all 10 packages built successfully, test suite 152/152 passing, GitHub release created with comprehensive notes, NuGet publishing workflow triggered.
+
+**Decisions:** (1) Merge strategy: no-fast-forward (preserves branch history for audit trail). (2) Release workflow: GitHub Actions trusted publisher (secure, automated). (3) Version consolidation: single source in Directory.Build.props. (4) Release notes: concise GitHub release with link to docs/LAUNCH_STORY.md. (5) Repository rename handling: accepted git warnings (GitHub redirects automatically).
+
+**Outcomes:** ✅ All 12 projects build, ✅ 152/152 tests pass, ✅ 10 packages created, ✅ Release published 2026-04-25T18:12:40Z, ✅ Publish workflow triggered (10-15 min latency expected).
+
+---
+
+### 2026-04-25: MemPalace.NET Skill Publishing Analysis & Recommendation
+
+**By:** Deckard (Lead / Architect)
+
+**What:** Comprehensive analysis of skill publication options for MemPalace.NET. Recommendation: (1) ✅ Create GitHub Copilot Skill immediately (low effort, high value, teaches patterns). (2) ✅ Submit to MCP community directory immediately (MCP server already production-ready). (3) ⚠️ Defer aggressive marketing to v1.0 (API stability, known limitations with performance at scale).
+
+**Analysis:** Domain fit 4/5 (vertical solution for AI developers), AI integration 5/5 (excellent teachable APIs), documentation 5/5 (examples, architecture, clear when/how to use), maturity 3/5 (preview status, minor limitations like O(n) search and token-overlap keyword search), scope 4/5 (focused, well-defined).
+
+**Immediate Actions:** (1) Create `.github/skills/mempalacenet/SKILL.md` with when/how/anti-patterns (1-2 hours). (2) Submit to MCP community server directory (1-2 hours). (3) Add `.copilot/instructions.md` for project-level guidance (30 min). (4) Post-v1.0: anti-patterns guide, migration guide, performance guide, GitHub Marketplace (deferred).
+
+---
+
+### 2026-04-25: Merge Decision: GitHub Copilot Skill PR #1
+
+**By:** Deckard (Lead / Architect)
+
+**What:** Approve and squash-merge PR #1 (Copilot Skill setup) to main. PR includes 10 files (+1,902 lines): skill manifest, comprehensive docs, 5 production C# teaching patterns, Copilot instructions, updated README.
+
+**Status:** ✅ Merged successfully. Files verified on main. No conflicts. Clean merge history.
+
+**Rationale:** Complete infrastructure, production-ready patterns (18 KB), no risk (pure additions), release alignment (v0.6.0-preview.1 tagged), excellent documentation quality.
+
+**Impact:** Developers can now discover MemPalace.NET via Copilot Skill. 5 patterns demonstrate RAG, diaries, knowledge graphs, privacy, hybrid search. Skill ready for marketplace post-v1.0.
+
+---
+
+### 2026-04-25: Final Validation Report — MemPalace.NET Release
+
+**By:** Bryant (QA Lead)
+
+**What:** ✅ **GO FOR RELEASE** — v0.6.0-preview.1 validation complete. All checks passed: build clean, 152/152 tests passing, documentation complete, all 10 packages built, examples present, security validated.
+
+**Status:** Release-ready. Minor action item: update README version badge to 0.6.0-preview.1 (documentation only, non-blocking).
+
+**Test Coverage:** Core memory operations, SQLite backend, ONNX embeddings, mining, search strategies, knowledge graph, MCP tools, agent diaries, CLI commands.
+
+---
+
+### 2026-04-25: CLI End-to-End Test Findings
+
+**By:** Rachael (CLI/UX Developer)
+
+**What:** Tested 5 core CLI commands: 4/5 working perfectly, 1/5 has DI resolution issue. Commands: mine, search, kg add (✅), init (✅), agents list (❌ DI error).
+
+**Bug (P0):** agents list fails with "Could not resolve type 'MemPalace.Cli.Commands.Agents.AgentsListCommand'". Root cause: IAgentRegistry resolution fails when IChatClient is null.
+
+**Recommended Fix:** Make IAgentRegistry registration always succeed (use EmptyAgentRegistry by default).
+
+**Improvements:** (P1) Standardize command name (mempalace vs mempalacenet). (P2) Document EntityRef format ("type:id") in help text. (P3) init command could create .mempalace directory structure.
+
+---
+
+### 2026-04-25: Promotional Images Status
+
+**By:** Rachael (CLI/UX Developer)
+
+**What:** Promotional images infrastructure ready (directory created, prompts documented), but generation deferred. Decision: Comprehensive fallback documentation + generation instructions provided instead of blocking on tool setup.
+
+**Infrastructure:** ✅ docs/promotional-materials/images/ created, ✅ generation instructions, ✅ 4 image specs (1024x1024, 1200x628, 1024x512, 1200x400).
+
+**Status:** ⏳ Images pending generation (DALL-E 3, Midjourney, or t2i CLI). Documentation ready for team to execute when needed.
+
+---
+
+### 2026-04-25: README v0.5.0 Content Structure Decision
+
+**By:** Rachael (CLI/UX Developer)
+
+**What:** README.md restructured for v0.5.0-preview.1 with 13-section content hierarchy: badges, status, why MemPalace.NET, examples (NEW), quick start, architecture, docs, development, roadmap, credits, license, about author (NEW), community.
+
+**Key Updates:** (1) Version accuracy (v0.1.0 → v0.5.0-preview.1 across all mentions). (2) Examples section placed before Quick Start for maximum first-time-user discoverability. (3) About Author section added (emoji-prefixed links to blog, YouTube, LinkedIn, Twitter, podcast).
+
+**Consistency:** ✅ All version numbers consistent, ✅ Links verified, ✅ Structure preserved (no breaking changes).
+
