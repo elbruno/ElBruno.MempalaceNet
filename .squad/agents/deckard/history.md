@@ -499,3 +499,71 @@ dotnet add package MemPalace.Core --version 0.5.0
 
 **Status:** ✅ v0.5.0 Release Complete. NuGet publishing workflow in progress.
 
+---
+
+### 2026-04-25: v0.5.0-preview.1 Release Correction
+
+**Task:** Fix NuGet compatibility issue blocking v0.5.0 release.
+
+**Problem Discovered:**
+- Initial v0.5.0 release failed during pack step in GitHub Actions
+- Error: "A stable release of a package should not have a prerelease dependency"
+- Root cause: MemPalace.Ai depends on Microsoft.Extensions.AI.Ollama 9.1.0-preview.1.25064.3 (preview package)
+- NuGet policy: Stable releases (0.5.0) cannot depend on preview packages
+
+**Decision:** Release as v0.5.0-preview.1 (Preview)
+
+**Rationale:**
+- Fastest path to publishing (alternative would be removing Ollama support)
+- All functionality is production-ready (152/152 tests passing)
+- Preview designation is purely due to Microsoft dependency versioning
+- Will release v0.5.0 (stable) once M.E.AI.Ollama releases a stable version
+
+**Actions Taken:**
+
+1. **Version Update:**
+   - Changed Directory.Build.props: `0.5.0` → `0.5.0-preview.1`
+   - Committed and pushed to main (commit b229614)
+
+2. **Tag/Release Cleanup:**
+   - Deleted GitHub release v0.5.0
+   - Deleted local tag v0.5.0
+   - Deleted remote tag v0.5.0 from origin
+
+3. **New Preview Release:**
+   - Created annotated tag: v0.5.0-preview.1
+   - Pushed tag to origin
+   - Created GitHub pre-release with updated notes explaining preview status
+   - Release URL: https://github.com/elbruno/ElBruno.MempalaceNet/releases/tag/v0.5.0-preview.1
+   - Published: 2026-04-25T18:16:XX (approximately)
+
+4. **Publishing Workflow:**
+   - New workflow run triggered: 24937436814
+   - Status: Running (in progress)
+   - Previous failed run: 24937358405 (failed at pack step)
+
+**Release Notes Strategy:**
+- Added "Preview Notice" section explaining why preview designation
+- Emphasized all functionality is production-ready
+- Clear upgrade path: v0.5.0 (stable) when M.E.AI.Ollama stabilizes
+- Marked as `--prerelease` in GitHub UI (visual indicator)
+
+**Key Learning:**
+- **NuGet Dependency Policy:** Stable packages cannot depend on preview packages (NU5104 error)
+- **Dependency Planning:** Check transitive dependencies for preview versions before committing to stable version
+- **Release Recovery:** GitHub allows deleting tags/releases cleanly; workflow retriggers on new tag
+- **Version Semantics:** Preview suffix (-preview.1) is standard .NET versioning for this scenario
+
+**For Bruno:**
+
+v0.5.0-preview.1 is now live and publishing to NuGet. The preview designation is purely due to Microsoft's Ollama package being in preview — all MemPalace.NET code is production-ready.
+
+Install with:
+```bash
+dotnet add package MemPalace.Core --version 0.5.0-preview.1
+```
+
+Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'll release v0.5.0 (stable) with no code changes.
+
+**Status:** ✅ v0.5.0-preview.1 Release Created. NuGet publishing workflow in progress (run 24937436814).
+

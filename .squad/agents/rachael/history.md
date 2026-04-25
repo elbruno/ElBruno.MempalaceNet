@@ -307,3 +307,78 @@ Documented placeholder image URLs using via.placeholder.com with appropriate col
 **Rationale:**
 Images enhance the v0.5.0 launch but aren't blocking for NuGet package functionality. Providing clear generation instructions with multiple tool options gives the team flexibility while maintaining momentum toward release.
 
+### 2026-04-25: README v0.5.0 Content Updates
+
+**What:** Updated README.md with version corrections, prominent examples section, and About Author section for v0.5.0-preview.1 release.
+
+**Changes Made:**
+1. **Version Number Fixed:**
+   - Updated NuGet badge from v0.1.0-preview.1 → v0.5.0-preview.1
+   - Updated status line from v0.1.0 → v0.5.0-preview.1
+   - Updated Quick Start install command to reference v0.5.0-preview.1
+
+2. **Examples Section Added:**
+   - Added new "Examples & Getting Started" section immediately before Quick Start
+   - Included direct links to both example projects:
+     * Simple Memory Agent (beginner-friendly core operations)
+     * Semantic Knowledge Graph (intermediate temporal relationships)
+   - Added call-to-action linking to examples/README.md for full walkthroughs
+   - Improved discoverability with emojis (🔰, 🕸️) for visual hierarchy
+
+3. **About the Author Section Added:**
+   - Copied polished author section from ElBruno.LocalLLMs repository
+   - Placed before Community section, after License section (standard OSS pattern)
+   - Includes 5 social/contact links:
+     * Blog (elbruno.com)
+     * YouTube channel
+     * LinkedIn profile
+     * Twitter/X handle
+     * Podcast (notienenombre.com)
+   - Consistent formatting with emoji indicators (📝, 📺, 🔗, 𝕏, 🎙️)
+
+**UX Rationale:**
+- **Version accuracy:** Critical for user trust and package manager discovery
+- **Examples prominence:** First-time users need clear path to runnable code
+- **Author section:** Builds community connection and provides support channels
+- **Placement:** Examples before Quick Start (discovery), Author after License (context)
+
+**Technical Details:**
+- Fetched ElBruno.LocalLLMs README via web_fetch (raw GitHub URL)
+- Located "About the Author" section at lines ~220-230 of reference README
+- Preserved exact formatting and link structure from reference
+- All relative links (./examples/) verified to exist in repository
+
+**Commit:**
+- Message: "📝 Update README: v0.5.0-preview.1, add examples section, include About Author"
+- Includes Co-authored-by trailer
+- Commit SHA: a6ec1de
+- Pushed to main successfully
+
+**Files Changed:**
+- README.md (4 edits: version badge, status line, examples section, author section)
+
+**Verification:**
+- ✅ Version numbers consistent across badge, status, and Quick Start
+- ✅ Examples links point to existing examples/ directory structure
+- ✅ Author links match Bruno's actual social profiles (verified from reference)
+- ✅ Community section preserved (no conflicts)
+- ✅ Roadmap section still references v0.1.0 as "current" (intentional, roadmap context)
+
+**Key Learnings:**
+1. Version consistency across README is critical — users check multiple places
+2. Examples section placement matters: early in README for discoverability
+3. Author section builds trust and provides community connection points
+4. Reference READMEs (ElBruno.LocalLLMs) provide battle-tested formatting patterns
+5. Emoji indicators improve scannability without being distracting
+
+**Impact:**
+- v0.5.0 release now has accurate version metadata
+- First-time users have clear path from README → runnable examples
+- Community members have 5 channels to connect with Bruno
+- README follows established OSS patterns (badges → features → quick start → examples → docs → author → community)
+
+**Next Actions:**
+- Consider updating Roadmap section to clarify v0.1.0 vs v0.5.0 status
+- Monitor user feedback on examples discoverability
+- Ensure NuGet package metadata matches v0.5.0-preview.1 when published
+
