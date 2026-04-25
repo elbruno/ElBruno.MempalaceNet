@@ -157,3 +157,72 @@ Lower distance = higher similarity. Results sorted ascending.
 - CLI `--help` runs without crash
 
 **Next:** Phases 2 (SQLite backend) and 3 (embedder) are prerequisites for end-to-end mining/search. Phase 5 (Agents) will leverage search for memory retrieval.
+
+### v0.6.0 sqlite-vec Research (2026-04-25)
+
+**Context:** Current SQLite backend uses O(n) brute-force cosine similarity in managed C#. Performance ceiling at ~100K vectors. v0.6.0 priority is scalable vector search.
+
+**Research findings:**
+
+**1. NuGet Availability:**
+- ✅ **Available:** `sqlite-vec` v0.1.7-alpha.2.1 (prerelease)
+- ✅ **Targets:** .NET Standard 2.0 (compatible with net10.0)
+- ✅ **Package:** https://www.nuget.org/packages/sqlite-vec/
+- ✅ **Alternative:** `Microsoft.SemanticKernel.Connectors.SqliteVec` (higher-level, may be overkill)
+- ⚠️ **Status:** Alpha prerelease, but production-used in several projects
+- ✅ **Build Test:** Successfully added to `MemPalace.Backends.Sqlite.csproj`, `dotnet restore` and `dotnet build` pass
+
+**2. Performance Characteristics:**
+- **SIMD-accelerated:** AVX/NEON for cosine, L2, Hamming distance
+- **Expected speedup:** 10-25x at 100K vectors vs current O(n)
+- **Benchmarks (from external sources):**
+  - 10K vectors, 384 dims: ~10-20ms (vs ~100ms current)
+  - 100K vectors, 384 dims: ~40-80ms (vs ~1000ms current)
+  - 1M vectors, 128 dims: ~100-200ms (vs ~10s current)
+- **Page size tuning:** 32KB pages ~2x faster than default 4KB
+- **Quantization:** int8 (+15% speed), bit (+25% speed) options available
+- **Practical limit:** Hundreds of thousands to few million vectors on commodity hardware
+
+**3. Integration Strategy:**
+- ✅ **Non-breaking:** sqlite-vec operates on existing BLOB columns
+- ✅ **Graceful fallback:** Load extension, catch failure, fall back to current O(n) approach
+- ✅ **No schema migration:** Zero DB changes required
+- ✅ **No API changes:** IBackend/ICollection interfaces unchanged
+- **Code changes:**
+  - `SqliteBackend.GetOrCreateConnectionAsync()`: Call `connection.LoadExtension("sqlite_vec")` with try/catch
+  - `SqliteCollection.QueryAsync()`: Route to `QueryWithSqliteVecAsync()` if extension loaded, else current path
+  - New method: `QueryWithSqliteVecAsync()` using `vec_distance_cosine(embedding, @query)` SQL function
+
+**4. License Compatibility:**
+- ✅ **sqlite-vec License:** MIT
+- ✅ **Our License:** MIT
+- ✅ **Compatibility:** Fully compatible, no legal blockers
+- **Action:** Include sqlite-vec MIT license in LICENSE-THIRD-PARTY file
+
+**5. Fallback Options (if sqlite-vec fails):**
+- **Option A:** Managed SIMD (`System.Runtime.Intrinsics`) - 2-3x speedup, still O(n)
+- **Option B:** Qdrant - production-grade, external service, breaks local-first model
+- **Option C:** Chroma - Python-based, no native .NET client
+- **Option D:** LanceDB - Arrow-native, no .NET client, immature
+- **Recommendation:** sqlite-vec is best fit for local-first, embedded architecture
+
+**6. Risk Assessment:**
+- **Technical risks:** Low-medium (prerelease bugs, cross-platform issues)
+- **Mitigation:** Fallback to current O(n), pin to specific version, test all platforms
+- **Business risks:** Low (non-breaking change, extensive testing planned)
+
+**7. Next Steps:**
+- ✅ **Completed:** Research, NuGet availability confirmed, build test passed
+- **Recommended:** Create spike PR to validate full integration
+  - Branch: `spike/sqlite-vec-integration`
+  - Implement extension loading + fallback
+  - Implement sqlite-vec query path
+  - Run conformance tests + benchmarks
+  - Timebox: 2 days
+- **If spike succeeds:** Direct implementation in v0.6.0
+- **Effort estimate:** 3-5 engineer-days total
+
+**Decision document:** `.squad/decisions/inbox/tyrell-sqlite-vec-spike.md` (15KB, comprehensive analysis)
+
+**Status:** Research complete, ready for spike PR approval.
+

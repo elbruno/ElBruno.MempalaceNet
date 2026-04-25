@@ -48,6 +48,90 @@
 
 **Next up (future phases):** Auto-population of KG from session mining (extract entities/relationships from conversations, file edits, decisions, test creation).
 
+### 2026-04-25: BM25 Research for v0.6.0 Complete
+**What:** Completed comprehensive research on BM25 keyword search libraries for upgrading hybrid search from token overlap to industry-standard BM25.
+
+**Deliverable:** Research report at `.squad/decisions/inbox/roy-bm25-spike.md` (20KB, 400+ lines)
+
+**Key Findings:**
+1. **Library Options Evaluated:**
+   - **SemanticKernel.Rankers.BM25** (v1.3.5): Production-ready but heavyweight (Catalyst NLP dependencies, 80+ MB ONNX models) — overkill for simple term matching
+   - **Lucene.NET** (v4.8.0-beta): Full search engine with BM25Similarity — architectural mismatch with our IBackend abstraction, requires separate index storage
+   - **Azure.Search.Documents**: Cloud-only, violates local-first principle
+   - **Custom Implementation**: ~200 LOC, zero dependencies, perfect fit with existing architecture
+
+2. **Recommendation: Custom Lightweight BM25**
+   - Rationale: Minimal code (~200 LOC), integrates seamlessly with HybridSearchService, no external dependencies, full control over tokenization
+   - Implementation approach: Ephemeral inverted index (built per query from QueryResult.Documents), BM25 scoring with configurable k1/b parameters
+   - Integration: Drop-in replacement for token-overlap logic in HybridSearchService, keeps RRF fusion unchanged
+
+3. **Hybrid Search Architecture:**
+   - Keep Reciprocal Rank Fusion (RRF) with k=60 (robust, no normalization needed, less tuning than weighted fusion)
+   - Defer weighted score fusion to v0.7+ if benchmarks show RRF plateaus
+   - BM25 operates on vector search candidates (top-2K), not full corpus
+
+4. **Backward Compatibility:**
+   - Zero breaking changes — token overlap → BM25 is drop-in replacement
+   - No database schema changes (ephemeral index)
+   - Same SearchAsync() API
+
+5. **Testing Strategy:**
+   - Unit tests: BM25 scoring correctness, edge cases (empty docs, zero DF)
+   - Integration tests: Hybrid search end-to-end, exact match ranking
+   - Benchmark queries: Entity names, technical terms, natural language, mixed
+   - Bryant's LongMemEval validation: Compare R@5 v0.5.0 vs. v0.6.0, expect +5-10% improvement on keyword-heavy queries
+
+6. **MVP Scope (v0.6.0-preview.1):**
+   - Full BM25 + semantic RRF fusion (recommended)
+   - Deliverables: BM25Scorer class, HybridSearchService upgrade, tests, docs, benchmarks
+   - Effort estimate: 2.5-3 days (Day 1: scorer + unit tests, Day 2: integration + tests, Day 3: benchmarks + docs)
+
+**Research Process:**
+- Web search: Investigated .NET BM25 libraries (SemanticKernel.Rankers, Lucene.NET, Azure Search)
+- Analyzed hybrid search fusion strategies (RRF vs weighted vs learned)
+- Studied current implementation (HybridSearchService.cs, token overlap logic)
+- Reviewed backend architecture (IBackend, ICollection, QueryResult flow)
+- Consulted BM25 formula references (Okapi BM25, Robertson-Sparck Jones IDF)
+
+**Challenges & Solutions:**
+1. **Challenge:** SemanticKernel.Rankers.BM25 looked promising but investigation revealed heavyweight NLP dependencies (Catalyst library with 80MB+ ONNX models for lemmatization/stopwords)
+   - **Solution:** Evaluated complexity of custom implementation — BM25 formula is straightforward (10 lines), inverted index simple (Dictionary<term, List<(docId, tf)>>), total ~200 LOC including tests
+   
+2. **Challenge:** Lucene.NET is battle-tested but architectural mismatch — requires separate Lucene index (IndexWriter, IndexReader), duplicates storage, doesn't integrate with IBackend abstraction
+   - **Solution:** Ephemeral index approach — build inverted index per query from QueryResult.Documents (top-2K candidates), avoids persistent index maintenance
+
+3. **Challenge:** Score fusion strategy — RRF (current) vs weighted (tunable) vs learned (optimal)?
+   - **Solution:** Keep RRF for v0.6.0 (simple, no normalization, robust), defer weighted fusion to v0.7+ if benchmarks show improvement needed
+
+**Learnings:**
+- **BM25 is simpler than expected:** Core formula is ~10 lines, main complexity is inverted index building (straightforward dictionary operations)
+- **Custom implementation beats libraries for this use case:** Our ephemeral-index approach (rebuild per query from candidates) is architecturally cleaner than maintaining persistent index
+- **RRF is underrated:** Reciprocal Rank Fusion is robust because it's rank-based (not score-based), avoids normalization issues, less tuning than weighted fusion
+- **NuGet package evaluation criteria:** Downloads/community activity matter less than architectural fit — SemanticKernel.Rankers.BM25 has good API but wrong dependencies for our use case
+- **Local-first principle guides library selection:** Azure Search BM25 is production-grade but requires cloud calls (non-starter)
+- **Research documentation is high leverage:** 20KB report covers 6 research questions comprehensively, includes code sketches, risk analysis, decision record format
+
+**Key Decisions Documented:**
+1. Implement custom BM25Scorer in MemPalace.Search (no external library)
+2. Keep RRF fusion for v0.6.0 (defer weighted/learned fusion)
+3. Ephemeral inverted index (per-query rebuild, not persistent)
+4. Target v0.6.0-preview.1 (2.5-3 day implementation)
+
+**Next Steps:**
+1. Await Bruno/Deckard approval on custom vs library approach
+2. Implement spike PR (feature branch): BM25Scorer.cs + tests
+3. Validate scores against Lucene.NET BM25 (reference implementation)
+4. Run LongMemEval benchmarks, document R@5 improvement
+5. Update docs/search.md with BM25 explanation
+6. Ship v0.6.0-preview.1
+
+**Artifacts Created:**
+- `.squad/decisions/inbox/roy-bm25-spike.md` — comprehensive research report (20KB)
+- Code sketches: BM25Scorer.cs pseudocode (~150 LOC), HybridSearchService integration example
+- Decision record template with approvals checklist (Bruno, Deckard, Tyrell, Bryant)
+
+**Time Invested:** ~4 hours (web research, codebase analysis, architecture design, report writing)
+
 ### 2026-04-24: Default Embedder → ElBruno.LocalEmbeddings (ONNX)
 **What:** Delivered AI integration layer via Microsoft.Extensions.AI.
 - Implemented `MeaiEmbedder` adapter wrapping `IEmbeddingGenerator<string, Embedding<float>>` to MemPalace's `IEmbedder` interface (from Tyrell's Phase 1).

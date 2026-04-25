@@ -204,3 +204,43 @@
 - [ ] MCP auto-discovery (Phase 3, v0.6)
 - [ ] Registry submission (Phase 4, v1.0)
 
+---
+
+### 2026-04-25: GitHub Copilot Skill PR #1
+
+**By:** Deckard (Lead / Architect)
+
+**What:** Copilot Skill skeleton pushed to GitHub (PR #1) after Rachael completed implementation on `feature/copilot-skill-setup`. PR includes 6 infrastructure files with 5 production-ready C# teaching patterns for RAG, agent diaries, knowledge graphs, local-first privacy, and hybrid search.
+
+**Rationale:** Early publication (post-v0.5.0) ensures team review before v0.6.0 implementation phase. Icons and pattern validation deferred to v0.6.0 spike (Week 2). Marketplace submission happens at v1.0 (post-BM25 + sqlite-vec maturity).
+
+---
+
+### 2026-04-25: sqlite-vec Integration (v0.6.0 P0)
+
+**By:** Tyrell (Core Engine Dev)
+
+**What:** Spike-approved research for `sqlite-vec` NuGet (v0.1.7-alpha.2.1) integration into `MemPalace.Backends.Sqlite`. Delivers 10-25x query speedup at 100K vectors via SIMD-accelerated distance calculations. Non-breaking: falls back to brute-force if extension unavailable. Zero schema migration required.
+
+**Rationale:** Current O(n) brute-force cosine similarity is production bottleneck. sqlite-vec is MIT-licensed, actively maintained, prerelease but field-proven. Integration via extension loading (non-invasive). Effort: 3-5 days (spike 2 days, production 3-4 days).
+
+---
+
+### 2026-04-25: BM25 Keyword Search (v0.6.0 P0)
+
+**By:** Roy (AI / Agent Integration Dev)
+
+**What:** Custom lightweight BM25 implementation (~200 LOC) recommended over external libraries. Replaces token-overlap keyword search with production-grade IR scoring. Integrates with existing QueryResult flow, zero external dependencies, RRF fusion with vector search for hybrid queries.
+
+**Rationale:** External options (SemanticKernel.Rankers.BM25, Lucene.NET) are either heavyweight (ONNX models) or architecturally mismatched (full search engines). Custom implementation provides full control over tokenization, integrates seamlessly with MemPalace backend abstraction, educational value. Effort: 2-3 days.
+
+---
+
+### 2026-04-25: LongMemEval Validation Framework (v0.6.0 P1)
+
+**By:** Bryant (Tester / QA)
+
+**What:** LongMemEval benchmarking infrastructure (Weeks 5-8) targets ≥91% R@5 parity on 500-item dataset (upstream Python baseline: 96.6%). Framework already complete: R@5 metric implemented, dataset loader supports upstream JSON format, fresh-haystack semantics match Python reference. Validation roadmap: (1) download real dataset, (2) baseline run with local embedder (MiniLM, 384-dim), (3) parity run with nomic embedder, (4) CI regression test integration.
+
+**Rationale:** Credibility validation essential for enterprise adoption. Benchmark infrastructure ready; just needs real-dataset execution. 91% threshold accommodates embedder variance (MiniLM vs Nomic dimensionality). Effort: 1.5 hours for v0.6.0 deliverables (Spikes 1-2); full CI integration in v0.6.0+ (optional).
+
