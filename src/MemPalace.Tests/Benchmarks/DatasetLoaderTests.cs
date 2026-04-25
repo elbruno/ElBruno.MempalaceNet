@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MemPalace.Benchmarks.Core;
+using System.Text.Json;
 
 namespace MemPalace.Tests.Benchmarks;
 
@@ -86,5 +87,32 @@ public sealed class DatasetLoaderTests
         var act = () => DatasetLoader.LoadAsync("nonexistent.jsonl").ToListAsync().AsTask();
 
         await act.Should().ThrowAsync<FileNotFoundException>();
+    }
+
+    [Fact]
+    public async Task LoadAsync_UpstreamLongMemEvalJsonArray_ThrowsJsonException()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                [
+                  {
+                    "question_id": "e47becba",
+                    "question": "What degree did I graduate with?",
+                    "answer": "Business Administration",
+                    "answer_session_ids": ["answer_280352e9"]
+                  }
+                ]
+                """);
+
+            var act = () => DatasetLoader.LoadAsync(tempFile).ToListAsync().AsTask();
+
+            await act.Should().ThrowAsync<JsonException>();
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
     }
 }

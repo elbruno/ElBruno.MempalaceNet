@@ -45,6 +45,27 @@ Real benchmark datasets should be obtained from:
 
 Place real datasets in a directory (e.g., `./datasets/`) with filenames matching the benchmark names (`longmemeval.jsonl`, `locomo.jsonl`, etc.).
 
+### QA status: real parity run (2026-04-25)
+
+Bryant ran a real LongMemEval attempt end to end against the upstream dataset link documented by the Python project:
+
+- Dataset: `https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json`
+- Synthetic control: `dotnet run --project src/MemPalace.Benchmarks -- run longmemeval --dataset src/MemPalace.Benchmarks/datasets-synthetic/longmemeval.jsonl --palace artifacts/benchmarks/palace-synth` ✅
+- Real-data attempt: `dotnet run --project src/MemPalace.Benchmarks -- run longmemeval --dataset artifacts/benchmarks/longmemeval_s_cleaned.json --palace artifacts/benchmarks/palace-real` ❌
+
+Observed blocker:
+
+- The upstream file is a **JSON array** with fields such as `question_id`, `answer`, `answer_session_ids`, and `haystack_sessions`.
+- The current .NET harness only accepts **JSONL** lines with `id`, `expected_answer`, `relevant_memory_ids`, and `metadata`.
+- Result: the loader fails immediately with `JsonException: Expected depth to be zero at the end of the JSON payload`.
+
+Additional parity blocker:
+
+- `RunCommand` and `RunAllCommand` currently hardcode `DeterministicEmbedder`, so even after format adaptation the command would still not reproduce the Python baseline (`nomic` / ChromaDB default real embeddings).
+- The current harness also scores over one shared collection, while upstream LongMemEval rebuilds a fresh haystack per question.
+
+Conclusion: a **full parity benchmark is not yet reproducible from this repo without harness changes**. The real-dataset fetch is verified, the synthetic harness still runs, and the first concrete failure point is now documented.
+
 ## Running Benchmarks
 
 ### List Available Benchmarks

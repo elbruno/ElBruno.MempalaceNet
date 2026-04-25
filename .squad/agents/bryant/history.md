@@ -126,12 +126,41 @@
 4. **SHOULD:** Document manual validation steps (which datasets to use, expected ranges)
 
 ### 2026-04-25: Cross-Agent Update — Deckard Roadmap Audit
-
+ 
 **Cross-Agent Finding:** Deckard completed roadmap audit confirming Phases 0-10 delivered. v0.1.0 ready after 3 small fixes.
 
 **Key Recommendations for QA:**
 1. **CI workflow fix** (Deckard): Add main + PR triggers → enables continuous benchmark validation (not just on tags)
 2. **Real benchmark execution** (Bryant recommendation stands): Run LongMemEval.jsonl before v0.1 tag to validate parity claim
 3. **CLI e2e test**: Gap identified by Deckard's doc/feature audit confirms Bryant's Gap 3 concern
-
+ 
 **Status:** Decisions merged to formal record (Scribe session). Inbox cleared. Ready for Bruno's fixes.
+
+### 2026-04-25 — Real Parity Benchmark Attempt
+
+**Task:** Run a real parity benchmark from this repo using an upstream dataset, capture the outcome, and document the result or blocker.
+
+**What I ran:**
+- Verified baseline with `dotnet test src\MemPalace.slnx`
+- Downloaded upstream LongMemEval dataset from Hugging Face: `longmemeval_s_cleaned.json`
+- Control run succeeded on `src/MemPalace.Benchmarks/datasets-synthetic/longmemeval.jsonl`
+- Real-data run failed immediately in `DatasetLoader`
+
+**Concrete findings:**
+- Upstream LongMemEval ships as a JSON array with `question_id`, `answer`, `answer_session_ids`, `haystack_sessions`, etc.
+- `src/MemPalace.Benchmarks/Core/DatasetLoader.cs` only accepts line-delimited JSONL with `id`, `expected_answer`, `relevant_memory_ids`, and `metadata`.
+- `src/MemPalace.Benchmarks/Commands/RunCommand.cs` and `RunAllCommand.cs` hardcode `DeterministicEmbedder`, so current CLI runs are smoke benchmarks, not parity runs against the Python embedding baseline.
+- `src/MemPalace.Benchmarks/Runners/BenchmarkBase.cs` queries one shared collection, while upstream LongMemEval rebuilds a fresh haystack per question. That is another parity mismatch even after format conversion.
+
+**Repo updates:**
+- Added `DatasetLoaderTests.LoadAsync_UpstreamLongMemEvalJsonArray_ThrowsJsonException` to lock in the currently observed blocker.
+- Updated `docs/benchmarks.md` with the real-dataset attempt, exact failure, and parity blockers.
+- Wrote decision inbox note for follow-up.
+
+**Key file paths:**
+- `docs/benchmarks.md`
+- `src/MemPalace.Benchmarks/Core/DatasetLoader.cs`
+- `src/MemPalace.Benchmarks/Commands/RunCommand.cs`
+- `src/MemPalace.Benchmarks/Commands/RunAllCommand.cs`
+- `src/MemPalace.Benchmarks/Runners/BenchmarkBase.cs`
+- `src/MemPalace.Tests/Benchmarks/DatasetLoaderTests.cs`
