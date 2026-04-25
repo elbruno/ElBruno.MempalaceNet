@@ -312,3 +312,70 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 **Status:** ✅ v0.1.0 released to GitHub. Tag pushed, release notes live. NuGet publish workflow will trigger on tag push.
 
+---
+
+### 2026-04-25: Example Projects for Adoption
+
+**Task:** Create 2 standalone example projects demonstrating MemPalace.NET in action to accelerate user adoption.
+
+**Created Examples:**
+
+1. **SimpleMemoryAgent** (`examples/SimpleMemoryAgent/`)
+   - Basic console app (~180 lines) demonstrating core workflow
+   - Initialize palace with in-memory backend
+   - Add memories with rich metadata (wings, rooms, tags, dates)
+   - Semantic search examples with embedding similarity
+   - Query by ID and metadata
+   - Includes demo embedder implementation for testing
+   - README with expected output, next steps, and learning path
+   - Self-contained: runs without external dependencies
+
+2. **SemanticKnowledgeGraph** (`examples/SemanticKnowledgeGraph/`)
+   - Knowledge graph demo (~250 lines) with temporal relationships
+   - Entity extraction from markdown documents (regex-based)
+   - Build temporal triples (subject-predicate-object with validity windows)
+   - Pattern-based queries (find all projects, team members, managers)
+   - Temporal queries (what was true at specific dates)
+   - Entity timelines (historical view of relationships)
+   - Includes 4 sample markdown documents (team updates, project status)
+   - Graph statistics and analysis examples
+   - README with query examples, production recommendations
+
+3. **examples/README.md** (Main Index)
+   - Overview of both examples with complexity ratings
+   - Quick start instructions for each
+   - Learning path recommendations (beginner → intermediate)
+   - Use case mapping (personal knowledge, AI agents, team docs, research)
+   - Comparison table of features
+   - Next steps: persistent storage, real embedders, file mining, MCP server
+   - Community links and contribution guidelines
+
+**Design Decisions:**
+
+- **Self-contained:** Both examples use in-memory/demo components (no API keys or external services required)
+- **Educational focus:** Clean, well-commented code with clear progression
+- **Production path:** Each README includes "Next Steps" showing how to move to production (SQLite backend, real embedders, etc.)
+- **Documentation quality:** Expected output, code structure breakdown, learning objectives
+- **Sample data:** SemanticKnowledgeGraph includes 4 realistic markdown documents with temporal data
+
+**Key Patterns Demonstrated:**
+
+- Palace initialization and collection management
+- Embedding generation and storage
+- Semantic search queries
+- Temporal triple creation and validity windows
+- Pattern matching in knowledge graphs
+- Entity reference modeling (type:id format)
+- Timeline queries and historical analysis
+- Metadata organization (wings, rooms, tags)
+
+**Commit:** `2569f5e` — "📚 Add example projects for adoption"
+- 11 files changed, 1,319 insertions
+- All examples self-documented and ready to run
+- No external dependencies beyond NuGet packages
+
+**For Bruno:**
+Examples are ready for users to clone and run. Each demonstrates a distinct capability (memory storage vs. knowledge graph). Both READMEs guide users from examples to production patterns.
+
+**Status:** ✅ Committed to feature/ui-docs-benchmark-polish branch. Ready for PR/merge to main.
+
