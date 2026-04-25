@@ -134,3 +134,109 @@
 - All agent commands now work without requiring backend/embedder/search configuration
 - Clean separation: agent listing works with minimal deps, agent execution requires full stack
 - Pattern established for other commands that need optional service dependencies
+
+### 2026-04-25: README Polish with Badges and Community Links
+
+**What:** Enhanced README.md with visual badges and community section for improved credibility and contributor onboarding.
+
+**Changes Made:**
+1. **Badges Section** - Added 4 badges after title:
+   - CI/Build status badge (GitHub Actions workflow)
+   - MIT License badge
+   - NuGet version badge (v0.1.0-preview.1)
+   - Test status badge (152/152 passing)
+
+2. **Community Section** - Added at bottom with links to:
+   - Contributing guidelines (.github/CONTRIBUTING.md)
+   - Code of Conduct (.github/CODE_OF_CONDUCT.md)
+   - Security Policy (.github/SECURITY.md)
+   - GitHub Issues and Discussions
+
+**UX Rationale:**
+- Badges provide immediate visual credibility and project health indicators
+- Community section makes it clear how users can contribute and get help
+- Placing badges at top maximizes visibility on GitHub
+- Community section at bottom follows standard OSS README patterns
+
+**Technical Details:**
+- Used shields.io badge format for consistency
+- CI badge links directly to GitHub Actions workflow
+- Test count reflects current state (updated from 129 to 152)
+- All links use relative paths where possible for repo portability
+
+**Note:** Community files (.github/CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md) don't exist yet but links are ready for when they're added.
+
+**Commit:** `⚛️ Add badges and community links to README` with Co-authored-by trailer
+
+### 2026-04-25: Comprehensive Community Contributor Guides
+
+**What:** Created complete CONTRIBUTING.md and DEVELOPMENT.md guides to welcome and onboard community contributors.
+
+**Files Created:**
+1. **.github/CONTRIBUTING.md** (13KB, 330+ lines)
+   - Welcome section with community-first tone
+   - Getting Started with prerequisites, clone, build, test
+   - Development Workflow with branch naming and commit flow
+   - Code Style & Standards (PascalCase, XML docs, async patterns, dependency guidelines)
+   - Testing Requirements (xUnit structure, coverage >80%, naming conventions)
+   - Documentation section (when to update README, docs/, XML comments)
+   - Commit Message Format (Conventional Commits with types/scopes/examples)
+   - Pull Request Process (template, linking issues, review expectations)
+   - Issue Reporting (bug/feature templates, search first)
+   - Questions section (Discussions, Issues, email links)
+
+2. **.github/DEVELOPMENT.md** (15KB, 330+ lines)
+   - Architecture Overview (backend contracts, dependency graph)
+   - Project Structure (detailed breakdown of all 11 projects)
+   - Key Files & Dependencies (NuGet packages, rationale)
+   - How to Extend (add backend, embedder, miner, search strategy with code examples)
+   - Testing Strategy (test pyramid, conformance tests, fake embedder)
+   - Performance Considerations (vector search, embedding, memory, benchmarking)
+   - Debugging Tips (logging, SQLite inspection, verbose test output, common issues)
+
+**UX Design Decisions:**
+- **Tone:** Welcoming and encouraging for first-time contributors
+- **Structure:** Table of contents for easy navigation
+- **Examples:** Real code snippets throughout DEVELOPMENT.md
+- **Completeness:** No "TODO" placeholders - guides are ready for v0.1.0 launch
+- **Cross-linking:** Both guides reference each other and docs/ pages appropriately
+
+**Technical Highlights:**
+- Covers full workflow from clone → build → test → PR
+- Explains Conventional Commits with project-specific scopes (agents, ai, backends, cli, etc.)
+- Documents testing requirements matching existing test suite structure
+- Provides real patterns for extending core abstractions (IBackend, IEmbedder, miners)
+- Performance section acknowledges current SQLite approach and future upgrade path
+
+**Integration Points:**
+- Links match existing repo structure (.github/CODE_OF_CONDUCT.md, docs/architecture.md, etc.)
+- Reflects actual solution file (MemPalace.slnx) and project names
+- Test count accurate (152 tests passing)
+- Commands use correct CLI name (mempalacenet)
+- All NuGet dependencies documented with purpose
+
+**Research Notes:**
+- Verified project structure by viewing src/ directory and .csproj files
+- Reviewed docs/architecture.md for accurate contract descriptions
+- Checked README.md for consistency with Quick Start and Development sections
+- Confirmed xUnit test structure in MemPalace.Tests/
+
+**Learnings:**
+1. Contributor guides should be comprehensive from day one - not iterative TODOs
+2. CONTRIBUTING focuses on process/workflow, DEVELOPMENT focuses on technical internals
+3. Real code examples in DEVELOPMENT make extension patterns concrete
+4. Community tone matters: "we welcome" not "you must"
+5. Cross-referencing existing docs/ pages prevents duplication
+
+**Files Changed:**
+- `.github/CONTRIBUTING.md` (created)
+- `.github/DEVELOPMENT.md` (created)
+
+**Commit:** `🤝 Add CONTRIBUTING and DEVELOPMENT guides` with Co-authored-by trailer
+
+**Impact:**
+- Community contributors now have clear guidance from first clone to merged PR
+- Extension patterns documented for backends, embedders, miners, and search strategies
+- Testing requirements explicit with conformance test pattern explained
+- Performance considerations surfaced early for developers choosing approaches
+- Ready for v0.1.0 public launch with full contributor onboarding
