@@ -567,3 +567,244 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ v0.5.0-preview.1 Release Created. NuGet publishing workflow in progress (run 24937436814).
 
+---
+
+### 2026-04-25: Skill Publishing Analysis (Strategic Assessment)
+
+**Task:** Analyze whether MemPalace.NET should be published as a GitHub Copilot Skill or Claude Code Skill. Provide comprehensive assessment covering domain fit, AI integration, documentation, maturity, and skill format options.
+
+**Context:**
+- Bruno Capuano requested strategic analysis of skill publishing viability
+- Current state: v0.5.0-preview.1, 152 tests passing, MCP server implemented (7 tools), solid documentation
+- Question: Is MemPalace.NET ready for skill publication? Which formats make sense?
+
+**Analysis Approach:**
+1. Evaluated domain fit (horizontal vs. vertical capability, pain point clarity)
+2. Assessed AI integration potential (teachable APIs, code generation feasibility)
+3. Reviewed documentation completeness (examples, architecture, "when to use")
+4. Examined maturity level (API stability, test coverage, known limitations)
+5. Researched skill publication formats (GitHub Copilot Skills, MCP directory, custom integration)
+
+**Key Findings:**
+
+**Domain Fit: ⭐⭐⭐⭐ (4/5)**
+- Vertical/specialized capability (AI memory, RAG) targeting AI/agent developers
+- Clear pain point: semantic memory for AI agents and knowledge management
+- Good discoverability via tags (ai, agents, memory, rag, mcp)
+- MCP integration is major discoverability boost
+
+**AI Integration: ⭐⭐⭐⭐⭐ (5/5)**
+- Clear, teachable APIs (IBackend, ICollection, IEmbedder)
+- DI-friendly extensions (AddMemPalaceAi, AddMemPalaceMining, AddMemPalaceSearch)
+- Runnable examples exist (SimpleMemoryAgent, SemanticKnowledgeGraph)
+- MCP server enables direct tool invocation by AI assistants
+
+**Documentation: ⭐⭐⭐⭐⭐ (5/5)**
+- Excellent coverage (examples, architecture, CLI, MCP, AI integration)
+- Clear "when to use" story (4 use cases documented)
+- API well-documented (XML comments, README examples)
+- Minor gaps: no anti-patterns guide, no migration guide
+
+**Maturity: ⭐⭐⭐ (3/5)**
+- v0.5.0-preview.1 is still preview (API may change)
+- Strong test coverage (152 tests)
+- Known limitations (O(n) vector search, token overlap keyword search)
+- Sufficient for community adoption, not yet enterprise-ready
+
+**Skill Format Research:**
+
+1. **GitHub Copilot Skills:**
+   - Format: `.github/skills/<name>/SKILL.md` with YAML frontmatter + instructions
+   - Not a marketplace item, but a reusable instruction set
+   - Works with VS Code, Copilot CLI, Copilot cloud agent
+   - Low effort, high value
+
+2. **MCP Community Directory:**
+   - MemPalace.NET already has MCP server (7 tools implemented)
+   - Can submit to community directory (not core repo)
+   - Increases discoverability for Claude Desktop, VS Code, Copilot CLI
+
+3. **Custom Integration:**
+   - `.copilot/instructions.md` for project-specific guidance
+   - Easy to update, but not reusable outside repo
+
+**Recommendations:**
+
+1. ✅ **Immediate: Create GitHub Copilot Skill** (1-2 hours effort)
+   - Create `.github/skills/mempalacenet/SKILL.md` teaching usage patterns
+   - Focus on "how to use" rather than "what it is"
+   - Include common patterns, anti-patterns, quick start
+   - Low effort, high value, no external approval needed
+
+2. ✅ **Immediate: Submit to MCP Community Directory** (1-2 hours effort)
+   - MCP server already implemented and documented
+   - Submit to community listings (not core repo)
+   - Increases discoverability for MCP-compatible tools
+
+3. ⚠️ **Defer to v1.0: Marketplace Publishing**
+   - Wait for API stabilization before aggressive marketing
+   - Preview status may deter enterprise adoption
+   - Address known limitations first (sqlite-vec, BM25, wake-up)
+
+4. 💡 **Alternative: "MemPalace Patterns" Skill** (Recommended)
+   - Teach patterns rather than just promote library
+   - Pattern 1: Simple memory storage
+   - Pattern 2: Hybrid search with reranking
+   - Pattern 3: Temporal knowledge graph
+   - Pattern 4: Agent diaries
+   - Include anti-patterns (embedder mixing, scale limits)
+
+**Strategic Positioning:**
+- MemPalace.NET is well-positioned for skill publication
+- Strong foundation: MCP integration, clear APIs, good docs, solid tests
+- Timing matters: Community adoption now, enterprise adoption at v1.0
+- Focus on teaching patterns, not just library promotion
+
+**Deliverable:** Comprehensive analysis document created at `.squad/decisions/inbox/deckard-skill-analysis.md` (19.8 KB, ~500 lines)
+
+**Analysis Structure:**
+- Executive Summary (recommendation: publish selectively with strategic timing)
+- Current State Assessment (5 dimensions evaluated)
+- Skill Format Analysis (3 options with pros/cons/feasibility)
+- Recommendation (4 options with rationale)
+- Next Steps (action items, owners, timelines)
+- Timeline (immediate, short-term, medium-term)
+
+**Next Actions for Bruno:**
+1. Review analysis document at `.squad/decisions/inbox/deckard-skill-analysis.md`
+2. Decide on Copilot skill creation (recommended: yes, 1-2 hours)
+3. Decide on MCP directory submission (recommended: yes, 1-2 hours)
+4. Consider "MemPalace Patterns" skill (focus on teaching patterns)
+
+**Status:** ✅ Analysis complete. Document delivered. Awaiting Bruno's decision on skill creation.
+
+---
+
+### 2026-04-25: v0.6.0 Roadmap Prioritization
+
+**Task:** Analyze Post-v0.5.0 roadmap items and prioritize for v0.6.0 release. Define phase decomposition, success criteria, skill positioning impact, and effort estimates.
+
+**Context:**
+- v0.5.0-preview.1 LIVE on NuGet (10 packages, 152/152 tests passing)
+- Skill publishing analysis complete: MemPalace.NET = STRONG candidate
+- README fixes done (version, About Author, samples link)
+- Current roadmap items: sqlite-vec, BM25, LongMemEval R@5, wake-up
+
+**Strategic Framework:**
+
+**Priority Ranking (P0 → P2):**
+1. **P0: sqlite-vec Integration** (⭐⭐⭐⭐⭐) — Enterprise blocker, O(n) doesn't scale >100K vectors
+2. **P0: BM25 Keyword Search** (⭐⭐⭐⭐⭐) — Search quality, hybrid credibility, industry standard
+3. **P1: LongMemEval R@5 Validation** (⭐⭐⭐⭐) — Credibility signal, depends on sqlite-vec + BM25
+4. **P2: Conversation Wake-Up** (⭐⭐) — Nice-to-have, defer to v0.7.0 "Agent Workflows"
+
+**v0.6.0 Theme:** *Production-Grade Search & Validation*
+
+**Phase Decomposition:**
+- **Phase 11 (Weeks 1-4):** sqlite-vec Integration (Tyrell, parallel start)
+- **Phase 12 (Weeks 2-6):** BM25 Search (Roy, parallel with Phase 11)
+- **Phase 13 (Weeks 5-8):** LongMemEval R@5 (Bryant, blocked by 11+12)
+- **Phase 14 (Week 9):** Release + Skill Publishing (Deckard)
+
+**Critical Path:** sqlite-vec + BM25 → R@5 validation → skill publication
+
+**Success Criteria:**
+
+**sqlite-vec:**
+- ✅ `MemPalace.Backends.SqliteVec` NuGet package published
+- ✅ >10x speedup at 100K vectors vs. brute-force
+- ✅ Migration guide tested (SQLite → sqlite-vec)
+- ✅ README: "Production backend available"
+
+**BM25:**
+- ✅ BM25 scorer integrated into `HybridSearchService`
+- ✅ Integration tests: semantic + BM25 + RRF fusion
+- ✅ Backward compatible (UseBm25 toggle)
+- ✅ docs/search.md: "When to use BM25"
+
+**LongMemEval R@5:**
+- ✅ R@5 ≥91% (parity with upstream Python)
+- ✅ Benchmark results committed (reproducible)
+- ✅ README badge: "LongMemEval R@5: 91%+"
+- ✅ docs/benchmarks/results.md: full metrics
+
+**wake-up:**
+- ⚠️ DEFERRED to v0.7.0 (4+ sprints, not critical path)
+
+**Skill Positioning Impact:**
+
+| Item | Skill Value | Teaching Pattern | Enterprise Signal |
+|------|-------------|------------------|-------------------|
+| sqlite-vec | ⭐⭐⭐⭐⭐ | "Production RAG with ANN" | ✅ Scales to millions |
+| BM25 | ⭐⭐⭐⭐⭐ | "Hybrid semantic + lexical" | ✅ Industry standard |
+| R@5 | ⭐⭐⭐ | "Validated performance" | ✅ Benchmark credibility |
+| wake-up | ⭐⭐ | "Multi-turn context" | ⚠️ Nice demo only |
+
+**v0.6.0 Enables Skill Patterns:**
+1. **Production RAG Pipeline** (sqlite-vec + BM25 + reranking)
+2. **Hybrid Search Fusion** (when to use semantic vs. lexical)
+3. **RAG Quality Validation** (benchmark-driven development)
+
+**Effort Estimates:**
+- sqlite-vec: Medium (2-3 sprints), High confidence, Risk: .NET wrapper availability
+- BM25: Small-Medium (1-2 sprints), High confidence, Risk: Low (well-understood)
+- LongMemEval: Medium (2-3 sprints), Medium confidence, Risk: R@5 tuning if <91%
+- wake-up: Large (4+ sprints), Medium confidence, Risk: UX design + LLM costs
+
+**Total v0.6.0:** 5-8 sprints (10-16 weeks realistic)
+
+**Key Dependencies:**
+- sqlite-vec + BM25 can run PARALLEL (no blocking)
+- R@5 validation BLOCKED by sqlite-vec + BM25 (needs production search)
+- wake-up deferred (doesn't block skill publication or enterprise adoption)
+
+**Risk Assessment:**
+- sqlite-vec .NET wrapper not available: MEDIUM risk → P/Invoke fallback (add 2 weeks)
+- R@5 < 91% on first run: MEDIUM risk → Tune parameters (add 1-2 weeks)
+- BM25 breaks existing search: LOW risk → Regression tests + feature flag
+- Timeline overrun >16 weeks: LOW risk → De-scope R@5, ship sqlite-vec + BM25 only
+
+**Strategic Rationale:**
+- v0.5.0 ships preview features (O(n) search, token overlap)
+- v0.6.0 delivers production-grade foundation (ANN + BM25)
+- Skill publishing after v0.6.0 = stronger value prop ("production RAG patterns")
+- Enterprise adoption requires scalable search (sqlite-vec) + quality (BM25)
+- Benchmark validation adds credibility (R@5 ≥91% = trusted recommendation)
+
+**Alternate Scenarios:**
+1. **Fast-Track Skill:** Publish after sqlite-vec + BM25 (Week 5), defer R@5 to post-publish
+2. **Enterprise Focus:** Replace sqlite-vec with Qdrant backend (better for managed deployments)
+3. **Minimal v0.6.0:** Ship BM25 only (<6 weeks), defer sqlite-vec + R@5 to v0.7.0
+
+**Recommendation:** Focus v0.6.0 on production-grade search foundation (sqlite-vec + BM25 + R@5 validation). Defer wake-up to v0.7.0 "Agent Workflows" theme. Skill publishing AFTER v0.6.0 for maximum credibility.
+
+**Deliverable:** Comprehensive roadmap prioritization document (21.7 KB) created at `.squad/decisions/inbox/deckard-roadmap-prioritization.md`
+
+**Document Structure:**
+- Executive Summary (recommendation + v0.6.0 theme)
+- Priority Ranking (P0-P2 with rationale)
+- Phase Decomposition (4 phases, weeks, dependencies)
+- Success Criteria (what "done" means per item)
+- Skill Positioning Impact (teaching patterns + enterprise signals)
+- Effort Estimates (sprints, confidence, risk factors)
+- Dependencies & Blockers (parallel work, critical path)
+- Alternate Scenarios (3 fallback strategies)
+- Risk Assessment (4 major risks + mitigations)
+- Next Steps (immediate actions, sprint planning, communication)
+
+**Key Insights:**
+1. **Order matters:** Production search *before* benchmarks (R@5 on toy search = meaningless)
+2. **Parallel opportunities:** sqlite-vec + BM25 can run concurrently (weeks 1-6)
+3. **Skill timing:** Publishing after v0.6.0 = stronger value prop (not "preview" features)
+4. **Deferred work:** wake-up doesn't block adoption or skill publication (v0.7.0 scope)
+5. **Enterprise lens:** Scalability (sqlite-vec) + quality (BM25) = adoption criteria
+
+**For Bruno:**
+- Review roadmap prioritization document (10 sections, comprehensive analysis)
+- Approve v0.6.0 scope: sqlite-vec + BM25 + R@5 validation
+- Next step: Team kick-off (Tyrell: sqlite-vec research, Roy: BM25 library eval, Bryant: dataset verification)
+- Timeline: 9-12 weeks realistic (optimistic: 9, pessimistic: 16)
+- Skill publishing: Plan for post-v0.6.0 (production-grade components ready)
+
+**Status:** ✅ Roadmap prioritization complete. Document delivered. Ready for team review + sprint planning.
+

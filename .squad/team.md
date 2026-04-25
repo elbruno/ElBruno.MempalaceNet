@@ -33,3 +33,17 @@
 1. **Constant pushes** — commit and push to GitHub frequently after every meaningful unit of work.
 2. **Docs location** — all documentation under `docs/`. Only `README.md` and `LICENSE` may sit at repo root.
 3. **Code location** — all source code under `src/`.
+
+## Strategic Focus (Post-v0.5.0 → v0.6.0)
+
+**Current Phase:** v0.6.0 Implementation (Production-Grade Search Foundation)
+
+**Skill Status:** PR #1 open for team review; publish post-v0.6.0
+
+**v0.6.0 Roadmap:** 
+  - P0: sqlite-vec (Tyrell) + BM25 (Roy) parallel, Weeks 1-4
+  - P1: LongMemEval R@5 validation (Bryant), Weeks 5-8
+  - P2: Release prep (Deckard), Week 9
+  - P2+: Copilot Skill publication, Weeks 10+
+
+**Next Milestone:** Team approval of research recommendations → Spike PRs
