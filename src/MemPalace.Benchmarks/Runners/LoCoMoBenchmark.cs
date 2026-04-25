@@ -14,15 +14,11 @@ public sealed class LoCoMoBenchmark : BenchmarkBase
 
     protected override async Task IngestMemoriesAsync(
         IBackend backend,
+        PalaceRef palace,
         IEmbedder embedder,
         IReadOnlyList<DatasetItem> items,
         CancellationToken ct)
     {
-        var palace = new PalaceRef(
-            Id: Guid.NewGuid().ToString(),
-            LocalPath: Environment.CurrentDirectory,
-            Namespace: "benchmark");
-
         var collection = await backend.GetCollectionAsync(palace, DefaultCollection, create: true, embedder, ct);
 
         // Ingest conversation episodes as memories

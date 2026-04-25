@@ -45,6 +45,26 @@ Real benchmark datasets should be obtained from:
 
 Place real datasets in a directory (e.g., `./datasets/`) with filenames matching the benchmark names (`longmemeval.jsonl`, `locomo.jsonl`, etc.).
 
+### QA status: real parity run (2026-04-25)
+
+Tyrell extended the harness so LongMemEval can now consume the upstream JSON array format and rebuild a fresh haystack per question, matching the Python benchmark's session-level raw mode much more closely.
+
+- Dataset: `https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json`
+- Synthetic control: `dotnet run --project src/MemPalace.Benchmarks -- run longmemeval --dataset src/MemPalace.Benchmarks/datasets-synthetic/longmemeval.jsonl --palace artifacts/benchmarks/palace-synth` ✅
+- Real-data command shape: `dotnet run --project src/MemPalace.Benchmarks -- run longmemeval --dataset artifacts/benchmarks/longmemeval_s_cleaned.json --palace artifacts/benchmarks/palace-real --embedder local` ✅ supported
+
+What changed:
+
+- `DatasetLoader` now accepts both the original JSONL fixtures and the upstream LongMemEval JSON array.
+- Upstream `haystack_sessions` are normalized into per-question corpus documents using the same session-level "join user turns" rule as the Python benchmark.
+- LongMemEval now deletes and recreates its collection for each question so evaluation happens against a fresh haystack instead of one shared corpus.
+- CLI commands can now use `--embedder deterministic|local|ollama` instead of always forcing the deterministic smoke embedder.
+
+Remaining parity caveat:
+
+- `--embedder local` uses MemPalace.NET's default ONNX model (`sentence-transformers/all-MiniLM-L6-v2`), which is a **real** embedder but not the Python repo's `nomic` configuration.
+- For the closest apples-to-apples run, use `--embedder ollama --model nomic-embed-text` with a running Ollama server.
+
 ## Running Benchmarks
 
 ### List Available Benchmarks
@@ -61,9 +81,30 @@ dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
 ```
 
 Options:
-- `--dataset`: Path to the JSONL dataset file
+- `--dataset`: Path to a benchmark dataset file (`.jsonl` fixtures or supported JSON array datasets such as upstream LongMemEval)
 - `--palace`: Directory for palace storage (will be created if needed)
 - `--max`: Optional limit on number of items to process
+- `--embedder`: `deterministic` (default smoke mode), `local` (real ONNX model), or `ollama`
+- `--model`: Optional embedder model override
+- `--endpoint`: Optional Ollama endpoint override (default `http://localhost:11434`)
+
+### Run a Real LongMemEval Session-Level Benchmark
+```bash
+dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
+  --dataset ./artifacts/benchmarks/longmemeval_s_cleaned.json \
+  --palace ./artifacts/benchmarks/palace-real \
+  --embedder local
+```
+
+For closer parity with the Python benchmark's `nomic` run:
+
+```bash
+dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
+  --dataset ./artifacts/benchmarks/longmemeval_s_cleaned.json \
+  --palace ./artifacts/benchmarks/palace-real \
+  --embedder ollama \
+  --model nomic-embed-text
+```
 
 ### Run All Benchmarks
 ```bash
@@ -78,6 +119,7 @@ Options:
 - `--palace`: Palace storage directory
 - `--max`: Optional limit per benchmark
 - `--out`: JSON file to save results (optional)
+- `--embedder`, `--model`, `--endpoint`: Same as `run`
 
 ### Run Micro-Benchmarks
 ```bash
@@ -151,4 +193,4 @@ From the Python MemPalace implementation:
 - **LongMemEval R@5:** ≥ 96.6% (raw embedding retrieval)
 - **LoCoMo R@10:** ≥ 60.3% (session-based, no reranker)
 
-These targets are based on the upstream Python implementation with `nomic-embed-text`. .NET results may vary slightly depending on the embedder used.
+These targets are based on the upstream Python implementation with `nomic-embed-text`. .NET results may vary depending on the embedder used; `--embedder ollama --model nomic-embed-text` is the closest current match.

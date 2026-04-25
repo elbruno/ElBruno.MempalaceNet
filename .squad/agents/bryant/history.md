@@ -126,12 +126,86 @@
 4. **SHOULD:** Document manual validation steps (which datasets to use, expected ranges)
 
 ### 2026-04-25: Cross-Agent Update — Deckard Roadmap Audit
-
+ 
 **Cross-Agent Finding:** Deckard completed roadmap audit confirming Phases 0-10 delivered. v0.1.0 ready after 3 small fixes.
 
 **Key Recommendations for QA:**
 1. **CI workflow fix** (Deckard): Add main + PR triggers → enables continuous benchmark validation (not just on tags)
 2. **Real benchmark execution** (Bryant recommendation stands): Run LongMemEval.jsonl before v0.1 tag to validate parity claim
 3. **CLI e2e test**: Gap identified by Deckard's doc/feature audit confirms Bryant's Gap 3 concern
-
+ 
 **Status:** Decisions merged to formal record (Scribe session). Inbox cleared. Ready for Bruno's fixes.
+
+### 2026-04-25 — Real Parity Benchmark Attempt
+
+**Task:** Run a real parity benchmark from this repo using an upstream dataset, capture the outcome, and document the result or blocker.
+
+**What I ran:**
+- Verified baseline with `dotnet test src\MemPalace.slnx`
+- Downloaded upstream LongMemEval dataset from Hugging Face: `longmemeval_s_cleaned.json`
+- Control run succeeded on `src/MemPalace.Benchmarks/datasets-synthetic/longmemeval.jsonl`
+- Real-data run failed immediately in `DatasetLoader`
+
+**Concrete findings:**
+- Upstream LongMemEval ships as a JSON array with `question_id`, `answer`, `answer_session_ids`, `haystack_sessions`, etc.
+- `src/MemPalace.Benchmarks/Core/DatasetLoader.cs` only accepts line-delimited JSONL with `id`, `expected_answer`, `relevant_memory_ids`, and `metadata`.
+- `src/MemPalace.Benchmarks/Commands/RunCommand.cs` and `RunAllCommand.cs` hardcode `DeterministicEmbedder`, so current CLI runs are smoke benchmarks, not parity runs against the Python embedding baseline.
+- `src/MemPalace.Benchmarks/Runners/BenchmarkBase.cs` queries one shared collection, while upstream LongMemEval rebuilds a fresh haystack per question. That is another parity mismatch even after format conversion.
+
+**Repo updates:**
+- Added `DatasetLoaderTests.LoadAsync_UpstreamLongMemEvalJsonArray_ThrowsJsonException` to lock in the currently observed blocker.
+- Updated `docs/benchmarks.md` with the real-dataset attempt, exact failure, and parity blockers.
+- Wrote decision inbox note for follow-up.
+
+**Key file paths:**
+- `docs/benchmarks.md`
+- `src/MemPalace.Benchmarks/Core/DatasetLoader.cs`
+- `src/MemPalace.Benchmarks/Commands/RunCommand.cs`
+- `src/MemPalace.Benchmarks/Commands/RunAllCommand.cs`
+- `src/MemPalace.Benchmarks/Runners/BenchmarkBase.cs`
+- `src/MemPalace.Tests/Benchmarks/DatasetLoaderTests.cs`
+
+---
+
+### 2026-04-25: Cross-Agent Update — Deckard Roadmap Audit & v0.1.0 Release Status
+
+**Input:** Deckard completed comprehensive roadmap audit. All 10 phases delivered/in progress. 150/150 tests passing. v0.1.0 ready after 3 small doc fixes (<1 hour).
+
+**Doc fixes completed by Deckard:**
+1. README: "29 tools" → "7 tools in v0.1" (now accurate)
+2. RELEASE-v0.1.md: tool count corrected
+3. README quick start: removed `wake-up` command (not yet implemented, Phase 11)
+
+**Impact on Bryant's work:** Parity benchmarks correctly deferred to Phase 11+. v0.1 release accurate and ready. Synthetic smoke test suite validates harness mechanics correctly (no real model/dataset dependency needed for CI).
+
+**Status:** ✅ v0.1.0 ready for tagging. Parity validation scope clarified for Phase 11+.
+
+---
+
+### 2026-04-25 — Benchmark Compilation Fixes
+
+**Task:** Fix 4 compilation errors blocking `dotnet build src/`:
+1. LongMemEvalBenchmark.cs(80,81,96): CS0103 — 'Metrics' does not exist in current context
+2. DatasetLoader.cs(221): CS8604 — Possible null reference for CorpusDocument.Id parameter
+3. DatasetLoaderTests.cs(130): CS8602 — Dereference of possibly null reference
+
+**Root causes:**
+- Missing `using MemPalace.Benchmarks.Scoring;` directive in LongMemEvalBenchmark.cs
+- Nullable flow analysis couldn't prove sessionId was non-null in ternary expression
+- Test code missing null-forgiving operator on second array access after null assertion
+
+**Fixes:**
+1. Added `using MemPalace.Benchmarks.Scoring;` to LongMemEvalBenchmark.cs header
+2. Added null-coalescing operator `?? $"session_{index}"` to CorpusDocument constructor call in DatasetLoader.cs:221
+3. Added null-forgiving operator `!` to CorpusDocuments[0] access in DatasetLoaderTests.cs:130
+
+**Verification:**
+- `dotnet build src/` passes cleanly (Build succeeded in 11.2s)
+- All 10 projects build without errors or warnings
+- Commit: 266e750 "🧪 Fix benchmark compilation errors (Metrics + null check)"
+
+**Pattern insight:**
+- When working across multiple namespaces in benchmarking/testing code, always verify all required using directives are present
+- C# nullable reference analysis can be conservative with ternary expressions — explicit null-coalescing makes intent clear to compiler
+- After null-forgiving operator `!` on collection access, subsequent accesses to same collection still need `!` for compiler satisfaction
+

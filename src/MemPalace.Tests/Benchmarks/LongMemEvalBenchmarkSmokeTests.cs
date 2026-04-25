@@ -64,6 +64,50 @@ public sealed class LongMemEvalBenchmarkSmokeTests
         }
     }
 
+    [Fact]
+    public async Task RunAsync_WithUpstreamLongMemEvalShape_UsesFreshHaystackSemantics()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                [
+                  {
+                    "question_id": "q1",
+                    "question": "What degree did I graduate with?",
+                    "answer": "Business Administration",
+                    "answer_session_ids": ["answer_session"],
+                    "haystack_session_ids": ["answer_session", "distractor_session"],
+                    "haystack_dates": ["2024-01-10", "2024-01-11"],
+                    "haystack_sessions": [
+                      [
+                        { "role": "user", "content": "I graduated with a Business Administration degree." },
+                        { "role": "assistant", "content": "Congrats." }
+                      ],
+                      [
+                        { "role": "user", "content": "I bought a new lamp for the living room." }
+                      ]
+                    ]
+                  }
+                ]
+                """);
+
+            var services = BuildServices();
+            var ctx = new BenchmarkContext(tempFile, "./_bench_test_upstream", services);
+
+            var result = await new LongMemEvalBenchmark().RunAsync(ctx);
+
+            result.BenchmarkName.Should().Be("longmemeval");
+            result.TotalQueries.Should().Be(1);
+            result.ExtraMetrics.Should().ContainKey("Recall@5");
+            result.ExtraMetrics["Recall@5"].Should().Be(1.0);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
     private static string? FindSyntheticDataset(string filename)
     {
         // Try multiple possible locations

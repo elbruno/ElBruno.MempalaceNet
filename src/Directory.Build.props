@@ -10,10 +10,10 @@
     <Company>Bruno Capuano</Company>
     <Copyright>Copyright (c) Bruno Capuano. Licensed under the MIT License.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/elbruno/mempalacenet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/elbruno/mempalacenet</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/elbruno/ElBruno.MempalaceNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/elbruno/ElBruno.MempalaceNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.5.0</Version>
     <PackageTags>ai;agents;memory;rag;mcp;dotnet;embeddings;palace</PackageTags>
   </PropertyGroup>
 

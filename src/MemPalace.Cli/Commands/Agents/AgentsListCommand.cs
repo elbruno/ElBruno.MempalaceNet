@@ -4,7 +4,11 @@ using Spectre.Console.Cli;
 
 namespace MemPalace.Cli.Commands.Agents;
 
-internal sealed class AgentsListCommand : AsyncCommand
+internal sealed class AgentsListSettings : CommandSettings
+{
+}
+
+internal sealed class AgentsListCommand : AsyncCommand<AgentsListSettings>
 {
     private readonly IAgentRegistry _agentRegistry;
 
@@ -13,7 +17,7 @@ internal sealed class AgentsListCommand : AsyncCommand
         _agentRegistry = agentRegistry;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, AgentsListSettings settings)
     {
         var agents = _agentRegistry.List();
 

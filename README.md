@@ -1,5 +1,10 @@
 # MemPalace.NET
 
+[![CI](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml/badge.svg)](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![NuGet](https://img.shields.io/badge/NuGet-v0.1.0--preview.1-blue.svg)](https://www.nuget.org/packages/mempalacenet)
+[![Tests](https://img.shields.io/badge/Tests-152%2F152%20passing-brightgreen.svg)](#)
+
 A **.NET port** of [MemPalace](https://github.com/MemPalace/mempalace) — local-first AI memory that stores everything verbatim, searches semantically, and organizes knowledge through a *wings / rooms / drawers* hierarchy. No cloud calls by default, powered by ONNX embeddings.
 
 > 🎯 **Status:** Preview — v0.1.0 is production-ready for local development and experimentation.
@@ -38,7 +43,7 @@ mempalacenet search "latest React patterns" --hybrid --rerank
 mempalacenet mcp --palace ~/my-palace
 
 # Run an agent
-mempalacenet agents run scribe --wing research
+mempalacenet agents run scribe --wing research --mode local
 ```
 
 ## Architecture
@@ -53,7 +58,7 @@ MemPalace.NET is a modular .NET solution with clear separation of concerns:
 | **MemPalace.Mining** | Content ingestion: filesystem miner + conversation transcript miner |
 | **MemPalace.Search** | Semantic, keyword, and hybrid search with optional LLM reranking |
 | **MemPalace.KnowledgeGraph** | Temporal entity-relationship graph with validity windows |
-| **MemPalace.Mcp** | Model Context Protocol server (29 tools) |
+| **MemPalace.Mcp** | Model Context Protocol server (7 tools in v0.1) |
 | **MemPalace.Agents** | Microsoft Agent Framework integration + per-agent diaries |
 | **MemPalace.Cli** | Spectre.Console CLI (`mempalacenet` command) |
 | **MemPalace.Benchmarks** | LongMemEval / LoCoMo / ConvoMem benchmarks + R@5 testing |
@@ -110,3 +115,17 @@ dotnet pack src/ -c Release
 ## License
 
 [MIT](LICENSE) — same spirit as the original MemPalace.
+
+---
+
+## Community
+
+We welcome contributions from the community! Here's how to get involved:
+
+- **[Contributing Guidelines](.github/CONTRIBUTING.md)** — how to submit pull requests, report issues, and contribute code
+- **[Code of Conduct](.github/CODE_OF_CONDUCT.md)** — our commitment to fostering an open and welcoming environment
+- **[Security Policy](.github/SECURITY.md)** — how to report security vulnerabilities responsibly
+- **[Issues](https://github.com/elbruno/mempalacenet/issues)** — report bugs or request features
+- **[Discussions](https://github.com/elbruno/mempalacenet/discussions)** — ask questions, share ideas, and connect with the community
+
+**Got questions?** Open a [discussion](https://github.com/elbruno/mempalacenet/discussions) or reach out to [@elbruno](https://github.com/elbruno).

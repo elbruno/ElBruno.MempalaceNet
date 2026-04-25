@@ -5,9 +5,12 @@ namespace MemPalace.Cli.Infrastructure;
 
 internal sealed class TypeRegistrar(IServiceCollection services) : ITypeRegistrar
 {
+    private IServiceProvider? _serviceProvider;
+
     public ITypeResolver Build()
     {
-        return new TypeResolver(services.BuildServiceProvider());
+        _serviceProvider ??= services.BuildServiceProvider();
+        return new TypeResolver(_serviceProvider);
     }
 
     public void Register(Type service, Type implementation)

@@ -107,3 +107,27 @@
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+## CI & Operations
+
+| Date | Agent | Scope | Decision | Rationale |
+|------|-------|-------|----------|-----------|
+| 2026-04-25 | Deckard | GitHub Actions minutes optimization | Keep CI job triggers limited to version tags (`v*`) and manual dispatch only. No scheduled or main branch pushes. | User directive: save minutes. Tag-triggered packing is sufficient for release validation. Development builds can be tested locally. |
+
+## Phase 9+ (Post-v0.1)
+
+| Date | Agent | Scope | Decision | Rationale |
+|------|-------|-------|----------|-----------|
+| 2026-04-25 | Bryant | Parity Benchmark Requirements | Do not claim reproducible .NET parity until MemPalace.Benchmarks can: (1) ingest upstream formats directly, (2) run with configurable real embedder, (3) mirror upstream semantics. Current blocker: JSONL schema mismatch, DeterministicEmbedder hardcoded. | Upstream datasets (LongMemEval JSON array) don't match current loader expectations. Harness semantic (shared collection vs per-question rebuild) differs from reference. Claim requires end-to-end validation with real embeddings. |
+| 2026-04-25 | Deckard | Release Documentation Audit | Fixed 3 doc gaps: (1) "29 tools" → accurate count of 7 in v0.1 (updated README, CHANGELOG). (2) wake-up command removed from quick start (not implemented in Phase 5), kept in Phase 11 roadmap. (3) CI triggers policy decided: tag-only (v*) + manual dispatch (save GitHub Actions minutes). | Documentation accuracy critical for first impression. Users expect implemented features. CI cost control prioritized per Bruno directive. |
+| 2026-04-25 | Deckard | v0.1.0 Release Readiness | v0.1.0 is architecturally complete and release-ready once Phase 9 test issue is fixed. All scope items exist; 1 nullable reference fix needed (DatasetLoaderTests.cs:130); Phase 10 polish complete. | Build passes 150/150 tests; single small fix unblocks full build and CI. Parity validation deferred to Phase 11 per team decision. |
+
+## Phase 11 (CLI Hardening & Parity)
+
+| Date | Agent | Scope | Decision | Rationale |
+|------|-------|-------|----------|-----------|
+| 2026-04-25 | Rachael | CLI DI Resolution Bug (agents list) | Fix AgentsListCommand DI resolution blocker: ensure IAgentRegistry always resolves successfully (use EmptyAgentRegistry by default). Error should happen at execution time with clear message, not at command registration time. | Users cannot list agents due to TypeResolver.GetService() returning null when IChatClient missing. Root cause: Spectre.Console.Cli requires all ctor dependencies resolvable at registration. Solution: Always resolve, fail gracefully at run time. |
+| 2026-04-25 | Rachael | CLI Naming Consistency | Standardize to "mempalace" command name (not "mempalacenet"). Update SetApplicationName, package name, and examples. | Current inconsistency (app name "mempalacenet" vs docs references) causes user confusion. Brevity + consistency with reference project preferred. |
+| 2026-04-25 | Rachael | CLI Help Documentation | Add EntityRef format "type:id" to command descriptions and help text. Include examples in kg add/query/timeline help. Update docs/cli.md. | Users need format guidance for temporal knowledge graph operations. Current error message is good but proactive documentation better. |
+| 2026-04-25 | Bryant | Benchmark Format Alignment (Phase 11) | Phase 11 task: Align MemPalace.Benchmarks dataset loader with upstream LongMemEval format (JSON array vs JSONL). Support configurable embedders (local/ollama). Mirror question-rebuild semantics. | Required for authentic parity claim. Current blocker: JSONL schema ≠ upstream format. Deferred to Phase 11 roadmap (post-v0.1). |
+
