@@ -64,3 +64,63 @@
 - All tests green
 - CLI commands functional
 - Documentation complete
+
+---
+
+### 2026-04-24 — QA Audit: Missing Coverage Assessment
+
+**Task:** Audit the codebase for gaps in test coverage, benchmarks, parity validation, and CI/CD wiring. Call out the most important QA gaps.
+
+**Audit Summary:**
+- **150 tests passing** ✅ across 9 modules (backends, search, mining, benchmarks, agents, MCP, CLI, AI, KG)
+- **Baseline unit/module tests: Complete** ✅ (40 backend, 9 mining, 5 search, 16 KG, 13 AI, 6 agents, 5 MCP, 10 CLI parsing)
+- **Parity validation: Not yet run** ⚠️ (harness exists, synthetic smoke tests only)
+- **E2E integration: Missing** ❌ (no palace init→mine→search workflow test)
+- **CLI execution: Parsing only** ⚠️ (10 tests verify argument parsing, zero tests verify command behavior)
+- **LlmReranker: Untested** ❌ (implementation exists, no unit tests)
+- **Code coverage: Not reported** ❌ (no Coverlet gate in CI)
+
+**Critical Gaps (block v0.1 release):**
+
+1. **Parity validation vs Python reference**
+   - LongMemEval/LoCoMo/ConvoMem harness exists, synthetic smoke datasets pass
+   - Real datasets NOT tested (must run against benchmark.jsonl from Python repo)
+   - Target: LongMemEval R@5 ≥ 96.6%, LoCoMo R@10 ≥ 60.3% (raw, no rerank)
+   - Impact: Without this, cannot claim .NET port achieves parity
+
+2. **End-to-end palace workflow**
+   - Tests cover individual components (backends, search, mining) in isolation
+   - No test validates: `init → mine → search → recall` full cycle
+   - Missing: state propagation across layers (embedder → backend → search)
+   - Impact: Core product workflow untested in integration
+
+3. **CLI command execution**
+   - 10 CLI parsing tests only (args validated but commands not run)
+   - Missing: `mempalacenet init`, `mempalacenet mine`, `mempalacenet search` actually work
+   - Missing: error cases (invalid paths, permission errors, malformed files)
+   - Impact: Users cannot verify CLI works before v0.1
+
+**High-Priority Gaps (improves quality pre-release):**
+
+4. **LlmReranker unit tests** — interface defined, implementation exists, zero coverage
+5. **Error recovery** — no tests for embedder failures, backend crashes, dimension mismatches
+6. **Performance baseline** — micro-benchmarks exist (EmbeddingThroughput, VectorQueryLatency) but no CI gates or trending
+7. **MCP end-to-end** — tool discovery works, no e2e client test (can MCP client call tools and get results?)
+
+**Medium-Priority Gaps (post-v0.1):**
+
+8. **Code coverage reporting** — add Coverlet to CI, set ≥80% gate
+9. **Integration tests with agents** — palace + knowledge graph + agent diary all together
+10. **Regression baseline** — save micro-benchmark results, compare on every build
+
+**Files analyzed:**
+- 23 test files, 150 tests across 9 projects
+- Benchmarks: `LongMemEvalBenchmarkSmokeTests`, `MetricsTests`, `DatasetLoaderTests`
+- CI: `.github/workflows/ci.yml` runs build + test, no coverage/perf gates
+- Docs: `docs/benchmarks.md` specifies parity targets but not validation procedure
+
+**Recommendations for v0.1:**
+1. **MUST:** Run real benchmark (pick one dataset, validate Recall@5 or R@10 is within 5pp of Python target)
+2. **MUST:** Add CLI e2e test (init + mine 1 file + search + verify results)
+3. **SHOULD:** Add LlmReranker unit tests (mock IChatClient, verify ranking logic)
+4. **SHOULD:** Document manual validation steps (which datasets to use, expected ranges)

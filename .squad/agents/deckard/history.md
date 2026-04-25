@@ -78,3 +78,31 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 ```
 
 **Status:** ✅ Committed (58e7eba), pushed to main.
+
+---
+
+### 2026-04-25: Roadmap Audit — Missing Work Assessment
+
+**Summary:** Conducted comprehensive audit of project state vs. roadmap. All phases complete/progressing; 3 process/doc gaps identified.
+
+**Findings:**
+
+1. **Process Gaps:**
+   - CI workflow only runs on `v*` tags + manual dispatch (should run on main pushes + PRs)
+   - 5 decisions in inbox (.squad/decisions/inbox/) pending formal merge to main decisions.md
+
+2. **Documentation Discrepancies:**
+   - README + CHANGELOG claim "29 MCP tools" but only 7 implemented (python reference has 29; .NET v0.1 targets 7)
+   - README quick start includes `mempalacenet wake-up` which is not yet implemented (documented as post-v0.1 in PLAN)
+
+3. **Forward-Looking Work (Post-v0.1, not blockers):**
+   - MCP tool expansion (7 → 29 tools, Phase 11+)
+   - BM25 keyword search (currently token overlap, Phase 11+)
+   - Real dataset integration (synthetic fixtures for CI now, real datasets post-v0.1)
+   - Vector store upgrade (sqlite-vec/Qdrant, Phase 12+)
+
+**Status:** ✅ v0.1.0 Architecturally complete. Build green (150/150 tests), Phase 9 in progress. Three <1-hour fixes recommended before tag: CI workflow, docs accuracy, quick start validation.
+
+**Audit Report:** `.squad/agents/deckard/roadmap-audit-2026-04-25.md`
+
+**Status:** ✅ Completed, ready for Bruno review.
