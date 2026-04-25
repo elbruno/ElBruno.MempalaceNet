@@ -210,3 +210,87 @@
 **Implication for Agents:** Real Microsoft Agent Framework integration (Phase 8 v2) now part of formal record. Tool wiring via AIFunctionFactory.Create() with palace_search + kg_query verified. Next phase work (e.g., Phase 11 MCP tool expansion) can reference these decisions directly.
 
 **Status:** All major decisions merged and deduplicated. No conflicts. Ready for v0.1.0 release coordination.
+
+
+### 2026-04-25: NuGet Publishing Documentation
+**What:** Prepared comprehensive NuGet publishing documentation and verified package metadata across all projects.
+- Reviewed all 11 .csproj files in src/ directory (10 publishable packages + 1 test project).
+- Verified consistent metadata in `src/Directory.Build.props`:
+  - Version: 0.1.0-preview.1 (all packages)
+  - Author: Bruno Capuano
+  - License: MIT
+  - Repository: https://github.com/elbruno/mempalacenet
+  - Tags: ai;agents;memory;rag;mcp;dotnet;embeddings;palace
+- Created `docs/PUBLISHING.md` with step-by-step NuGet publishing guide:
+  - Prerequisites (nuget.org account, API key setup)
+  - Package metadata overview (10 packages: 8 libraries + 2 CLI tools)
+  - Publishing workflow (pack, validate, push)
+  - Verification steps and troubleshooting
+  - Dependency order for publishing (Core → Backends/AI → Search/KG → Mining → Mcp → Agents → CLI tools)
+- Created `PUBLISHING_CHECKLIST.md` in repo root as quick reference:
+  - Pre-flight checks (tests, build, version)
+  - Build & pack commands
+  - Publish commands (individual and batch)
+  - Post-publish verification steps
+  - Common issues and solutions
+- Committed with `📝 Add NuGet publishing guide and checklist` (commit 2b1a57a).
+
+**Key findings:**
+1. **Package structure:** 10 publishable packages:
+   - 8 libraries: Core, Backends.Sqlite, Ai, Search, KnowledgeGraph, Mining, Mcp, Agents
+   - 2 CLI tools: `mempalacenet`, `mempalacenet-bench` (configured with `PackAsTool=true`)
+   - 1 test project: `MemPalace.Tests` (marked `IsPackable=false`)
+2. **Metadata consistency:** All packages share common metadata via `Directory.Build.props`, with each .csproj providing unique `PackageId` and `Description`.
+3. **Publishing order matters:** Due to inter-package dependencies, Core should be published first, followed by Backends/AI, then higher-level packages (Search, KG, Mining), then Mcp, then Agents, and finally CLI tools.
+4. **Documentation includes:** API key setup, validation tools (`dotnet-validate`), troubleshooting for common errors (401 Unauthorized, package already exists, indexing delays).
+
+**Learnings:**
+- NuGet package metadata centralization via `Directory.Build.props` is clean and maintainable — all packages share common author/license/version/tags.
+- .NET CLI tools require `PackAsTool=true` and `ToolCommandName` properties — already correctly configured for both CLI packages.
+- Package validation (`dotnet validate package local`) is recommended before publishing to catch metadata issues early.
+- NuGet indexing takes 10-15 minutes after upload; packages are visible immediately in account but may delay in search results.
+- Preview versions use semver format: `0.1.0-preview.1` (appropriate for initial release).
+
+**Next steps:** Ready for first NuGet publish when Bruno gives the green light. All metadata verified, documentation complete.
+
+
+## 2026-04-25: Launch Story & Adoption Content
+**What:** Created comprehensive launch story (docs/LAUNCH_STORY.md) for driving MemPalace.NET adoption across GitHub, DEV.to, and HackerNews.
+
+**Content structure (~1850 words):**
+- **Hook (100 words):** Positioned the AI memory problem (hallucination, context loss) and MemPalace.NET as the local-first .NET solution.
+- **What Is MemPalace.NET (600 words):** Architecture overview, hierarchical organization (palace/wings/rooms/drawers), memory problem solved with real customer support use case.
+- **Code walkthrough:** Full end-to-end example showing initialization, mining, semantic search, agent diary integration, and MCP server setup.
+- **Feature showcase (400 words):** Semantic embeddings, knowledge graph, MCP integration, local-first design, .NET 10 tooling.
+- **Getting started (300 words):** CLI installation, 5-minute quickstart, links to examples and documentation.
+- **Call to action:** GitHub star, try examples, report issues, contribute, community showcase.
+
+**Optimization for target platforms:**
+- **GitHub:** Clear headings, code blocks, emojis (🧠🏰✨), architecture diagram in ASCII, direct repo/doc links.
+- **DEV.to:** Technical but accessible (mid-level engineers), real-world use case, strong narrative flow.
+- **HackerNews:** Strong technical hook ("Your AI agent forgot..."), no marketing fluff, concrete code examples, local-first privacy angle.
+
+**Key messaging:**
+1. **Problem-first:** LLMs can't remember → hallucinations, lost context across sessions.
+2. **Solution:** MemPalace.NET = local semantic memory with hierarchical organization.
+3. **Differentiation:** .NET-first (Python had all the tools), local-first (no cloud), M.E.AI integration (zero vendor lock-in).
+4. **Social proof:** Production-ready v0.1.0, 152 passing tests, Microsoft Agent Framework support.
+
+**Learnings:**
+- Launch content needs strong hook — first sentence must grab attention (HackerNews/DEV.to readers scroll fast).
+- Real-world use case (customer support agent) grounds abstract concepts in relatable problems.
+- Code-first approach works for developer audiences — show, don't just tell.
+- Multiple CTAs increase conversion: star repo, try examples, contribute, spread the word.
+- Emojis aid scannability on GitHub/DEV.to but should be natural, not forced.
+- Technical credibility: specific metrics (152 tests, 384-dim vectors, sub-100ms queries) matter.
+
+**Distribution strategy recommendations:**
+1. **GitHub README:** Add "📖 Read the Launch Story" badge linking to LAUNCH_STORY.md.
+2. **DEV.to:** Publish verbatim with canonical URL to GitHub (SEO-friendly).
+3. **HackerNews:** Submit as "Show HN: MemPalace.NET – Local-first AI memory for .NET" with link to launch story.
+4. **Twitter/X:** Thread format: problem → solution → code snippet → CTA (link to story).
+5. **Reddit:** r/dotnet, r/MachineLearning (cross-post with context).
+6. **LinkedIn:** Bruno's network — professional angle (enterprise AI memory solutions).
+
+**Next steps:** Bruno to review, publish to DEV.to, coordinate HN/Reddit/social launch timing for maximum reach.
+
