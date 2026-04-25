@@ -81,6 +81,35 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 ---
 
+### 2026-04-25: Roadmap Audit & v0.1.0 Release Readiness (Cross-Agent)
+
+**Task:** Conduct full audit of project scope vs. delivered work. All 10 phases accounted for. Question: missing or untracked work?
+
+**Audit Results:**
+- ✅ Phases 0-10 delivered (8 complete, 2 in progress)
+- ✅ 150/150 tests passing, solid coverage
+- ✅ Architecture complete for v0.1.0
+- ⚠️ 4 gaps identified (none blocking, all fixable)
+
+**Process Gaps (Low Impact):**
+1. **CI Workflow**: Build+test only on tags (needs main + PR triggers) — 5 min fix
+2. **Decisions Inbox**: 5 files pending merge to formal record — 15 min cleanup (Scribe handles in this session)
+
+**Documentation Discrepancies (Medium Impact):**
+1. **MCP Tool Count**: README/CHANGELOG say "29 tools" but only 7 delivered in v0.1 — 2 min fix
+2. **Wake-up Command**: Listed in quick start but not implemented — 10 min fix
+
+**Recommendations:**
+- **Blocking:** Fix CI workflow, README tool count, remove wake-up command
+- **Non-blocking:** Merge decisions inbox (organizational cleanup)
+- **Status:** v0.1.0 ready after 3 small fixes (<1 hour total)
+
+**Full Audit Report:** `.squad/agents/deckard/roadmap-audit-2026-04-25.md`
+
+**Key Quote:** "v0.1.0 is ready for tagging. Three small fixes (<1 hour total) are strongly recommended before tag creation."
+
+**Scribe Status:** Decisions merged (inbox → decisions.md), inbox files deleted, orchestration logs created.
+
 ### 2026-04-25: Roadmap Audit — Missing Work Assessment
 
 **Summary:** Conducted comprehensive audit of project state vs. roadmap. All phases complete/progressing; 3 process/doc gaps identified.

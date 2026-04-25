@@ -186,3 +186,17 @@
 - Don't bail on a NuGet package without verifying the conflict — check build output, not assumptions.
 
 **Next up:** Integrate with real LLM providers (OpenAI, Azure OpenAI, Ollama), test end-to-end agent workflows with real models, implement agent-to-agent communication.
+
+### 2026-04-25: Cross-Agent Update — Agent Framework & MCP Reviewed in Decisions Merge
+
+**Context:** Scribe session processed all pending decisions. Roy's Phase 7 (MCP v1.2.0 stable, stdio transport, 7 tools) and Phase 8 (Microsoft.Agents.AI 1.3.0 real integration) decisions formally recorded.
+
+**Key Decisions Archived:**
+1. **Phase 7 (Roy — MCP):** ModelContextProtocol v1.2.0 stable, 7 tools (palace read/write, KG ops), stdio transport, SSE deferred
+2. **Phase 8 (Roy — Agent Framework v2):** Restored Microsoft.Agents.AI 1.3.0 after verification (package is stable, initial removal was premature)
+3. **Phase 9 (Bryant — Benchmarks):** Interface-based harness, JSONL streaming, BenchmarkDotNet micro-benchmarks, synthetic CI fixtures
+4. **Phase 10 (Deckard — Release):** NuGet metadata consolidated, README rewritten, CHANGELOG/RELEASE docs, CI pack job
+
+**Implication for Agents:** Real Microsoft Agent Framework integration (Phase 8 v2) now part of formal record. Tool wiring via AIFunctionFactory.Create() with palace_search + kg_query verified. Next phase work (e.g., Phase 11 MCP tool expansion) can reference these decisions directly.
+
+**Status:** All major decisions merged and deduplicated. No conflicts. Ready for v0.1.0 release coordination.
