@@ -678,3 +678,133 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ Analysis complete. Document delivered. Awaiting Bruno's decision on skill creation.
 
+---
+
+### 2026-04-25: v0.6.0 Roadmap Prioritization
+
+**Task:** Analyze Post-v0.5.0 roadmap items and prioritize for v0.6.0 release. Define phase decomposition, success criteria, skill positioning impact, and effort estimates.
+
+**Context:**
+- v0.5.0-preview.1 LIVE on NuGet (10 packages, 152/152 tests passing)
+- Skill publishing analysis complete: MemPalace.NET = STRONG candidate
+- README fixes done (version, About Author, samples link)
+- Current roadmap items: sqlite-vec, BM25, LongMemEval R@5, wake-up
+
+**Strategic Framework:**
+
+**Priority Ranking (P0 → P2):**
+1. **P0: sqlite-vec Integration** (⭐⭐⭐⭐⭐) — Enterprise blocker, O(n) doesn't scale >100K vectors
+2. **P0: BM25 Keyword Search** (⭐⭐⭐⭐⭐) — Search quality, hybrid credibility, industry standard
+3. **P1: LongMemEval R@5 Validation** (⭐⭐⭐⭐) — Credibility signal, depends on sqlite-vec + BM25
+4. **P2: Conversation Wake-Up** (⭐⭐) — Nice-to-have, defer to v0.7.0 "Agent Workflows"
+
+**v0.6.0 Theme:** *Production-Grade Search & Validation*
+
+**Phase Decomposition:**
+- **Phase 11 (Weeks 1-4):** sqlite-vec Integration (Tyrell, parallel start)
+- **Phase 12 (Weeks 2-6):** BM25 Search (Roy, parallel with Phase 11)
+- **Phase 13 (Weeks 5-8):** LongMemEval R@5 (Bryant, blocked by 11+12)
+- **Phase 14 (Week 9):** Release + Skill Publishing (Deckard)
+
+**Critical Path:** sqlite-vec + BM25 → R@5 validation → skill publication
+
+**Success Criteria:**
+
+**sqlite-vec:**
+- ✅ `MemPalace.Backends.SqliteVec` NuGet package published
+- ✅ >10x speedup at 100K vectors vs. brute-force
+- ✅ Migration guide tested (SQLite → sqlite-vec)
+- ✅ README: "Production backend available"
+
+**BM25:**
+- ✅ BM25 scorer integrated into `HybridSearchService`
+- ✅ Integration tests: semantic + BM25 + RRF fusion
+- ✅ Backward compatible (UseBm25 toggle)
+- ✅ docs/search.md: "When to use BM25"
+
+**LongMemEval R@5:**
+- ✅ R@5 ≥91% (parity with upstream Python)
+- ✅ Benchmark results committed (reproducible)
+- ✅ README badge: "LongMemEval R@5: 91%+"
+- ✅ docs/benchmarks/results.md: full metrics
+
+**wake-up:**
+- ⚠️ DEFERRED to v0.7.0 (4+ sprints, not critical path)
+
+**Skill Positioning Impact:**
+
+| Item | Skill Value | Teaching Pattern | Enterprise Signal |
+|------|-------------|------------------|-------------------|
+| sqlite-vec | ⭐⭐⭐⭐⭐ | "Production RAG with ANN" | ✅ Scales to millions |
+| BM25 | ⭐⭐⭐⭐⭐ | "Hybrid semantic + lexical" | ✅ Industry standard |
+| R@5 | ⭐⭐⭐ | "Validated performance" | ✅ Benchmark credibility |
+| wake-up | ⭐⭐ | "Multi-turn context" | ⚠️ Nice demo only |
+
+**v0.6.0 Enables Skill Patterns:**
+1. **Production RAG Pipeline** (sqlite-vec + BM25 + reranking)
+2. **Hybrid Search Fusion** (when to use semantic vs. lexical)
+3. **RAG Quality Validation** (benchmark-driven development)
+
+**Effort Estimates:**
+- sqlite-vec: Medium (2-3 sprints), High confidence, Risk: .NET wrapper availability
+- BM25: Small-Medium (1-2 sprints), High confidence, Risk: Low (well-understood)
+- LongMemEval: Medium (2-3 sprints), Medium confidence, Risk: R@5 tuning if <91%
+- wake-up: Large (4+ sprints), Medium confidence, Risk: UX design + LLM costs
+
+**Total v0.6.0:** 5-8 sprints (10-16 weeks realistic)
+
+**Key Dependencies:**
+- sqlite-vec + BM25 can run PARALLEL (no blocking)
+- R@5 validation BLOCKED by sqlite-vec + BM25 (needs production search)
+- wake-up deferred (doesn't block skill publication or enterprise adoption)
+
+**Risk Assessment:**
+- sqlite-vec .NET wrapper not available: MEDIUM risk → P/Invoke fallback (add 2 weeks)
+- R@5 < 91% on first run: MEDIUM risk → Tune parameters (add 1-2 weeks)
+- BM25 breaks existing search: LOW risk → Regression tests + feature flag
+- Timeline overrun >16 weeks: LOW risk → De-scope R@5, ship sqlite-vec + BM25 only
+
+**Strategic Rationale:**
+- v0.5.0 ships preview features (O(n) search, token overlap)
+- v0.6.0 delivers production-grade foundation (ANN + BM25)
+- Skill publishing after v0.6.0 = stronger value prop ("production RAG patterns")
+- Enterprise adoption requires scalable search (sqlite-vec) + quality (BM25)
+- Benchmark validation adds credibility (R@5 ≥91% = trusted recommendation)
+
+**Alternate Scenarios:**
+1. **Fast-Track Skill:** Publish after sqlite-vec + BM25 (Week 5), defer R@5 to post-publish
+2. **Enterprise Focus:** Replace sqlite-vec with Qdrant backend (better for managed deployments)
+3. **Minimal v0.6.0:** Ship BM25 only (<6 weeks), defer sqlite-vec + R@5 to v0.7.0
+
+**Recommendation:** Focus v0.6.0 on production-grade search foundation (sqlite-vec + BM25 + R@5 validation). Defer wake-up to v0.7.0 "Agent Workflows" theme. Skill publishing AFTER v0.6.0 for maximum credibility.
+
+**Deliverable:** Comprehensive roadmap prioritization document (21.7 KB) created at `.squad/decisions/inbox/deckard-roadmap-prioritization.md`
+
+**Document Structure:**
+- Executive Summary (recommendation + v0.6.0 theme)
+- Priority Ranking (P0-P2 with rationale)
+- Phase Decomposition (4 phases, weeks, dependencies)
+- Success Criteria (what "done" means per item)
+- Skill Positioning Impact (teaching patterns + enterprise signals)
+- Effort Estimates (sprints, confidence, risk factors)
+- Dependencies & Blockers (parallel work, critical path)
+- Alternate Scenarios (3 fallback strategies)
+- Risk Assessment (4 major risks + mitigations)
+- Next Steps (immediate actions, sprint planning, communication)
+
+**Key Insights:**
+1. **Order matters:** Production search *before* benchmarks (R@5 on toy search = meaningless)
+2. **Parallel opportunities:** sqlite-vec + BM25 can run concurrently (weeks 1-6)
+3. **Skill timing:** Publishing after v0.6.0 = stronger value prop (not "preview" features)
+4. **Deferred work:** wake-up doesn't block adoption or skill publication (v0.7.0 scope)
+5. **Enterprise lens:** Scalability (sqlite-vec) + quality (BM25) = adoption criteria
+
+**For Bruno:**
+- Review roadmap prioritization document (10 sections, comprehensive analysis)
+- Approve v0.6.0 scope: sqlite-vec + BM25 + R@5 validation
+- Next step: Team kick-off (Tyrell: sqlite-vec research, Roy: BM25 library eval, Bryant: dataset verification)
+- Timeline: 9-12 weeks realistic (optimistic: 9, pessimistic: 16)
+- Skill publishing: Plan for post-v0.6.0 (production-grade components ready)
+
+**Status:** ✅ Roadmap prioritization complete. Document delivered. Ready for team review + sprint planning.
+

@@ -131,3 +131,76 @@
 | 2026-04-25 | Rachael | CLI Help Documentation | Add EntityRef format "type:id" to command descriptions and help text. Include examples in kg add/query/timeline help. Update docs/cli.md. | Users need format guidance for temporal knowledge graph operations. Current error message is good but proactive documentation better. |
 | 2026-04-25 | Bryant | Benchmark Format Alignment (Phase 11) | Phase 11 task: Align MemPalace.Benchmarks dataset loader with upstream LongMemEval format (JSON array vs JSONL). Support configurable embedders (local/ollama). Mirror question-rebuild semantics. | Required for authentic parity claim. Current blocker: JSONL schema ≠ upstream format. Deferred to Phase 11 roadmap (post-v0.1). |
 
+### 2026-04-25: v0.6.0 Roadmap Prioritization
+
+**By:** Deckard (Lead / Architect)
+
+**What:** Post-v0.5.0 strategic planning recommends v0.6.0 focus on **production-grade search foundation** (sqlite-vec + BM25) with **credibility validation** (LongMemEval R@5). Defer conversation wake-up to v0.7.0.
+
+**Rationale:** 
+- v0.5.0 now LIVE on NuGet (10 packages, 152/152 tests passing)
+- Enterprise adoption requires production-grade hybrid search (current: O(n) brute-force + token overlap)
+- Benchmark validation adds credibility (target: ≥91% R@5 parity with upstream Python)
+- Skill publishing depends on production-grade components
+
+**v0.6.0 Scope (Phases 11-14):**
+
+| Phase | Item | Owner | Duration | Success Criteria |
+|-------|------|-------|----------|-----------------|
+| 11 | sqlite-vec Integration | Tyrell | 2-3 sprints | NuGet pkg published, >10x speedup at 100K vectors, migration guide tested |
+| 12 | BM25 Keyword Search | Roy | 1-2 sprints | BM25 scorer integrated, hybrid search validated, backward compatible |
+| 13 | LongMemEval R@5 Validation | Bryant | 2-3 sprints | R@5 ≥91% parity, reproducible, benchmark results committed |
+| 14 | Release + Skill Publishing | Deckard | 1 sprint | v0.6.0 on NuGet, Copilot Skill live, MCP listing submitted |
+
+**Timeline:** 9-12 weeks (optimistic: 9, realistic: 12, pessimistic: 16)
+
+**Critical Path:** sqlite-vec + BM25 (parallel Weeks 1-4) → LongMemEval (Weeks 5-8) → Release (Week 9)
+
+**Deferrals:** Conversation wake-up deferred to v0.7.0 ("Agent Workflows" phase)
+
+---
+
+### 2026-04-25: Copilot Skill Strategy
+
+**By:** Rachael (CLI/UX Dev)
+
+**What:** Implement GitHub Copilot Skill skeleton for MemPalace.NET, deferring marketplace submission to v1.0 but establishing infrastructure now.
+
+**Rationale:**
+1. Early documentation benefits current users before marketplace listing
+2. 5 core teaching patterns demonstrate high-value integration scenarios
+3. Copilot instructions enable better AI code generation today
+4. Phased rollout aligns skill publishing with production-grade search (v0.6.0 for maturity → v1.0 for marketplace)
+5. Community feedback can evolve pattern library based on adoption
+
+**Deliverables (Status: ✅ Complete on feature/copilot-skill-setup):**
+
+| File | Size | Content |
+|------|------|---------|
+| `.github/copilot-skill.yaml` | 3.8 KB | Manifest with 6 capabilities, pattern library references, prerequisites |
+| `docs/COPILOT_SKILL.md` | 7.3 KB | Overview, 4 example use cases with code snippets, integration options |
+| `docs/SKILL_PATTERNS.md` | 18.3 KB | 5 teaching patterns (Semantic Search, Agent Diaries, KG Queries, Local-First Privacy, Hybrid Search) |
+| `docs/SKILL_INTEGRATION.md` | 5.7 KB | 5-phase publishing roadmap, milestones table, RACI matrix |
+| `.github/copilot-instructions.md` | 10.7 KB | Copilot agent guidance, code generation hints, constraints, best practices |
+| `README.md` | updated | Link to COPILOT_SKILL.md for discoverability |
+
+**5 Teaching Patterns:**
+1. Semantic Search for Context Injection (RAG workflow)
+2. Agent Diaries for State Persistence (multi-turn memory)
+3. Knowledge Graph Queries (temporal entity relationships)
+4. Local-First Privacy (ONNX embeddings offline)
+5. Hybrid Search with Reranking (semantic + keyword + LLM fusion)
+
+**Publishing Timeline:**
+- Documentation + patterns: Ready now (v0.5.0)
+- MCP polish: v0.6.0
+- Marketplace submission: v1.0 (post-keyword-search, preview suffix drops)
+
+**Branch Status:** feature/copilot-skill-setup (7c76cbe) — awaiting Deckard review before push
+
+**Outstanding TODOs:**
+- [ ] Icon generation (non-blocking)
+- [ ] Pattern testing (Phase 2, v0.6)
+- [ ] MCP auto-discovery (Phase 3, v0.6)
+- [ ] Registry submission (Phase 4, v1.0)
+

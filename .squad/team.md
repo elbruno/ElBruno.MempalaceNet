@@ -33,3 +33,18 @@
 1. **Constant pushes** — commit and push to GitHub frequently after every meaningful unit of work.
 2. **Docs location** — all documentation under `docs/`. Only `README.md` and `LICENSE` may sit at repo root.
 3. **Code location** — all source code under `src/`.
+
+## Strategic Focus (Post-v0.5.0)
+
+**Current Phase:** v0.6.0 Planning (Production-Grade Search Foundation)
+
+**Skill Status:** Copilot Skill skeleton ready; publishing post-v0.6.0 (v1.0 marketplace submission)
+
+**Next Milestone:** Approve v0.6.0 scope (sqlite-vec + BM25 + R@5)
+
+**v0.6.0 Roadmap (Phases 11-14):**
+- **Phase 11 (Weeks 1-4):** sqlite-vec integration (Tyrell) + BM25 keyword search (Roy, parallel)
+- **Phase 13 (Weeks 5-8):** LongMemEval R@5 validation (Bryant) — *depends on 11 + 12*
+- **Phase 14 (Week 9):** v0.6.0 release + Copilot Skill go-live (Deckard)
+
+**Timeline:** 9-12 weeks (realistic estimate with tuning buffer)
