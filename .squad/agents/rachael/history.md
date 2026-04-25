@@ -84,3 +84,53 @@
 - Fix agents list command DI resolution issue
 - Verify command name consistency across docs (mempalace vs mempalacenet)
 - Consider pre-creating sample .mempalace directory in init command
+
+### 2026-04-25: Fixed agents list DI Resolution
+
+**Issue:** `agents list` command failed with "Could not resolve type 'MemPalace.Cli.Commands.Agents.AgentsListCommand'"
+
+**Root Cause:** Complex DI dependency chain issue:
+1. `AgentsListCommand` requires `IAgentRegistry`
+2. `IAgentRegistry` factory creates `IMemPalaceAgentBuilder`
+3. `IMemPalaceAgentBuilder` constructor has optional parameters including `IAgentDiary`
+4. .NET DI always tries to resolve optional constructor parameters, triggering `IAgentDiary` factory
+5. `IAgentDiary` factory conditionally creates `BackedByPalaceDiary` or `InMemoryAgentDiary`
+6. Factory checked for `ISearchService` availability using `sp.GetService<ISearchService>()`
+7. `ISearchService` registration uses `sp.GetRequiredService<IBackend>()` in its factory
+8. **Exception thrown:** "No service for type 'MemPalace.Core.Backends.IBackend' has been registered"
+
+**The Fix:**
+1. **Created `InMemoryAgentDiary` stub** - Simple in-memory implementation for when backend/embedder not available
+2. **Fixed `IAgentDiary` factory** - Check for `IBackend` and `IEmbedder` directly (don't call GetService on ISearchService since it throws)
+3. **Fixed `IMemPalaceAgentBuilder` factory** - Conditionally resolve ISearchService only if IBackend available
+4. **Added `AgentsListSettings`** - Changed from `AsyncCommand` to `AsyncCommand<AgentsListSettings>` to match Spectre.Console.Cli pattern
+5. **Cached ServiceProvider** - TypeRegistrar now caches the built ServiceProvider for reuse
+
+**Technical Deep Dive:**
+- Optional constructor parameters in .NET DI are NOT truly optional - DI still attempts resolution
+- When a factory throws during GetService, the exception bubbles up even if you were only checking availability
+- Solution: Check for prerequisite services first, then only call GetService if safe
+- This pattern now works: backend/embedder/search optional → agents work without full infrastructure
+
+**Testing:**
+- ✅ `mempalacenet agents list` now works - shows "No agents found. Create agent YAML files in .mempalace/agents/"
+- ✅ Output is clean and well-formatted using Spectre.Console
+- ✅ Command exits cleanly with code 0
+- ✅ No IChatClient required for listing (uses EmptyAgentRegistry as designed)
+
+**Key Learnings:**
+1. .NET DI GetService can throw if the factory itself calls GetRequiredService
+2. Always check transitive dependencies when designing optional service patterns
+3. Debugging with file logging (resolver.log) was crucial to trace through the DI resolution chain
+4. Spectre.Console.Cli commands with dependencies should use `AsyncCommand<TSettings>` pattern
+
+**Files Changed:**
+- `src/MemPalace.Agents/ServiceCollectionExtensions.cs` - Added InMemoryAgentDiary, fixed factories
+- `src/MemPalace.Cli/Commands/Agents/AgentsListCommand.cs` - Added settings class, updated signature
+- `src/MemPalace.Cli/Infrastructure/TypeRegistrar.cs` - Cache ServiceProvider for reuse
+- `src/MemPalace.Cli/Infrastructure/TypeResolver.cs` - Simplified to use GetService consistently
+
+**Impact:**
+- All agent commands now work without requiring backend/embedder/search configuration
+- Clean separation: agent listing works with minimal deps, agent execution requires full stack
+- Pattern established for other commands that need optional service dependencies
