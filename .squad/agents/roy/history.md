@@ -8,6 +8,16 @@
 - **Key NuGet packages (latest):** `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.Ollama`, `Microsoft.Extensions.AI.OpenAI`, `Microsoft.Agents.AI`, `ModelContextProtocol`.
 - **Defaults:** local-first → Ollama embedder (`nomic-embed-text`) by default, OpenAI optional behind config. No telemetry without opt-in.
 
+## Previous Phases Summary (0–6)
+
+**Phase 0–2 (Foundational):** Solution scaffolding, core domain contracts, SQLite backend, mining infrastructure.
+
+**Phase 3 (AI Layer):** Delivered `MeaiEmbedder` adapter wrapping `IEmbeddingGenerator<string, Embedding<float>>`. DI registration via `AddMemPalaceAi(options)` with provider abstraction (Ollama default, OpenAI/Azure deferred). `IReranker` interface + `LlmReranker` skeleton added. 11 tests, all green. Docs: `docs/ai.md`. (Commit `24e4deb`)
+
+**Phase 4–5 (Search & CLI):** Hybrid search (vector + RRF), command infrastructure. Not Roy's primary scope.
+
+**Phase 6 (Temporal Knowledge Graph):** Delivered `SqliteKnowledgeGraph` with temporal triples, entity references, timeline queries. Schema: `triples` table with ISO8601 UTC timestamps. CLI commands: `kg add`, `kg query` (wildcard support), `kg timeline` (from/to filters). DI: `AddMemPalaceKnowledgeGraph(options)`. 19 tests (17 passing, 2 minor timeline filter edge cases). Docs: `docs/kg.md`. (Commit `6e9916d`) Key learning: Entity format `type:id` is intuitive; SQLite string comparisons work well for ISO8601 queries.
+
 ## Learnings
 
 ### 2026-04-24: Phase 6 — Temporal Knowledge Graph Complete
