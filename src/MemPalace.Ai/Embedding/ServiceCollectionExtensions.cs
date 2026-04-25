@@ -39,12 +39,14 @@ public static class ServiceCollectionExtensions
                 "local" => throw new InvalidOperationException(
                     "Local provider must be registered using AddLocalEmbeddings before AddMemPalaceAi. " +
                     "This will be fixed in the final implementation."),
-                "ollama" => CreateOllamaGenerator(options),
+                "ollama" => throw new InvalidOperationException(
+                    "Ollama provider is temporarily unavailable in v0.6.0 (stable release). " +
+                    "Please use 'Local' provider instead. Ollama support will be restored in the next preview release."),
                 "openai" => CreateOpenAiGenerator(options),
                 "azureopenai" => CreateAzureOpenAiGenerator(options),
                 _ => throw new InvalidOperationException(
                     $"Unknown embedding provider: {options.Provider}. " +
-                    "Supported: Local, Ollama, OpenAI, AzureOpenAI.")
+                    "Supported: Local, OpenAI, AzureOpenAI. (Ollama available in preview versions)")
             };
         });
 
@@ -72,6 +74,9 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    // Ollama support temporarily removed for stable v0.6.0 release
+    // Will be restored when Microsoft.Extensions.AI.Ollama has a stable version
+    /*
     private static IEmbeddingGenerator<string, Embedding<float>> CreateOllamaGenerator(
         EmbedderOptions options)
     {
@@ -80,6 +85,7 @@ public static class ServiceCollectionExtensions
             options.Model);
         return client;
     }
+    */
 
     private static IEmbeddingGenerator<string, Embedding<float>> CreateOpenAiGenerator(
         EmbedderOptions options)

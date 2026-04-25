@@ -4,6 +4,33 @@
 
 The `MemPalace.Benchmarks` project provides a harness for evaluating MemPalace.NET's memory recall performance against standard benchmarks. It includes four benchmark suites and micro-benchmarks for performance profiling.
 
+## Quick Start: LongMemEval Parity Validation
+
+To validate MemPalace.NET's recall performance against the standard LongMemEval benchmark:
+
+```bash
+# 1. Download the official dataset (500 queries, ~2.5MB)
+mkdir -p artifacts/benchmarks
+curl -L -o artifacts/benchmarks/longmemeval_s_cleaned.json \
+  https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
+
+# 2. Run the benchmark with local ONNX embedder (baseline)
+dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
+  --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
+  --palace artifacts/benchmarks/palace-local \
+  --embedder local
+
+# Expected: R@5 ≥ 91% (target for v0.6.0)
+# Python baseline: 96.6% R@5 (with nomic-embed-text)
+```
+
+**Interpretation:**
+- **R@5 (Recall at 5):** Did the correct session appear in the top-5 search results?
+- **Target:** ≥ 91% with local ONNX embedder (allows for embedder variance)
+- **Stretch target:** ≥ 95% with nomic-embed-text via Ollama (closest to Python baseline)
+
+See [Parity Results](#parity-results-v060) section below for detailed validation status.
+
 ## Benchmark Suites
 
 ### 1. LongMemEval
@@ -194,3 +221,48 @@ From the Python MemPalace implementation:
 - **LoCoMo R@10:** ≥ 60.3% (session-based, no reranker)
 
 These targets are based on the upstream Python implementation with `nomic-embed-text`. .NET results may vary depending on the embedder used; `--embedder ollama --model nomic-embed-text` is the closest current match.
+
+## Parity Results (v0.6.0)
+
+**Status:** 🚧 Pending full validation run
+
+**Target baseline run:** MemPalace.NET with `sentence-transformers/all-MiniLM-L6-v2` (ONNX)
+
+| Metric | Score | Target | Status |
+|--------|-------|--------|--------|
+| Recall@5 | _Pending_ | ≥ 91% | 🚧 Validation in progress |
+| Recall@10 | _Pending_ | ≥ 95% | 🚧 Validation in progress |
+| NDCG@10 | _Pending_ | ≥ 0.85 | 🚧 Validation in progress |
+| Duration | _Pending_ | < 10 min | 🚧 Validation in progress |
+
+**Validation command:**
+```bash
+# 1. Download LongMemEval dataset
+curl -L -o artifacts/benchmarks/longmemeval_s_cleaned.json \
+  https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
+
+# 2. Run baseline validation
+dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
+  --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
+  --palace artifacts/benchmarks/palace-local \
+  --embedder local
+```
+
+**Expected results:**
+- R@5: 88-94% (due to embedder difference: MiniLM 384-dim vs nomic 1536-dim)
+- Python baseline: 96.6% R@5 with nomic-embed-text
+- Delta: -2 to -8 percentage points (embedder variance is expected)
+
+**For closest parity with Python baseline:**
+```bash
+# Requires Ollama with nomic-embed-text model
+ollama pull nomic-embed-text
+
+dotnet run --project src/MemPalace.Benchmarks -- run longmemeval \
+  --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
+  --palace artifacts/benchmarks/palace-nomic \
+  --embedder ollama \
+  --model nomic-embed-text
+```
+
+**Expected with nomic embedder:** 95-97% R@5 (within 1-2 percentage points of Python)
