@@ -22,7 +22,7 @@ MemPalace.NET v0.1.0 is the first public release of the .NET port of [MemPalace]
 - **MemPalace.Mining** — filesystem + conversation transcript miners
 - **MemPalace.Search** — semantic, keyword, hybrid search + optional reranking
 - **MemPalace.KnowledgeGraph** — temporal triples with validity windows
-- **MemPalace.Mcp** — Model Context Protocol server (29 tools)
+- **MemPalace.Mcp** — Model Context Protocol server (7 tools)
 - **MemPalace.Agents** — Agent Framework integration + per-agent diaries
 
 ### Tools

@@ -38,7 +38,7 @@ mempalacenet search "latest React patterns" --hybrid --rerank
 mempalacenet mcp --palace ~/my-palace
 
 # Run an agent
-mempalacenet agents run scribe --wing research
+mempalacenet agents run scribe --wing research --mode local
 ```
 
 ## Architecture
@@ -53,7 +53,7 @@ MemPalace.NET is a modular .NET solution with clear separation of concerns:
 | **MemPalace.Mining** | Content ingestion: filesystem miner + conversation transcript miner |
 | **MemPalace.Search** | Semantic, keyword, and hybrid search with optional LLM reranking |
 | **MemPalace.KnowledgeGraph** | Temporal entity-relationship graph with validity windows |
-| **MemPalace.Mcp** | Model Context Protocol server (29 tools) |
+| **MemPalace.Mcp** | Model Context Protocol server (7 tools in v0.1) |
 | **MemPalace.Agents** | Microsoft Agent Framework integration + per-agent diaries |
 | **MemPalace.Cli** | Spectre.Console CLI (`mempalacenet` command) |
 | **MemPalace.Benchmarks** | LongMemEval / LoCoMo / ConvoMem benchmarks + R@5 testing |

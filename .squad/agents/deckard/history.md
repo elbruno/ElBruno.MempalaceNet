@@ -158,4 +158,56 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 - ✅ No history rewrites, no amended commits
 - ✅ Working tree remains clean
 
+### 2026-04-25: Push to GitHub
+
+**Task:** Inspect git state, working tree, and remotes. Push any unpushed commits to origin/main.
+
+**Findings:**
+- Branch: `main`, ahead of origin/main by 2 commits
+- Working tree: clean (no uncommitted changes)
+- Commits to push:
+  1. `1219572` Scribe: Merge decisions inbox and cross-agent updates (2026-04-25)
+  2. `4e453ea` Roy: Summarize Phase 0-6 to Core Context for history size management
+- Remote: `https://github.com/elbruno/mempalacenet.git` (fetch/push)
+
+**Action:** Executed `git push origin main`. Push succeeded; 18 objects transferred, 8.60 KiB compressed.
+
+**Result:** 
+- ✅ Both commits now live on origin/main
+- ✅ HEAD (main) now at 4e453ea, in sync with origin/main
+- ✅ No history rewrites, no amended commits
+- ✅ Working tree remains clean
+
 **Status:** ✅ Pushed to main successfully. Project state synchronized to GitHub.
+
+---
+
+### 2026-04-25: Docs Cleanup & CI Decision
+
+**Task:** Execute repo-local non-code tasks: docs cleanup, CI decision capture, squad decisions merge, commit all changes.
+
+**Scope Covered:**
+
+1. **Branch:** Created `deckard/docs-ci-cleanup` for this session's work.
+
+2. **Docs Accuracy (Critical):**
+   - Fixed README.md: "29 tools" → "7 tools in v0.1" (audit found this overstatement)
+   - Fixed docs/RELEASE-v0.1.md: Same tool count correction
+   - Removed `mempalacenet wake-up` from README quick start (not yet implemented; listed in Phase 11)
+   - Rationale: Documentation must match shipped features, not future roadmap
+
+3. **CI Strategy Formalized:**
+   - Bruno's directive: Keep CI limited to version tags to save GitHub Actions minutes
+   - Decision: CI already implements this (tag-triggered + manual dispatch)
+   - No workflow changes needed; decision documented in `.squad/decisions.md` under "CI & Operations"
+   - Rationale: Tag releases are sufficient validation point; local dev builds OK for PRs
+
+4. **Squad Decisions:**
+   - Merged inbox directive into decisions.md formal record
+   - Created `.squad/decisions/deckard-docs-ci.md` (this session's decision record)
+   - Deleted merged inbox file
+
+**Status:** ✅ All four tasks completed. Changes staged for commit (not pushed).
+
+**Key Learning:** Audit precision → caught overstated tool count early. Documentation accuracy is release-critical.
+

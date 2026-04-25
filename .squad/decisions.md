@@ -107,3 +107,10 @@
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+## CI & Operations
+
+| Date | Agent | Scope | Decision | Rationale |
+|------|-------|-------|----------|-----------|
+| 2026-04-25 | Deckard | GitHub Actions minutes optimization | Keep CI job triggers limited to version tags (`v*`) and manual dispatch only. No scheduled or main branch pushes. | User directive: save minutes. Tag-triggered packing is sufficient for release validation. Development builds can be tested locally. |
+
