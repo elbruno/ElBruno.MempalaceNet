@@ -180,3 +180,32 @@
 
 **Status:** ✅ v0.1.0 ready for tagging. Parity validation scope clarified for Phase 11+.
 
+---
+
+### 2026-04-25 — Benchmark Compilation Fixes
+
+**Task:** Fix 4 compilation errors blocking `dotnet build src/`:
+1. LongMemEvalBenchmark.cs(80,81,96): CS0103 — 'Metrics' does not exist in current context
+2. DatasetLoader.cs(221): CS8604 — Possible null reference for CorpusDocument.Id parameter
+3. DatasetLoaderTests.cs(130): CS8602 — Dereference of possibly null reference
+
+**Root causes:**
+- Missing `using MemPalace.Benchmarks.Scoring;` directive in LongMemEvalBenchmark.cs
+- Nullable flow analysis couldn't prove sessionId was non-null in ternary expression
+- Test code missing null-forgiving operator on second array access after null assertion
+
+**Fixes:**
+1. Added `using MemPalace.Benchmarks.Scoring;` to LongMemEvalBenchmark.cs header
+2. Added null-coalescing operator `?? $"session_{index}"` to CorpusDocument constructor call in DatasetLoader.cs:221
+3. Added null-forgiving operator `!` to CorpusDocuments[0] access in DatasetLoaderTests.cs:130
+
+**Verification:**
+- `dotnet build src/` passes cleanly (Build succeeded in 11.2s)
+- All 10 projects build without errors or warnings
+- Commit: 266e750 "🧪 Fix benchmark compilation errors (Metrics + null check)"
+
+**Pattern insight:**
+- When working across multiple namespaces in benchmarking/testing code, always verify all required using directives are present
+- C# nullable reference analysis can be conservative with ternary expressions — explicit null-coalescing makes intent clear to compiler
+- After null-forgiving operator `!` on collection access, subsequent accesses to same collection still need `!` for compiler satisfaction
+
