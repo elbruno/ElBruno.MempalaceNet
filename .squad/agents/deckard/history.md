@@ -270,3 +270,45 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 **Status:** ✅ v0.1.0 release-ready (pending 1 test fix). All Phase 9 & 10 scope delivered.
 
+---
+
+### 2026-04-25: v0.1.0 Release Execution
+
+**Task:** Tag v0.1.0 at current HEAD, push to GitHub, create release with prepared notes.
+
+**Actions:**
+1. Created git tag v0.1.0 at current HEAD (67 objects, 21.79 KiB compressed)
+2. Pushed tag to origin: `git push origin v0.1.0` ✅
+3. Created GitHub release: `gh release create v0.1.0 --title "v0.1.0: MemPalace.NET Preview" --notes-file docs\RELEASE-v0.1.md` ✅
+4. Release URL: https://github.com/elbruno/mempalacenet/releases/tag/v0.1.0
+
+**Release Package Contents:**
+- 8 core libraries (Core, Backends.Sqlite, Ai, Mining, Search, KG, Mcp, Agents)
+- 2 CLI tools (mempalacenet, mempalacenet-bench)
+- 129 tests, all green
+- Full documentation suite (10 docs/)
+- CHANGELOG.md + RELEASE-v0.1.md
+
+**Key Deliverables:**
+- Local-first ONNX embeddings (ElBruno.LocalEmbeddings)
+- Microsoft.Extensions.AI integration
+- Microsoft Agent Framework support
+- Model Context Protocol server (7 tools)
+- Temporal knowledge graph
+- Semantic + hybrid search with optional reranking
+- SQLite backend with upgrade path
+
+**Release Notes Strategy:**
+- Used pre-drafted docs/RELEASE-v0.1.md (comprehensive highlights, getting started, known limitations)
+- Accurate tool count (7 tools in v0.1, not 29)
+- Known limitations documented (O(n) vector search, token overlap keyword search, no wake-up command)
+- Links to full documentation tree
+- Clear roadmap for post-v0.1 work
+
+**Coordination:**
+- Bryant's benchmark harness (Phase 9) delivered; parity validation deferred to Phase 11 per decision log
+- Rachael can proceed with CLI hardening independently
+- Release unblocked by test fixes (129/129 green)
+
+**Status:** ✅ v0.1.0 released to GitHub. Tag pushed, release notes live. NuGet publish workflow will trigger on tag push.
+
