@@ -43,6 +43,8 @@ This directory contains promotional materials for the MemPalace.NET v0.5.0 relea
 
 ### Image Generation
 
+**Status:** Images are pending manual generation. See `images/README.md` for current status and generation instructions.
+
 See `image-generation-prompts.md` for:
 - Detailed prompts for each image type
 - Recommended tools (DALL-E 3, Midjourney, Stable Diffusion)
@@ -88,7 +90,11 @@ docs/promotional-materials/images/
 
 ## Publishing Checklist
 
-- [ ] Generate all images using prompts
+- [ ] Generate all images using prompts (see `images/README.md`)
+  - [ ] NuGet logo (1024x1024)
+  - [ ] LinkedIn hero banner (1200x628)
+  - [ ] Twitter card (1024x512)
+  - [ ] Blog header (1200x400)
 - [ ] Test social media posts for character count
 - [ ] Review blog post for accuracy and completeness
 - [ ] Add code examples to blog post

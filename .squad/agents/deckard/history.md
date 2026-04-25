@@ -379,3 +379,123 @@ Examples are ready for users to clone and run. Each demonstrates a distinct capa
 
 **Status:** ✅ Committed to feature/ui-docs-benchmark-polish branch. Ready for PR/merge to main.
 
+---
+
+### 2026-04-25: v0.5.0 Release Execution
+
+**Task:** Execute complete v0.5.0 release workflow: merge feature branch, tag release, create GitHub release, trigger NuGet publishing workflow.
+
+**Context:**
+- Repository renamed: mempalacenet → ElBruno.MempalaceNet
+- Source branch: feature/ui-docs-benchmark-polish (2 commits ahead)
+- Target branch: main
+- Version: 0.5.0 (already bumped in Directory.Build.props)
+- Publishing: GitHub Actions workflow (publish.yml) configured to trigger on release tag
+- User configured NuGet trusted publisher for "ElBruno.MempalaceNet"
+
+**Actions Executed:**
+
+1. **Build & Test Verification:**
+   - Full solution build: ✅ Succeeded (all 12 projects compiled)
+   - Test suite: ✅ 152/152 tests passed (4.6s duration)
+   - Version verification: ✅ Directory.Build.props shows `<Version>0.5.0</Version>`
+
+2. **Feature Branch Merge:**
+   - Switched to main branch (was up to date with origin/main)
+   - Merged feature/ui-docs-benchmark-polish with --no-ff (created merge commit)
+   - Merge commit: 9a5dd7c
+   - Changes: 60 files changed, 6,223 insertions (+), 103 deletions (-)
+   - Key additions:
+     * GitHub community standards (.github/ files: COC, CONTRIBUTING, SECURITY, PR template, issue templates)
+     * Publishing workflow (.github/workflows/publish.yml)
+     * Promotional materials (docs/promotional-materials/ with blog post, social posts, image prompts)
+     * Launch story and publishing guide (docs/LAUNCH_STORY.md, docs/PUBLISHING.md)
+     * Repository rename report (docs/REPOSITORY_RENAME_REPORT.md)
+     * Example projects (examples/SimpleMemoryAgent, examples/SemanticKnowledgeGraph)
+     * Benchmark enhancements (LongMemEval corpus rebuild support, dataset loader improvements)
+   - Pushed merge commit to origin/main ✅
+
+3. **Release Tag Creation:**
+   - Created annotated tag: v0.5.0
+   - Tag message: "Release v0.5.0: Professional NuGet Edition" with complete feature list
+   - Pushed tag to origin ✅
+   - Remote location: https://github.com/elbruno/ElBruno.MempalaceNet.git (repository renamed)
+
+4. **GitHub Release Creation:**
+   - Created release via `gh release create v0.5.0`
+   - Title: "v0.5.0 - Professional NuGet Edition"
+   - Release notes: Comprehensive overview with key features, getting started, publishing notes
+   - Published: 2026-04-25T18:12:40Z
+   - Release URL: https://github.com/elbruno/ElBruno.MempalaceNet/releases/tag/v0.5.0 ✅
+
+5. **Publishing Workflow Verification:**
+   - Workflow: "Publish to NuGet" started automatically on release event
+   - Run ID: 24937358405
+   - Status: Running (workflow triggered successfully)
+   - Expected completion: 10-15 minutes (builds all packages, packs, publishes to NuGet.org)
+
+**Release Content Summary:**
+
+- **8 NuGet Libraries:**
+  1. MemPalace.Core (domain + storage interfaces)
+  2. MemPalace.Backends.Sqlite (SQLite backend)
+  3. MemPalace.Ai (M.E.AI integration)
+  4. MemPalace.Mining (file/conversation mining)
+  5. MemPalace.Search (semantic + hybrid search)
+  6. MemPalace.KnowledgeGraph (temporal knowledge graph)
+  7. MemPalace.Mcp (Model Context Protocol server)
+  8. MemPalace.Agents (Agent Framework integration)
+
+- **2 CLI Tools:**
+  1. mempalacenet (main CLI)
+  2. mempalacenet-bench (benchmark harness)
+
+- **Documentation:**
+  * Launch story with positioning, roadmap, adoption strategy
+  * Publishing guide with NuGet setup, trusted publisher, versioning
+  * Repository rename report with impact analysis
+  * Development guide, contributing guide, security policy
+  * Promotional materials (blog post, social posts, image generation prompts)
+
+- **Examples:**
+  * SimpleMemoryAgent (basic memory storage and semantic search)
+  * SemanticKnowledgeGraph (temporal relationships and entity extraction)
+
+**Key Technical Details:**
+
+- Target Framework: net10.0
+- Test Coverage: 152 tests passing (100% success rate)
+- Build Status: Clean build with no warnings/errors
+- Repository: Renamed to ElBruno.MempalaceNet (casing matches NuGet package naming)
+- Publishing: Automated via GitHub Actions on release tag (trusted publisher configured)
+- Merge Strategy: No-fast-forward merge preserves branch history
+
+**Post-Release Status:**
+
+- ✅ All changes merged to main
+- ✅ v0.5.0 tag pushed to GitHub
+- ✅ GitHub release created and published
+- ✅ Publishing workflow triggered (in progress)
+- ⏱️  NuGet packages will be available in 10-15 minutes (workflow completion time)
+
+**For Bruno:**
+
+v0.5.0 Release is live! The GitHub Actions workflow is currently building and publishing all 10 packages to NuGet.org. You can monitor progress at:
+- Release: https://github.com/elbruno/ElBruno.MempalaceNet/releases/tag/v0.5.0
+- Workflow: gh run watch 24937358405 (or check Actions tab on GitHub)
+
+Once workflow completes, packages will be available:
+```bash
+dotnet add package MemPalace.Core --version 0.5.0
+```
+
+**Learning:**
+
+- Repository rename requires updating remote URLs (git warns but pushes succeed)
+- No-fast-forward merge preserves complete feature branch history in main timeline
+- GitHub Actions release trigger works seamlessly with annotated tags
+- Trusted publisher configuration eliminates API key management (more secure)
+- Merge commit strategy important for audit trail on releases
+
+**Status:** ✅ v0.5.0 Release Complete. NuGet publishing workflow in progress.
+

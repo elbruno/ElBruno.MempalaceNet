@@ -240,3 +240,70 @@
 - Testing requirements explicit with conformance test pattern explained
 - Performance considerations surfaced early for developers choosing approaches
 - Ready for v0.1.0 public launch with full contributor onboarding
+
+### 2026-04-25: v0.5.0 Promotional Image Generation Setup
+
+**What:** Set up promotional images infrastructure for v0.5.0 NuGet launch. Created image directory and documentation for manual generation.
+
+**Context:**
+- Task: Generate 4 promotional images for NuGet launch using t2i CLI tool
+- Images needed: Logo (1024x1024), LinkedIn banner (1200x628), Twitter card (1024x512), Blog header (1200x400)
+- Detailed prompts exist in `docs/promotional-materials/image-generation-prompts.md`
+
+**Tool Investigation:**
+- ✅ t2i CLI tool is installed (`C:\Users\brunocapuano\.dotnet\tools\t2i.exe`)
+- ❌ Tool requires API key configuration for FLUX.2 Pro or MAI-Image-2 providers
+- ⚙️ Setup wizard prompts for API key before image generation
+- Decision: Use fallback approach (manual generation) since API keys not configured
+
+**Fallback Implementation:**
+1. Created `docs/promotional-materials/images/` directory
+2. Created `docs/promotional-materials/images/README.md` with:
+   - Status tracking for all 4 images (marked as ⏳ Pending)
+   - Complete generation instructions for multiple tools (DALL-E 3, Midjourney, t2i CLI)
+   - Temporary placeholder URLs for documentation
+   - Post-generation checklist
+3. Updated `docs/promotional-materials/README.md`:
+   - Added status reference to images/README.md
+   - Enhanced publishing checklist with specific image items
+
+**Image Generation Options Documented:**
+- **Option 1 (Recommended):** DALL-E 3 via ChatGPT Plus or OpenAI API
+- **Option 2:** Midjourney via Discord subscription
+- **Option 3:** t2i CLI after API key configuration
+- **Option 4:** Design tools (Figma, Canva, Adobe Firefly)
+
+**Temporary Placeholders:**
+Documented placeholder image URLs using via.placeholder.com with appropriate colors (#512BD4, #0078D4, etc.) for use while real images are generated.
+
+**Key Learnings:**
+1. t2i CLI tool exists but requires provider setup (not plug-and-play)
+2. Image generation is supplementary, not release-blocking
+3. Detailed prompts + multiple generation options > forced automation with unconfigured tools
+4. Fallback documentation is better than broken automation
+
+**Status:**
+- ✅ Image directory structure ready
+- ✅ Generation documentation complete
+- ⏳ Images need manual generation (4 total)
+- ⏳ Post-generation: commit images and update status
+
+**Next Actions:**
+1. Bruno or team member generates images using provided prompts
+2. Save images to `docs/promotional-materials/images/` with exact filenames
+3. Update `images/README.md` status markers (⏳ → ✅)
+4. Commit images to repository
+5. Images ready for NuGet package metadata and social media posts
+
+**Files Changed:**
+- `docs/promotional-materials/images/README.md` (created)
+- `docs/promotional-materials/README.md` (updated)
+
+**Technical Notes:**
+- t2i CLI uses interactive setup wizard with FLUX.2 Pro or MAI-Image-2 as default providers
+- Future automation possible with: `t2i configure` + environment variables for API keys
+- Current approach prioritizes release velocity over complete automation
+
+**Rationale:**
+Images enhance the v0.5.0 launch but aren't blocking for NuGet package functionality. Providing clear generation instructions with multiple tool options gives the team flexibility while maintaining momentum toward release.
+
