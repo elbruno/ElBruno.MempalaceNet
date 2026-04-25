@@ -1,10 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
 using MemPalace.Benchmarks.Core;
-using MemPalace.Backends.Sqlite;
-using MemPalace.Core.Backends;
-using MemPalace.Search;
-using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -29,6 +25,18 @@ internal sealed class RunAllCommand : Command<RunAllCommand.Settings>
         [CommandOption("--out")]
         [Description("Output JSON file for results")]
         public string? OutputFile { get; init; }
+
+        [CommandOption("--embedder")]
+        [Description("Embedder to use: deterministic, local, or ollama")]
+        public string Embedder { get; init; } = "deterministic";
+
+        [CommandOption("--model")]
+        [Description("Optional embedder model override")]
+        public string? Model { get; init; }
+
+        [CommandOption("--endpoint")]
+        [Description("Optional embedder endpoint override (used by Ollama)")]
+        public string? Endpoint { get; init; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
@@ -47,7 +55,7 @@ internal sealed class RunAllCommand : Command<RunAllCommand.Settings>
 
         var benchmarks = ListCommand.GetAllBenchmarks();
         var results = new List<BenchmarkResult>();
-        var services = BuildServices(settings.Palace);
+        var services = BenchmarkServiceBuilder.Build(settings.Embedder, settings.Model, settings.Endpoint);
 
         foreach (var benchmark in benchmarks)
         {
@@ -79,16 +87,6 @@ internal sealed class RunAllCommand : Command<RunAllCommand.Settings>
 
         return 0;
     }
-
-    private static IServiceProvider BuildServices(string palacePath)
-    {
-        var services = new ServiceCollection();
-        services.AddSingleton<IEmbedder>(new DeterministicEmbedder(384));
-        services.AddSingleton<IBackend>(sp => new SqliteBackend(palacePath));
-        services.AddSingleton<ISearchService, VectorSearchService>();
-        return services.BuildServiceProvider();
-    }
-
     private static void DisplayResult(BenchmarkResult result)
     {
         var table = new Table();

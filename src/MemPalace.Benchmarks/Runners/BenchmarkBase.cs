@@ -3,8 +3,6 @@ using MemPalace.Benchmarks.Core;
 using MemPalace.Benchmarks.Scoring;
 using MemPalace.Core.Backends;
 using MemPalace.Core.Model;
-using MemPalace.Mining;
-using MemPalace.Search;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MemPalace.Benchmarks.Runners;
@@ -20,35 +18,50 @@ public abstract class BenchmarkBase : IBenchmark
     protected const string DefaultCollection = "benchmark";
     protected const int DefaultTopK = 10;
 
-    public async Task<BenchmarkResult> RunAsync(BenchmarkContext ctx, CancellationToken ct = default)
+    public virtual async Task<BenchmarkResult> RunAsync(BenchmarkContext ctx, CancellationToken ct = default)
+    {
+        var items = await DatasetLoader.LoadAsync(ctx.DatasetPath, ctx.MaxItems, ct).ToListAsync(ct);
+        return await RunLoadedAsync(ctx, items, ct);
+    }
+
+    protected virtual async Task<BenchmarkResult> RunLoadedAsync(
+        BenchmarkContext ctx,
+        IReadOnlyList<DatasetItem> items,
+        CancellationToken ct)
     {
         var stopwatch = Stopwatch.StartNew();
-        
-        // Load dataset
-        var items = await DatasetLoader.LoadAsync(ctx.DatasetPath, ctx.MaxItems, ct).ToListAsync(ct);
-        
+
         // Get services
         var backend = ctx.Services.GetRequiredService<IBackend>();
         var embedder = ctx.Services.GetRequiredService<IEmbedder>();
-        var searchService = ctx.Services.GetRequiredService<ISearchService>();
+        var palace = CreatePalace(ctx);
 
         // Prepare collection
-        await PrepareCollectionAsync(backend, embedder, items, ct);
+        await PrepareCollectionAsync(backend, palace, ct);
 
         // Ingest memories
-        await IngestMemoriesAsync(backend, embedder, items, ct);
+        await IngestMemoriesAsync(backend, palace, embedder, items, ct);
 
         // Run queries
         var queryResults = new List<(DatasetItem Item, IReadOnlyList<string> Retrieved)>();
-        
+        await using var collection = await backend.GetCollectionAsync(palace, DefaultCollection, create: false, embedder, ct);
+
         foreach (var item in items)
         {
             if (string.IsNullOrWhiteSpace(item.Question))
                 continue;
 
-            var opts = new SearchOptions(TopK: DefaultTopK);
-            var hits = await searchService.SearchAsync(item.Question, DefaultCollection, opts, ct);
-            var retrievedIds = hits.Select(h => h.Id).ToList();
+            var queryEmbeddings = await embedder.EmbedAsync(new[] { item.Question }, ct);
+            var result = await collection.QueryAsync(
+                queryEmbeddings,
+                nResults: DefaultTopK,
+                include: IncludeFields.Distances,
+                ct: ct);
+
+            var retrievedIds = result.Ids.Count > 0
+                ? result.Ids[0].ToList()
+                : new List<string>();
+
             queryResults.Add((item, retrievedIds));
         }
 
@@ -94,21 +107,32 @@ public abstract class BenchmarkBase : IBenchmark
             ExtraMetrics: extraMetrics);
     }
 
+    protected virtual PalaceRef CreatePalace(BenchmarkContext ctx)
+    {
+        return new PalaceRef(
+            Id: $"{Name}-benchmark",
+            LocalPath: Path.GetFullPath(ctx.PalacePath),
+            Namespace: "benchmark");
+    }
+
     protected virtual async Task PrepareCollectionAsync(
         IBackend backend,
-        IEmbedder embedder,
-        IReadOnlyList<DatasetItem> items,
+        PalaceRef palace,
         CancellationToken ct)
     {
-        // Just create the collection - no need to drop since each run uses unique palace
-        var palace = new PalaceRef(
-            Id: Guid.NewGuid().ToString(),
-            LocalPath: Environment.CurrentDirectory,
-            Namespace: "benchmark");
+        try
+        {
+            await backend.DeleteCollectionAsync(palace, DefaultCollection, ct);
+        }
+        catch
+        {
+            // Fresh run path; nothing to delete.
+        }
     }
 
     protected abstract Task IngestMemoriesAsync(
         IBackend backend,
+        PalaceRef palace,
         IEmbedder embedder,
         IReadOnlyList<DatasetItem> items,
         CancellationToken ct);

@@ -90,7 +90,7 @@ public sealed class DatasetLoaderTests
     }
 
     [Fact]
-    public async Task LoadAsync_UpstreamLongMemEvalJsonArray_ThrowsJsonException()
+    public async Task LoadAsync_UpstreamLongMemEvalJsonArray_MapsFreshHaystackDataset()
     {
         var tempFile = Path.GetTempFileName();
         try
@@ -101,14 +101,33 @@ public sealed class DatasetLoaderTests
                     "question_id": "e47becba",
                     "question": "What degree did I graduate with?",
                     "answer": "Business Administration",
-                    "answer_session_ids": ["answer_280352e9"]
+                    "answer_session_ids": ["answer_280352e9"],
+                    "haystack_session_ids": ["answer_280352e9", "distractor"],
+                    "haystack_dates": ["2024-01-10", "2024-01-12"],
+                    "haystack_sessions": [
+                      [
+                        { "role": "user", "content": "I graduated with a Business Administration degree." },
+                        { "role": "assistant", "content": "That sounds useful." }
+                      ],
+                      [
+                        { "role": "user", "content": "I bought a new lamp today." }
+                      ]
+                    ]
                   }
                 ]
                 """);
 
-            var act = () => DatasetLoader.LoadAsync(tempFile).ToListAsync().AsTask();
+            var items = await DatasetLoader.LoadAsync(tempFile).ToListAsync();
 
-            await act.Should().ThrowAsync<JsonException>();
+            items.Should().HaveCount(1);
+            items[0].Id.Should().Be("e47becba");
+            items[0].ExpectedAnswer.Should().Be("Business Administration");
+            items[0].RelevantMemoryIds.Should().Equal("answer_280352e9");
+            items[0].Metadata["source_format"].Should().Be("longmemeval-upstream");
+            items[0].CorpusDocuments.Should().NotBeNull();
+            items[0].CorpusDocuments.Should().HaveCount(2);
+            items[0].CorpusDocuments![0].Id.Should().Be("answer_280352e9");
+            items[0].CorpusDocuments![0].Document.Should().Contain("Business Administration degree");
         }
         finally
         {

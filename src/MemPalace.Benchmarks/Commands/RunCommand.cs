@@ -1,9 +1,5 @@
 using System.ComponentModel;
 using MemPalace.Benchmarks.Core;
-using MemPalace.Backends.Sqlite;
-using MemPalace.Core.Backends;
-using MemPalace.Search;
-using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -18,7 +14,7 @@ internal sealed class RunCommand : Command<RunCommand.Settings>
         public string Name { get; init; } = "";
 
         [CommandOption("--dataset")]
-        [Description("Path to the dataset file (JSONL)")]
+        [Description("Path to the dataset file (JSONL or supported JSON array)")]
         public string Dataset { get; init; } = "";
 
         [CommandOption("--palace")]
@@ -28,6 +24,18 @@ internal sealed class RunCommand : Command<RunCommand.Settings>
         [CommandOption("--max")]
         [Description("Maximum number of dataset items to process")]
         public int? MaxItems { get; init; }
+
+        [CommandOption("--embedder")]
+        [Description("Embedder to use: deterministic, local, or ollama")]
+        public string Embedder { get; init; } = "deterministic";
+
+        [CommandOption("--model")]
+        [Description("Optional embedder model override")]
+        public string? Model { get; init; }
+
+        [CommandOption("--endpoint")]
+        [Description("Optional embedder endpoint override (used by Ollama)")]
+        public string? Endpoint { get; init; }
     }
 
     public override int Execute(CommandContext context, Settings settings)
@@ -59,7 +67,7 @@ internal sealed class RunCommand : Command<RunCommand.Settings>
             return 1;
         }
 
-        var services = BuildServices(settings.Palace);
+        var services = BenchmarkServiceBuilder.Build(settings.Embedder, settings.Model, settings.Endpoint);
         var ctx = new BenchmarkContext(settings.Dataset, settings.Palace, services, settings.MaxItems);
 
         var result = AnsiConsole.Status()
@@ -70,15 +78,6 @@ internal sealed class RunCommand : Command<RunCommand.Settings>
 
         DisplayResult(result);
         return 0;
-    }
-
-    private static IServiceProvider BuildServices(string palacePath)
-    {
-        var services = new ServiceCollection();
-        services.AddSingleton<IEmbedder>(new DeterministicEmbedder(384));
-        services.AddSingleton<IBackend>(sp => new SqliteBackend(palacePath));
-        services.AddSingleton<ISearchService, VectorSearchService>();
-        return services.BuildServiceProvider();
     }
 
     private static void DisplayResult(BenchmarkResult result)
