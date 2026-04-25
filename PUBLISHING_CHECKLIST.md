@@ -2,6 +2,24 @@
 
 Quick reference for publishing MemPalace.NET packages to NuGet.org.
 
+## 🚀 Automated Publishing (Recommended)
+
+The repository has a **GitHub Actions workflow** (`.github/workflows/publish.yml`) for automated publishing.
+
+### Option 1: Publish on Release
+1. Create a GitHub Release with a tag (e.g., `v0.5.0`)
+2. Workflow triggers automatically
+3. Packages are built, tested, and published to NuGet.org
+
+### Option 2: Manual Dispatch
+1. Go to Actions → Publish to NuGet → Run workflow
+2. Optionally specify version (or leave empty to use Directory.Build.props)
+3. Workflow builds, tests, and publishes
+
+**Prerequisites:**
+- Repository secret `NUGET_USER` must be set in Settings → Secrets → Actions
+- NuGet OIDC authentication configured (NuGet/login@v1 action)
+
 ## 📋 Pre-Flight Checks
 
 - [ ] All tests passing: `dotnet test --configuration Release`

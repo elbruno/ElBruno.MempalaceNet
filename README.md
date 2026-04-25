@@ -1,6 +1,6 @@
 # MemPalace.NET
 
-[![CI](https://github.com/elbruno/mempalacenet/actions/workflows/ci.yml/badge.svg)](https://github.com/elbruno/mempalacenet/actions/workflows/ci.yml)
+[![CI](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml/badge.svg)](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![NuGet](https://img.shields.io/badge/NuGet-v0.1.0--preview.1-blue.svg)](https://www.nuget.org/packages/mempalacenet)
 [![Tests](https://img.shields.io/badge/Tests-152%2F152%20passing-brightgreen.svg)](#)
