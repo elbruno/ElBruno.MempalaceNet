@@ -164,3 +164,19 @@
 - `src/MemPalace.Benchmarks/Commands/RunAllCommand.cs`
 - `src/MemPalace.Benchmarks/Runners/BenchmarkBase.cs`
 - `src/MemPalace.Tests/Benchmarks/DatasetLoaderTests.cs`
+
+---
+
+### 2026-04-25: Cross-Agent Update — Deckard Roadmap Audit & v0.1.0 Release Status
+
+**Input:** Deckard completed comprehensive roadmap audit. All 10 phases delivered/in progress. 150/150 tests passing. v0.1.0 ready after 3 small doc fixes (<1 hour).
+
+**Doc fixes completed by Deckard:**
+1. README: "29 tools" → "7 tools in v0.1" (now accurate)
+2. RELEASE-v0.1.md: tool count corrected
+3. README quick start: removed `wake-up` command (not yet implemented, Phase 11)
+
+**Impact on Bryant's work:** Parity benchmarks correctly deferred to Phase 11+. v0.1 release accurate and ready. Synthetic smoke test suite validates harness mechanics correctly (no real model/dataset dependency needed for CI).
+
+**Status:** ✅ v0.1.0 ready for tagging. Parity validation scope clarified for Phase 11+.
+

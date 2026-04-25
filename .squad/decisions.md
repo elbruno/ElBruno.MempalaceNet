@@ -114,3 +114,9 @@
 |------|-------|-------|----------|-----------|
 | 2026-04-25 | Deckard | GitHub Actions minutes optimization | Keep CI job triggers limited to version tags (`v*`) and manual dispatch only. No scheduled or main branch pushes. | User directive: save minutes. Tag-triggered packing is sufficient for release validation. Development builds can be tested locally. |
 
+## Phase 9+ (Post-v0.1)
+
+| Date | Agent | Scope | Decision | Rationale |
+|------|-------|-------|----------|-----------|
+| 2026-04-25 | Bryant | Parity Benchmark Requirements | Do not claim reproducible .NET parity until MemPalace.Benchmarks can: (1) ingest upstream formats directly, (2) run with configurable real embedder, (3) mirror upstream semantics. Current blocker: JSONL schema mismatch, DeterministicEmbedder hardcoded. | Upstream datasets (LongMemEval JSON array) don't match current loader expectations. Harness semantic (shared collection vs per-question rebuild) differs from reference. Claim requires end-to-end validation with real embeddings. |
+

@@ -211,3 +211,15 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 **Key Learning:** Audit precision → caught overstated tool count early. Documentation accuracy is release-critical.
 
+---
+
+### 2026-04-25: Cross-Agent Update — Bryant Parity Benchmark Result
+
+**Input:** Bryant completed real parity benchmark attempt. Downloaded upstream LongMemEval dataset; real-data run failed at loader boundary due to schema mismatch (upstream: JSON array; harness: JSONL). CLI hardcodes DeterministicEmbedder; semantic mismatch (shared collection vs per-question rebuild).
+
+**Key Decision:** Do not claim reproducible .NET parity until harness supports: (1) upstream dataset format ingestion, (2) configurable real embedder, (3) upstream semantics. Blocker documented in .squad/decisions.md (Phase 9+ post-v0.1).
+
+**Impact on v0.1.0:** No impact. Documentation correctly reflects "7 tools v0.1" and removed wake-up command from quick start. Parity targets remain post-v0.1 roadmap goal.
+
+**Status:** ✅ v0.1.0 ready. Parity claim deferred to Phase 11.
+
