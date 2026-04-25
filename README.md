@@ -2,12 +2,12 @@
 
 [![CI](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml/badge.svg)](https://github.com/elbruno/ElBruno.MempalaceNet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![NuGet](https://img.shields.io/badge/NuGet-v0.1.0--preview.1-blue.svg)](https://www.nuget.org/packages/mempalacenet)
+[![NuGet](https://img.shields.io/badge/NuGet-v0.5.0--preview.1-blue.svg)](https://www.nuget.org/packages/mempalacenet)
 [![Tests](https://img.shields.io/badge/Tests-152%2F152%20passing-brightgreen.svg)](#)
 
 A **.NET port** of [MemPalace](https://github.com/MemPalace/mempalace) — local-first AI memory that stores everything verbatim, searches semantically, and organizes knowledge through a *wings / rooms / drawers* hierarchy. No cloud calls by default, powered by ONNX embeddings.
 
-> 🎯 **Status:** Preview — v0.1.0 is production-ready for local development and experimentation.
+> 🎯 **Status:** Preview — v0.5.0-preview.1 is production-ready for local development and experimentation.
 
 ## Why MemPalace.NET?
 
@@ -18,11 +18,20 @@ A **.NET port** of [MemPalace](https://github.com/MemPalace/mempalace) — local
 - **Temporal knowledge graph** — track entity relationships with validity windows
 - **SQLite backend** — managed BLOB storage, cosine similarity, clear upgrade path to vector stores
 
+## Examples & Getting Started
+
+Ready to dive in? Check out our **[runnable examples](./examples/README.md)**:
+
+- 🔰 **[Simple Memory Agent](./examples/SimpleMemoryAgent/)** — Core memory operations with semantic search
+- 🕸️ **[Semantic Knowledge Graph](./examples/SemanticKnowledgeGraph/)** — Temporal entity relationships
+
+See [examples/README.md](./examples/README.md) for detailed walkthroughs and learning paths.
+
 ## Quick Start
 
 ```bash
 # Install the CLI tool
-dotnet tool install -g mempalacenet --version 0.1.0-preview.1
+dotnet tool install -g mempalacenet --version 0.5.0-preview.1
 
 # Initialize a new palace
 mempalacenet init ~/my-palace
@@ -109,12 +118,21 @@ dotnet pack src/ -c Release
 ## Credits
 
 - **Original project:** [MemPalace](https://github.com/MemPalace/mempalace) (Python)
-- **Author:** [Bruno Capuano](https://github.com/elbruno)
 - **Default embedder:** [ElBruno.LocalEmbeddings](https://github.com/elbruno/LocalEmbeddings) (ONNX)
 
 ## License
 
 [MIT](LICENSE) — same spirit as the original MemPalace.
+
+## 👋 About the Author
+
+**Made with ❤️ by [Bruno Capuano (ElBruno)](https://github.com/elbruno)**
+
+- 📝 **Blog**: [elbruno.com](https://elbruno.com)
+- 📺 **YouTube**: [youtube.com/elbruno](https://youtube.com/elbruno)
+- 🔗 **LinkedIn**: [linkedin.com/in/elbruno](https://linkedin.com/in/elbruno)
+- 𝕏 **Twitter**: [twitter.com/elbruno](https://twitter.com/elbruno)
+- 🎙️ **Podcast**: [notienenombre.com](https://notienenombre.com)
 
 ---
 
