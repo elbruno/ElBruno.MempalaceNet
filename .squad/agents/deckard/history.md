@@ -880,3 +880,51 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ Proposal created. Awaiting Bruno's approval before filing GitHub issues.
 
+---
+
+### 2026-04-27: v0.7.0 GitHub Issues Filed
+
+**Task:** File 10 GitHub issues for v0.7.0 roadmap approved by Bruno (Ollama defer, MCP SSE → v0.8.0, local-only wake-up summarization, skill marketplace v0.7.0).
+
+**v0.7.0 Approved Decisions:**
+1. **Ollama:** Defer restoration until M.E.AI.Ollama stable release (doesn't block v0.7.0, track separately)
+2. **MCP SSE:** Defer to v0.8.0 (scope management: prioritize agent workflows over transport)
+3. **wake-up Summarization:** Local LLM only (privacy-first, pluggable architecture for future cloud option)
+4. **Skill Marketplace:** Target v0.7.0 publication (MemPalace patterns skill ready for community)
+
+**Issues Filed (10 total):**
+
+**P0 Issues (Critical Path):**
+- #2: wake-up context summarization (squad:tyrell) — Summarize last N memories using local LLM
+- #3: Fix agents list DI bug (squad:rachael) — EmptyAgentRegistry fallback for CLI command
+- #4: Restore Ollama support (squad:roy, blocked) — Re-add when M.E.AI.Ollama stable released
+
+**P1 Issues (Secondary, Parallel):**
+- #5: MCP SSE transport (squad:roy, future:v0.8) — HTTP hosting for non-stdio clients (deferred)
+- #6: MCP tool expansion (squad:roy) — 7 → 15 tools with write operations
+- #7: CLI UX polish (squad:rachael) — Progress bars, error messages, EntityRef docs
+- #8: R@5 regression tests (squad:bryant) — Prevent search quality degradation in CI
+- #9: Skill pattern documentation (squad:deckard) — Update docs for wake-up & new MCP tools
+
+**P2 Issues (Polish, Lower Priority):**
+- #10: Integration test coverage (squad:bryant) — MCP + agents e2e scenarios
+- #11: v0.7.0 Release prep (squad:deckard) — Changelog, docs, NuGet publish
+
+**Deliverable:** `.squad/decisions/inbox/deckard-v070-github-issues.md` (issue URLs + summary)
+
+**Key Insights:**
+1. **Strategic Deferral:** MCP SSE and Ollama correctly deferred (don't block core agent workflows)
+2. **P0 Focus:** DI fix + wake-up + Ollama foundation = minimal viable agent support
+3. **Parallel Opportunity:** P1 MCP tools + UX + regression tests can run concurrently with P0
+4. **Release Gate:** All 10 issues tied to v0.7.0 publication (GitHub release + NuGet)
+5. **Skill Timing:** Pattern documentation ready for skill creation after release
+
+**Team Readiness:**
+- Tyrell: P0 wake-up task + P1 MCP SSE (defer work item)
+- Roy: P0 Ollama foundation + P1 MCP expansion (7→15 tools)
+- Rachael: P0 DI fix + P1 UX polish (parallel with others)
+- Bryant: P1 CI regression tests + P2 integration tests
+- Deckard: P1 skill pattern docs + P2 release prep
+
+**Status:** ✅ 10 GitHub issues filed (P0/P1/P2). Team ready to start workstreams. Ollama support blocked pending M.E.AI.Ollama stable release (track separately).
+
