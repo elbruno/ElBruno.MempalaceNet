@@ -356,3 +356,266 @@
 
 **Consistency:** ✅ All version numbers consistent, ✅ Links verified, ✅ Structure preserved (no breaking changes).
 
+---
+
+## v0.7.0 (Agent Workflows & Integrations) — Ready for Implementation
+
+**Phase:** 12-15 (8-10 weeks estimated)  
+**Target:** Production-ready agent integration with MCP SSE transport, skill marketplace CLI, LLM-powered wake-up, and custom embedder support.
+
+### 2026-04-27: Architectural Validation Report — v0.7.0 Kickoff
+
+**By:** Deckard (Lead / Architect)  
+**Status:** ✅ ALL 5 DECISIONS CLEAN — Ready for implementation
+
+**What:** Comprehensive validation of 5 architectural decisions for v0.7.0 confirms all are architecturally sound, properly scoped, and aligned with MemPalace (Python) principles. No scope creep detected. Dependency mapping clear. All decisions leverage existing M.E.AI abstractions.
+
+**Validation Results:**
+- ✅ **Alignment with MemPalace (Python):** All patterns respect local-first defaults, pluggable models, and opt-in patterns from Python reference.
+- ✅ **Dependencies:** Zero circular dependencies. No blocking relationships. All workstreams can proceed in parallel.
+- ✅ **Scope Boundaries:** Clean. No creep. Deferrals are intentional and documented (marketplace UI → v1.0; Ollama → v0.7.0-preview when stable).
+- ✅ **M.E.AI Leverage:** Abstractions used correctly (IEmbedder, IChatClient). Zero lock-in. Pluggable providers throughout.
+
+**v0.6.0 Dependencies:** All v0.6.0 foundations present (sqlite-vec, BM25, M.E.AI abstractions, Agent Framework integration, Copilot Skill PR #1). No v0.6.0 changes needed.
+
+**Risk Mitigations Assigned:**
+- M.E.AI.Ollama stays preview: Roy handles workaround (use ONNX); defer to v0.8.0
+- SSE transport complexity: Roy implements stdio first; SSE iterative if overruns
+- wake-up LLM costs: Tyrell makes summarizer pluggable; default to no-op if IChatClient missing
+- Skill publishing CLI: Rachael keeps MVP scope clear
+
+**Recommendation:** 🟢 STATUS: CLEAN — PROCEED WITH IMPLEMENTATION. No blockers. Teams can begin work immediately on parallel workstreams.
+
+---
+
+### 2026-04-27: Decision 1 — Embedder Pluggability (ICustomEmbedder)
+
+**By:** Deckard (Architectural Validation)  
+**Owner:** Tyrell (Core Engine Dev)  
+**Scope:** v0.7.0 Phase 13
+
+**What:** Add `ICustomEmbedder` interface to ElBruno.LocalEmbeddings NuGet package. Users maintain custom embedder; MemPalace.NET implements via factory pattern. Single source of truth prevents scope creep.
+
+**Key Points:**
+- ✅ Factory pattern already used in `MemPalace.Ai/Embedding/ServiceCollectionExtensions.cs`
+- ✅ Single source of truth (ElBruno.LocalEmbeddings) = user responsibility
+- ✅ Unblocks GitHub issue #43 (custom embedder support)
+- ✅ No conflict with M.E.AI abstractions
+
+**Effort:** 3-5 days  
+**Risk Level:** Low
+
+---
+
+### 2026-04-27: Decision 2 — MCP SSE Transport Architecture
+
+**By:** Tyrell (Core Engine Dev)  
+**Scope:** v0.7.0 Phase 12
+
+**What:** HTTP Server-Sent Events transport for real-time bi-directional JSON-RPC communication without stdio. Preserves existing stdio transport for CLI/desktop clients while opening web/embedded use cases (Copilot CLI, Jupyter, browser IDEs).
+
+**Architecture:**
+- **Dual-Transport:** Implement HTTP SSE alongside stdio. Auto-detect via CLI flag or env var.
+- **Backward Compatible:** Stdio remains default. No breaking changes to MCP tool signatures.
+- **Endpoints:** `POST /mcp/init` (handshake), `GET /mcp/stream/{sessionId}` (SSE stream), `POST /mcp/request/{sessionId}` (JSON-RPC requests).
+- **Session Management:** Token-based isolation (32-byte hex, 60-min expiry). No user auth yet (single-user local setups).
+- **Message Format:** Standard JSON-RPC 2.0 wrapped in SSE frames.
+- **Transport Abstraction:** New `IMcpTransport` interface (stdio vs SSE).
+
+**Implementation Path:**
+1. IMcpTransport abstraction + refactor stdio (1-2 days)
+2. HTTP SSE endpoint + session mgmt (2-3 days)
+3. CLI flag + config (0.5 days)
+4. Tests + docs (3-4 days)
+5. **Total: 7-11 days (realistic: 9 days)**
+
+**Key Technologies:**
+- Use `HttpListener` for v0.7.0 (built-in, zero deps). Kestrel migration optional in v0.8.0.
+- ModelContextProtocol v1.2.0 (already present).
+- System.Net.HttpListener (built-in Windows, .NET built-in abstraction).
+
+**Success Criteria:**
+- [ ] `mempalacenet mcp --transport stdio` works (v0.6.0 behavior preserved)
+- [ ] `mempalacenet mcp --transport sse --port 3142` starts HTTP server
+- [ ] Copilot CLI connects to SSE endpoint and invokes palace_search
+- [ ] Session expires after 60 minutes idle
+- [ ] Connection loss + reconnect preserves memory state
+- [ ] No performance regression vs stdio (<5% latency delta)
+
+---
+
+### 2026-04-27: Decision 3 — Skill Marketplace CLI Design (MVP)
+
+**By:** Rachael (CLI/UX Dev)  
+**Scope:** v0.7.0 Phase 12
+
+**What:** Local skill distribution via CLI commands enabling discovery, install, publish, and management. Full marketplace UI deferred to v1.0. MVP includes `list`, `search`, `install`, `publish`, `show` commands.
+
+**Skill Path & Storage:**
+```
+~/.mempalace/skills/
+├── skill-semantic-rag/
+│   ├── skill.yaml              # Manifest (metadata, requirements)
+│   ├── README.md               # User docs
+│   ├── samples/
+│   │   └── SemanticRagExample.cs
+│   └── lib/
+│       └── skill-semantic-rag.dll (optional)
+└── skill-agent-diary-persistence/
+    └── ...
+```
+
+**Skill Manifest Format (skill.yaml):**
+- YAML for human readability (Kubernetes precedent)
+- Metadata: name, version, title, description, author, repository, license, tags
+- Dependencies: mempalace_version, external NuGet packages
+- Content: readme path, examples list, optional compiled assembly
+- Categories + tags for search + discovery
+
+**CLI Commands:**
+- `mempalacenet skill list` — discover skills in `~/.mempalace/skills/`
+- `mempalacenet skill search "agent"` — filter by keyword
+- `mempalacenet skill install rag-pattern` — install and wire DI
+- `mempalacenet skill publish` — publish skill (future: registry)
+- `mempalacenet skill show rag-pattern` — view skill details
+
+**Key Features:**
+- ✅ Local discovery (no external registry required for v0.7.0 MVP)
+- ✅ DI integration — skill manifests load custom services
+- ✅ Error handling — malformed manifests, name conflicts, missing deps
+- ✅ Metadata serialization — JSON manifest for compatibility
+
+**Effort:** 8-12 days (includes CLI + fixtures + tests)  
+**Risk Level:** Low (infrastructure largely complete)
+
+**Deferrals:**
+- Marketplace UI → v1.0
+- Registry submission → v1.0 (requires stable API)
+
+---
+
+### 2026-04-27: Decision 4 — LLM Wake-Up Summarization
+
+**By:** Roy (AI/Agent Integration Dev)  
+**Owner:** Roy + Tyrell  
+**Scope:** v0.7.0 Phase 12
+
+**What:** `mempalacenet wake-up` command summarizes recent memories via LLM (optional), generates context for agent handoff. Configuration from JSON/env vars, provider switching with fallback, token limits, graceful degradation.
+
+**Wake-Up Mechanism:**
+- **Input:** Palace + optional time window (default: 7 days)
+- **Process:** Retrieve N recent memories → optionally summarize with LLM → format as context
+- **Output:** Plain text summary + metadata (topic clusters, key entities, timeline)
+- **Use Case:** Agent boot-up, conversation starters, system prompts for multi-session workflows
+
+**Configuration Schema (ChatOptions):**
+```csharp
+public sealed record ChatOptions
+{
+    public string Provider { get; set; } = "OpenAI";  // Cloud default
+    public string Model { get; set; } = "gpt-4o-mini";
+    public string Endpoint { get; set; } = "https://api.openai.com/v1";
+    public string? ApiKey { get; set; }
+    public int MaxSummaryTokens { get; set; } = 512;
+    public bool EnableWakeUpSummarization { get; set; } = true;
+}
+```
+
+**Default Provider:** OpenAI (cloud) as primary; Local (Ollama via M.E.AI preview) as secondary opt-in.
+
+**Rationale:**
+- Wake-up summarization is cosmetic (not mission-critical); cloud default acceptable for UX
+- gpt-4o-mini + text-embedding-3-small are proven, stable
+- Users prioritizing privacy can opt into local via config flag
+- Cost: ~$0.002 per wake-up (low frequency)
+
+**Graceful Degradation:**
+- If LLM unavailable: return formatted raw memory (last 20)
+- If timeout (>30s): return raw memory + log warning
+- If API key missing: skip summarization; exit 0
+
+**Cost Control:**
+- Conservative token budgets (512 output max)
+- Reservoir sampling for 50+ memories (keep 20)
+- Hard cutoff on input (2K tokens); incomplete summary allowed
+
+**Environment Variable Override:**
+```bash
+export MEMPALACENET_CHAT_PROVIDER=Ollama
+export MEMPALACENET_CHAT_MODEL=llama2
+mempalacenet wake-up --palace ~/my-palace
+```
+
+**M.E.AI Abstractions:**
+- Use `IChatClient` from Microsoft.Extensions.AI
+- Pluggable providers: OpenAI, AzureOpenAI, Ollama, future
+- Zero lock-in (custom implementations bypass M.E.AI)
+
+**Effort:** 15-25 days (realistic: 18 days, 2.5-3 weeks with reviews)  
+**Risk Level:** Low (M.E.AI abstractions stable)
+
+---
+
+### 2026-04-27: Decision 5 — v0.7.0 Test Coverage Strategy
+
+**By:** Bryant (Tester/QA)  
+**Scope:** v0.7.0 Phases 12-14
+
+**What:** Comprehensive test strategy for 4 major workstreams covering SSE transport, skill CLI, LLM wake-up, and embedder pluggability. All tests follow existing patterns: xUnit + NSubstitute + FluentAssertions.
+
+**Test Scenarios by Feature:**
+
+| Feature | Scenarios | Coverage Target | Effort |
+|---------|-----------|-----------------|--------|
+| **MCP SSE Transport** | 4 (connection, messaging, session isolation, fallback) | ≥85% | 4-5 days |
+| **Skill Marketplace CLI** | 4 (discovery, search, install+DI, error handling) | ≥80% | 3-4 days |
+| **LLM Wake-Up** | 4 (config loading, provider switching, token limits, fallback) | ≥85% | 4-5 days |
+| **Embedder Pluggability** | 4 (interface compliance, DI resolution, switching, fallback) | ≥90% | 2-3 days |
+
+**Test Infrastructure:**
+- **New Fixtures:** HttpSseClientMock, SessionManagerStub, SkillManifestFactory, TempSkillDirectory, LlmProviderMock, FakeCustomEmbedder
+- **Mock Updates:** ITransport (SSE variant), ILlmProvider, ILlmFactory, IServiceProvider
+- **Test Data:** MCP RFC samples, 3 sample skill directories, synthetic embeddings
+
+**CI/CD Considerations:**
+- SSE tests use loopback HTTP (127.0.0.1, ephemeral port)
+- Skill CLI tests use temp directories (no impact on ~/.mempalace/)
+- LLM tests use mocks (no Ollama/model download required)
+- Embedder tests use in-memory (fast, deterministic)
+- All tests parallel-executable (<5 min total on CI)
+
+**Coverage Targets:**
+- Minimum: **82% line coverage** on modified code
+- Target: **88% across all 4 features**
+- Stretch: **95% on core abstractions** (ITransport, ILlmProvider, ICustomEmbedder)
+
+**Parallelization Opportunity:** YES
+- Week 1 (parallel with dev): Write test scaffolds, create fixtures, define mocks
+- Week 2-3 (feature dev ongoing): Fill assertions as APIs stabilize
+- Week 4: All tests green, coverage locked
+
+**Total Effort:** 14-19 days (realistic: 15-16 days with parallelization)
+
+**Sign-Off Criteria:**
+- ✅ All 16 scenarios have passing tests
+- ✅ Fixtures documented in `src/MemPalace.Tests/Infrastructure/`
+- ✅ Line coverage ≥82% via ReportGenerator
+- ✅ CI green on all branches
+- ✅ `docs/TESTING_v070.md` complete
+
+---
+
+## v0.7.0 Work Item Assignments
+
+| Owner | Focus | Phase | Duration | Status |
+|-------|-------|-------|----------|--------|
+| Tyrell | MCP SSE Transport + Embedder ICustomEmbedder | 12-13 | 2 sprints | Ready to start |
+| Roy | LLM Wake-Up Summarization + Provider Architecture | 12 | 2.5-3 weeks | Ready to start |
+| Rachael | Skill Marketplace CLI + UX | 12 | 1.5-2 weeks | Ready to start |
+| Bryant | Test Strategy + Coverage (all 4 features) | 12-14 | 2-3 sprints (parallel) | Ready to start |
+| Deckard | Orchestration + Release Prep | 15 | 1 sprint | Planned |
+
+**Critical Path:** SSE transport + wake-up LLM (parallel) → skill CLI integration → release prep
+
+**Timeline:** 8-10 weeks (optimistic: 8, realistic: 10, pessimistic: 14)
+

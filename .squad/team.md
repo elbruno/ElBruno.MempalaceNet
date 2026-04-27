@@ -34,16 +34,21 @@
 2. **Docs location** — all documentation under `docs/`. Only `README.md` and `LICENSE` may sit at repo root.
 3. **Code location** — all source code under `src/`.
 
-## Strategic Focus (Post-v0.5.0 → v0.6.0)
+## Strategic Focus
 
-**Current Phase:** v0.6.0 Implementation (Production-Grade Search Foundation)
+**Current Phase:** v0.7.0 Kickoff (Agent Workflows & Integrations) — Ready for Implementation
 
-**Skill Status:** PR #1 open for team review; publish post-v0.6.0
+**v0.7.0 Launch Date:** 2026-04-27 (Deckard validation + team consensus complete)
 
-**v0.6.0 Roadmap:** 
-  - P0: sqlite-vec (Tyrell) + BM25 (Roy) parallel, Weeks 1-4
-  - P1: LongMemEval R@5 validation (Bryant), Weeks 5-8
-  - P2: Release prep (Deckard), Week 9
-  - P2+: Copilot Skill publication, Weeks 10+
+**v0.7.0 Roadmap (8-10 weeks):**
+  - P0: MCP SSE Transport (Tyrell) + LLM Wake-Up (Roy) parallel, Weeks 1-3
+  - P0: Embedder Pluggability (Tyrell), Weeks 1-2
+  - P1: Skill Marketplace CLI (Rachael), Weeks 2-3
+  - P1: Test Coverage Strategy (Bryant), Weeks 1-4 (parallel with dev)
+  - P2: Release prep + integration (Deckard), Week 8-10
 
-**Next Milestone:** Team approval of research recommendations → Spike PRs
+**Parallel Workstreams:** All 5 decisions architecturally validated. Zero blockers. Teams ready to start immediately.
+
+**Prior Phase:** v0.6.0 Implementation ✅ COMPLETE (sqlite-vec, BM25, LongMemEval validation, Copilot Skill PR #1 merged)
+
+**Next Milestone:** v0.7.0 Phase 12 kickoff → skill delivery in 8-10 weeks
