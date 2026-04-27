@@ -832,3 +832,51 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ Roadmap prioritization complete. Document delivered. Ready for team review + sprint planning.
 
+---
+
+### 2026-04-27: v0.7.0 Roadmap Proposal
+
+**Task:** Produce v0.7.0 roadmap proposal for Bruno's review following v0.6.0 ship confirmation.
+
+**v0.6.0 Retrospective:**
+- ✅ All 10 packages published to NuGet.org at v0.6.0 (confirmed via NuGet API)
+- ✅ sqlite-vec integration complete (ANN search, 10-25x speedup)
+- ✅ BM25 keyword search complete (~200 LOC custom implementation)
+- ✅ LongMemEval R@5 validation framework ready
+- ✅ Copilot Skill PR #1 merged to main
+- ✅ Ollama removed to enable stable release (M.E.AI.Ollama still preview)
+- 🚧 Carryover: wake-up command, Ollama support, MCP tool expansion
+
+**v0.7.0 Theme:** "Agent Workflows & Integrations"
+
+**Rationale:**
+1. v0.6.0 delivered production search foundation; v0.7.0 enables *using* it in agents
+2. wake-up command is the primary carryover item (deferred from v0.6.0)
+3. CLI DI bug (`agents list`) is P0 blocker for agent workflows
+4. Ollama can return when M.E.AI.Ollama stabilizes
+5. MCP tool expansion enables richer agent integrations
+
+**Workstream Summary:**
+- Tyrell: wake-up (P0), MCP SSE transport (P1)
+- Roy: Ollama restore (P0), MCP tools 7→15 (P1)
+- Rachael: CLI DI fix (P0), UX polish (P1)
+- Bryant: R@5 CI regression (P1), integration tests (P2)
+- Deckard: release prep (P0), skill pattern updates (P1)
+
+**Key Constraints:**
+- Ollama blocked by upstream M.E.AI.Ollama preview status
+- wake-up may have LLM cost implications (need pluggable summarizer)
+- MCP SSE adds complexity (may defer to v0.8.0)
+
+**Bruno's Input Needed:**
+1. Ollama priority (wait vs ship without)
+2. MCP SSE scope (v0.7.0 or defer)
+3. wake-up summarization (local-first vs cloud option)
+4. Skill marketplace timing (v0.7.0 or v1.0)
+
+**Timeline:** 8-10 weeks (realistic: 10 weeks)
+
+**Deliverable:** `.squad/decisions/inbox/deckard-v070-roadmap-proposal.md`
+
+**Status:** ✅ Proposal created. Awaiting Bruno's approval before filing GitHub issues.
+
