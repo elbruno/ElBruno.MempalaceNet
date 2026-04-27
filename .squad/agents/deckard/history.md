@@ -9,6 +9,30 @@
 
 ## Learnings
 
+### 2025-04-27: NuGet Publishing Status Audit
+**Context:** Bruno requested verification of NuGet publishing status for v0.6.0.
+
+**Findings:**
+- ✅ **All 10 packages successfully published to NuGet.org at v0.6.0**
+  - mempalace.core, mempalace.backends.sqlite, mempalace.ai, mempalace.search
+  - mempalace.knowledgegraph, mempalace.mining, mempalace.mcp, mempalace.agents
+  - mempalacenet (CLI), mempalacenet-bench
+- ✅ **GitHub Actions workflow succeeded** (run 24938559571, ~2 days ago)
+- ✅ **Git tags present**: v0.6.0, v0.6.0-preview.1 pushed
+- ✅ **.NET 10 SDK available**: 10.0.300-preview.0.26177.108
+- ❌ **NUGET_API_KEY not set locally** (not needed — GitHub Actions handled publishing)
+
+**Workflow:**
+1. GitHub Release created with tag v0.6.0
+2. `publish.yml` workflow triggered automatically
+3. OIDC auth via NuGet/login@v1 (no local API key required)
+4. All packages built, tested, packed, and pushed in correct dependency order
+5. README.md badge correctly shows v0.6.0
+
+**Outcome:** No action needed. Publishing is healthy. All packages are current at v0.6.0 on NuGet.org.
+
+**Recommendation:** For future releases, continue using GitHub Actions (release tag or manual dispatch). Local publishing requires NUGET_API_KEY but is unnecessary given the robust CI/CD pipeline.
+
 ### 2026-04-24: Phase 0 — Solution Scaffold + CI
 
 **Target Framework:** net10.0 (.NET 10.0.300-preview.0.26177.108 installed)
