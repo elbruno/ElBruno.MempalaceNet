@@ -384,6 +384,70 @@
 - wake-up LLM costs: Tyrell makes summarizer pluggable; default to no-op if IChatClient missing
 - Skill publishing CLI: Rachael keeps MVP scope clear
 
+## v0.7.0 Implementation Phase
+
+### 2026-04-27: v0.7.0 Test Coverage Strategy
+
+**ADR:** bryant-v070-test-strategy.md  
+**Decision:** Implement comprehensive test strategy for 4 major v0.7.0 workstreams (MCP SSE Transport, Skill Marketplace CLI, LLM Wake-Up Summarization, Embedder Pluggability) with 16 test scenarios, 8+ fixtures, and ≥82% line coverage target across 14-19 days effort (3-4 sprints, parallelizable).  
+**Rationale:** Each feature requires distinct test strategies (HTTP mocking, file system fixtures, LLM mocking, custom embedder testing). Early fixture scaffolding enables test-driven development in parallel with feature implementation. Cross-feature infrastructure (mock updates, CI integration) reduces duplication.
+
+---
+
+### 2026-04-27: v0.7.0 GitHub Issues Filed
+
+**ADR:** deckard-v070-github-issues.md  
+**Decision:** File 10 GitHub issues spanning v0.7.0 roadmap: 3 P0 (wake-up context summarization, agents list DI bug, Ollama support blocked), 5 P1 (MCP SSE transport, MCP tool expansion, CLI UX polish, R@5 regression tests, skill pattern docs), 2 P2 (integration tests, release prep).  
+**Rationale:** Issues enable team to pick up workstreams asynchronously. Clear prioritization (P0/P1/P2) guides sprint planning. Ollama tracked as blocked dependency (external M.E.AI.Ollama stable release).
+
+---
+
+### 2026-04-27: v0.7.0 Roadmap Proposal
+
+**ADR:** deckard-v070-roadmap-proposal.md  
+**Decision:** v0.7.0 theme: "Agent Workflows & Integrations" (8-10 weeks optimistic-realistic). Workstreams: (1) Tyrell: wake-up LLM + MCP SSE transport, (2) Roy: Ollama support + MCP tool expansion, (3) Rachael: agents list fix + CLI UX, (4) Bryant: R@5 regression + integration tests, (5) Deckard: release prep + skill pattern docs.  
+**Rationale:** Logical follow-on to v0.6.0 (production search). User-visible value (wake-up, Ollama return, Skill CLI). Integration debt payoff (agents list DI). Skill completion (runnable patterns via MCP).
+
+---
+
+### 2026-04-27: v0.7.0 Architectural Decisions — Validation Complete
+
+**ADR:** deckard-v070-validation.md  
+**Decision:** ✅ **All 5 v0.7.0 decisions validated and accepted:** (1) embedder-architecture (ICustomEmbedder in ElBruno.LocalEmbeddings, factory pattern), (2) mcp-sse-transport (HTTP SSE for agent communication, non-negotiable), (3) skill-publish (MVP: CLI + folder structure, marketplace UI → v1.0), (4) wakeup-llm (cloud LLM default + local opt-in via M.E.AI abstractions), (5) ollama (rejected, defer to v0.7.0-preview+ when stable).  
+**Rationale:** All 5 decisions respect local-first defaults, pluggable models, opt-in patterns from Python MemPalace. Zero circular dependencies. Scope boundaries clean (deferrals documented). M.E.AI abstractions used correctly (zero lock-in). v0.6.0 foundations present (no blocking changes needed).
+
+---
+
+### 2026-04-27: Skill Marketplace CLI Design (v0.7.0 MVP)
+
+**ADR:** rachael-skill-marketplace-cli.md  
+**Decision:** Implement 6 CLI commands under `mempalace skill` namespace (list, search, info, install, enable/disable, uninstall). Local filesystem discovery (v0.7.0): scan `~/.palace/skills/` for skill folders with `skill.json` manifests. Remote registry (v1.0): MCP SSE integration for download + auto-install. Dependency resolution deferred. Installation v0.7.0: manual instructions; v1.0: automatic via SSE download.  
+**Rationale:** Local-first MVP requires no server infrastructure (users share via GitHub/gists). Manual install depends on Tyrell's SSE transport (in progress). Spectre.Console UI consistent with existing CLI. Deferred features (marketplace UI, dependency resolution) reduce v0.7.0 risk; clear v1.0 upgrade path.
+
+---
+
+### 2026-04-27: Skill Marketplace CLI — Handoff Notes
+
+**ADR:** rachael-skill-marketplace-handoff.md  
+**Decision:** Skill Marketplace design complete (ADR + spec). 5 phases: (1) CLI commands (local filesystem), (2) Manifest validation, (3) Config integration, (4) Documentation + example skills, (5) Remote registry (post-Tyrell SSE). Blocker: Tyrell's MCP SSE transport (Phase 5 dependency). Ready for implementation immediately on Phase 1-4 (parallel with SSE work).  
+**Rationale:** CLI infrastructure independent of SSE. Early phases validate skill format + UX before committing to remote protocol. 3 example skills (RAG, agent-diary, KG temporal) demonstrate patterns. Phase 5 (remote registry) unblocked by SSE completion.
+
+---
+
+### 2026-04-27: Wake-Up Summarization with LLM (v0.7.0)
+
+**ADR:** roy-wakeup-llm-integration.md  
+**Decision:** Implement wake-up summarization using Microsoft.Extensions.AI `IChatClient` abstraction. Cloud LLM default (OpenAI/Azure) with local opt-in (Ollama/ONNX via custom `IChatClient` registration). Summarization cosmetic (not mission-critical). Add `WakeUpAsync()` to IBackend (SQLite query). Service layer: `IWakeUpService` + `WakeUpOptions` config. CLI command: `mempalace wake-up [--days 7] [--wing conversations] [--limit 100]`. Graceful degradation if IChatClient unavailable.  
+**Rationale:** Cloud-first respects user choice + enterprise cost control. Local opt-in respects privacy. M.E.AI abstractions already in place (precedent: LlmReranker). Cosmetic characterization prevents over-engineering. Implementation guide (config examples) complete. Follows existing CLI patterns (Spectre.Console, settings).
+
+---
+
+### 2026-04-27: MCP SSE Transport Architecture
+
+**ADR:** tyrell-mcp-sse-architecture.md  
+**Decision:** Implement MCP Streamable HTTP transport using ASP.NET Core + Server-Sent Events (SSE) as parallel transport option alongside stdio (non-breaking). Architecture: IMcpTransport abstraction, HttpSseTransport implementation, SessionStore (session CRUD + 30-min timeout), SseStreamManager (connection tracking, event sequencing). Endpoints: POST /mcp (requests), GET /mcp (SSE stream), DELETE /mcp (terminate). Security: Origin header validation, localhost-only binding (127.0.0.1 default). CLI integration: `--transport sse --port 5050`. Non-negotiable for v0.7.0 (skill marketplace, Web/Copilot CLI unblock).  
+**Rationale:** Stdio insufficient for web clients (no subprocess spawning). SSE is MCP spec standard. Transport abstraction keeps MCP logic unchanged. Phased implementation: Phase 1 (abstraction, 2d), Phase 2 (core, 3d), Phase 3 (CLI, 1d), Phase 4 (tests + docs, 2d). Security mitigations (DNS rebinding, DoS) documented. Performance: +5-20ms latency acceptable for web clients.
+
 **Recommendation:** 🟢 STATUS: CLEAN — PROCEED WITH IMPLEMENTATION. No blockers. Teams can begin work immediately on parallel workstreams.
 
 ---
