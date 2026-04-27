@@ -226,3 +226,68 @@ Lower distance = higher similarity. Results sorted ascending.
 
 **Status:** Research complete, ready for spike PR approval.
 
+### v0.7.0 MCP SSE Transport Architecture (2025-04-27)
+
+**Context:** Mission v070-mcp-sse-transport. Current MCP server (Phase 7) uses stdio transport only, blocking web-based integrations (Copilot CLI, skill marketplace, browser assistants).
+
+**Research findings:**
+
+**1. MCP Specification:**
+- ✅ **Streamable HTTP transport** defined in MCP spec (2025-06-18 version)
+- ✅ **POST /mcp** for client→server JSON-RPC messages
+- ✅ **GET /mcp** for server→client SSE stream
+- ✅ **Session management** via `Mcp-Session-Id` header
+- ✅ **Resumability** via `Last-Event-Id` (SSE standard)
+
+**2. Implementation Strategy:**
+- **Transport abstraction:** `IMcpTransport` interface (stdio + HTTP/SSE)
+- **New package:** `MemPalace.Mcp.AspNetCore` (ASP.NET Core Minimal API)
+- **Non-breaking:** stdio remains default, SSE opt-in via `--transport sse`
+- **Security:**
+  - Origin header validation (DNS rebinding mitigation)
+  - Localhost-only binding (127.0.0.1, not 0.0.0.0)
+  - Crypto-secure session IDs (GUID v4)
+  - DoS protection (stream limits, rate limiting)
+
+**3. File Structure:**
+```
+src/MemPalace.Mcp.AspNetCore/
+├── HttpSseTransport.cs      — IMcpTransport implementation
+├── McpEndpoints.cs           — POST/GET/DELETE handlers
+├── SseStreamManager.cs       — Connection lifecycle, broadcast
+├── SessionStore.cs           — Session CRUD + timeout
+└── README.md
+```
+
+**4. CLI Integration:**
+```bash
+mempalacenet mcp --transport stdio  # default (unchanged)
+mempalacenet mcp --transport sse --port 5050  # new HTTP endpoint
+```
+
+**5. Implementation Plan (5 phases, 8 days):**
+- Phase 1: Transport abstraction (2d) — `IMcpTransport`, refactor stdio
+- Phase 2: HTTP/SSE core (3d) — SessionStore, SseStreamManager, endpoints
+- Phase 3: CLI integration (1d) — Update McpCommand, project references
+- Phase 4: Testing + docs (2d) — Unit tests, integration tests, mcp-sse-guide.md
+- Phase 5: Skill marketplace (post-v0.7.0) — Update Copilot Skill manifest
+
+**6. Dependencies:**
+- **Upstream:** None (all packages in place)
+- **Downstream:** Rachael's v070-skill-marketplace-cli (blocked until Phase 2)
+
+**7. Risks & Mitigations:**
+- **ASP.NET Core bloat (+10MB):** Acceptable for web scenarios, stdio remains default
+- **Session race conditions:** Thorough unit tests, `ConcurrentDictionary` for thread safety
+- **Security vulnerabilities:** Follow MCP spec security warnings, localhost-only default
+
+**8. Open Questions (Needs Bruno):**
+1. **Scope:** v0.7.0 or v0.8.0? (Deckard recommends v0.8.0 — focus v0.7.0 on wake-up + Ollama)
+2. **Default transport:** stdio (backward compat) or SSE (web-first)?
+3. **Authentication:** Localhost-only or add `--auth-token` option?
+4. **CORS policy:** Strict whitelist (localhost + copilot.github.com) or configurable?
+
+**Decision document:** `.squad/decisions/inbox/tyrell-mcp-sse-architecture.md` (18KB, ADR + implementation plan + handoff notes)
+
+**Status:** ADR complete, awaiting Bruno's approval for v0.7.0 vs v0.8.0 scope decision. Committed (a2f93ff).
+
