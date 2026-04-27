@@ -443,18 +443,41 @@ The following items are **explicitly out of scope** for v0.7.0:
 
 ## Appendix: GitHub Issues Mapping
 
-| Issue # | Title | Phase | Owner | Status |
-|---------|-------|-------|-------|--------|
-| #2 | wake-up: Summarize recent memories | Phase 1 | Roy | ✅ DONE |
-| #3 | Fix CLI agents list DI bug | Phase 1 | Rachael | ✅ DONE |
-| #5 | MCP SSE transport support | Phase 1 | Tyrell | ✅ DONE |
-| #6 | MCP tool expansion (7 to 15 tools) | Phase 2 | Roy | 🚀 ACTIVE |
-| #7 | CLI UX polish | Phase 2 | Rachael | 🚀 ACTIVE |
-| #8 | R@5 regression tests in CI | Phase 3 | Bryant | ⏳ PENDING |
-| #9 | Skill pattern documentation update | Phase 3 | Deckard | ⏳ PENDING |
-| #10 | Integration test coverage | Phase 3 | Bryant | ⏳ PENDING |
-| #11 | v0.7.0 Release prep | Phase 3 | Deckard | ⏳ PENDING |
-| #4 | Restore Ollama support | v0.8.0 | Roy | ❌ BLOCKED |
+### Phase 1 (Complete) ✅
+| Issue # | Title | Owner | Status |
+|---------|-------|-------|--------|
+| #2 | wake-up: Summarize recent memories | Roy | ✅ DONE |
+| #3 | Fix CLI agents list DI bug | Rachael | ✅ DONE |
+| #5 | MCP SSE transport support | Tyrell | ✅ DONE |
+
+### Phase 2 (Active) 🚀
+| Issue # | Title | Workstream | Owner | Status |
+|---------|-------|-----------|-------|--------|
+| #12 | MCP CLI --transport sse integration | A (CLI Integration) | Rachael + Tyrell | 🚀 ACTIVE |
+| #13 | Skill CLI MCP integration | A (CLI Integration) | Rachael | 🚀 ACTIVE |
+| #17 | CLI error messages with remediation steps | A (CLI Integration) | Rachael | 🚀 ACTIVE |
+| #20 | Progress bars for long-running CLI commands | A (CLI Integration) | Rachael | 🚀 ACTIVE |
+| #6 | MCP tool expansion (7 to 15 tools) | B (MCP Tools) | Roy | 🚀 ACTIVE |
+| #14 | MCP write operations testing | B (MCP Tools) | Roy | 🚀 ACTIVE |
+| #21 | MCP tool security validation (write operations) | B (MCP Tools) | Roy | 🚀 ACTIVE |
+| #16 | Backend query optimization (WakeUpAsync) | B (Backend) | Tyrell | 🚀 ACTIVE |
+| #15 | E2E test scenarios (MCP + Skills + Palace) | C (Integration Tests) | Bryant | 🚀 ACTIVE |
+| #19 | CI/CD integration test workflow | C (Integration Tests) | Bryant | 🚀 ACTIVE |
+| #18 | MCP tool catalog documentation | C (Documentation) | Deckard | 🚀 ACTIVE |
+| #7 | CLI UX polish | A (CLI Integration) | Rachael | 🚀 ACTIVE |
+
+### Phase 3 (Pending) ⏳
+| Issue # | Title | Owner | Status |
+|---------|-------|-------|--------|
+| #8 | R@5 regression tests in CI | Bryant | ⏳ PENDING |
+| #9 | Skill pattern documentation update | Deckard | ⏳ PENDING |
+| #10 | Integration test coverage (master issue) | Bryant | ⏳ PENDING |
+| #11 | v0.7.0 Release prep | Deckard | ⏳ PENDING |
+
+### Deferred to v0.8.0
+| Issue # | Title | Owner | Status |
+|---------|-------|-------|--------|
+| #4 | Restore Ollama support | Roy | ❌ BLOCKED |
 
 **Legend:**
 - ✅ DONE: Completed and committed
@@ -469,8 +492,10 @@ The following items are **explicitly out of scope** for v0.7.0:
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-04-27 | Deckard | Initial Phase 2-3 roadmap created |
+| 2026-04-27 | Deckard | Phase 2 kickoff: 10 GitHub issues filed (#12-#21), workstreams assigned |
 
 ---
 
 **Next Review:** 2026-05-08 (Phase 2 → Phase 3 transition)  
-**Release Target:** 2026-05-20 (v0.7.0 public launch)
+**Release Target:** 2026-05-20 (v0.7.0 public launch)  
+**Phase 2 Status:** ACTIVE 🚀 (3 parallel workstreams)
