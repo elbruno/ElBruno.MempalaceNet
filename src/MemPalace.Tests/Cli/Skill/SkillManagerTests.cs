@@ -104,7 +104,7 @@ public sealed class SkillManagerTests : IDisposable
     }
 
     [Fact]
-    public void Search_ReturnsMatchingSkills_ByName()
+    public async Task Search_ReturnsMatchingSkills_ByName()
     {
         // Arrange
         var manager = new SkillManager();
@@ -113,8 +113,8 @@ public sealed class SkillManagerTests : IDisposable
 
         try
         {
-            manager.InstallAsync(skill1).Wait();
-            manager.InstallAsync(skill2).Wait();
+            await manager.InstallAsync(skill1);
+            await manager.InstallAsync(skill2);
 
             // Act
             var results = manager.Search("embedding");

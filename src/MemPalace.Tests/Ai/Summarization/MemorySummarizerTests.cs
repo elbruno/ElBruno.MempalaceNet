@@ -1,6 +1,7 @@
 using MemPalace.Ai.Summarization;
 using MemPalace.Core.Backends;
 using Microsoft.Extensions.AI;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace MemPalace.Tests.Ai.Summarization;
@@ -152,12 +153,12 @@ public sealed class MemorySummarizerTests
         public ChatClientMetadata Metadata => new("mock-client");
 
         public async Task<ChatResponse> GetResponseAsync(
-            IList<ChatMessage> chatMessages,
+            IEnumerable<ChatMessage> chatMessages,
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
             WasCalled = true;
-            LastMessages = chatMessages;
+            LastMessages = chatMessages.ToList();
 
             if (_throwException)
             {
@@ -168,15 +169,21 @@ public sealed class MemorySummarizerTests
             return new ChatResponse(new ChatMessage(ChatRole.Assistant, _response));
         }
 
-        public IAsyncEnumerable<StreamingChatCompletionUpdate> GetStreamingResponseAsync(
-            IList<ChatMessage> chatMessages,
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> chatMessages,
             ChatOptions? options = null,
-            CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await Task.CompletedTask;
+            yield break;
         }
 
         public TService? GetService<TService>(object? key = null) where TService : class
+        {
+            return null;
+        }
+
+        public object? GetService(Type serviceType, object? serviceKey = null)
         {
             return null;
         }
