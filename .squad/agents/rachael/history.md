@@ -1,5 +1,63 @@
 # Rachael — History
 
+## 2026-04-27: v070-skill-marketplace-cli (Phase 1 Implementation)
+
+**Mission:** Scaffold Phase 1 of skill marketplace CLI (local filesystem operations, no MCP integration yet).
+
+**What I built:**
+1. **Model layer** (`src/MemPalace.Core/Model/SkillManifest.cs`):
+   - Full manifest schema with JSON serialization
+   - Required fields: id, name, version, description, entryPoint
+   - Optional: author, tags, dependencies, enabled, repository, license
+   - Immutable record type for type safety
+
+2. **Service layer** (`src/MemPalace.Cli/Infrastructure/SkillManager.cs`):
+   - Local skill management (CRUD operations)
+   - Skills stored in `~/.palace/skills/`
+   - Manifest validation (ensures required fields present)
+   - Directory operations: install (copy), uninstall (delete), list, search
+   - Enable/disable toggles (updates manifest JSON)
+
+3. **CLI commands** (`src/MemPalace.Cli/Commands/Skill/`):
+   - `SkillListCommand` - List installed skills in table format
+   - `SkillSearchCommand` - Search by name/description/tags (local only)
+   - `SkillInfoCommand` - Display detailed skill info in panel
+   - `SkillInstallCommand` - Install from local path with validation
+   - `SkillEnableCommand` / `SkillDisableCommand` - Toggle enabled flag
+   - `SkillUninstallCommand` - Remove skill with confirmation prompt
+   - All use Spectre.Console for rich output
+
+4. **Wiring** (`src/MemPalace.Cli/Program.cs`):
+   - Registered `SkillManager` as singleton
+   - Added `skill` command branch with 7 subcommands
+   - Examples and descriptions for each command
+
+5. **Tests** (`src/MemPalace.Tests/Cli/Skill/`):
+   - `SkillManagerTests` - Full coverage of manager operations
+   - `SkillManifestTests` - JSON serialization/deserialization tests
+   - Temp directory fixtures for isolation
+   - Tests verify: list, search, install, enable/disable, uninstall flows
+
+**Constraints honored:**
+- Phase 1 is LOCAL ONLY (no remote registry, no MCP)
+- Manifest validation but no dependency resolution (deferred to Phase 3)
+- Used existing Spectre.Console patterns from other commands
+- DI-friendly (SkillManager injected via constructor)
+
+**What's deferred to Phase 2:**
+- Remote registry search/install
+- MCP integration (Tyrell building SSE transport in parallel)
+- Archive extraction (ZIP/TAR)
+
+**What's deferred to Phase 3:**
+- Dependency resolution
+- Version constraints
+- Skill updates/upgrades
+
+**Status:** ✅ Phase 1 complete. All commands scaffolded, wired, and tested. Code compiles cleanly for Core and new CLI components. Ready for Bruno's review and Phase 2 integration.
+
+---
+
 ## Core Context
 - **Project:** MemPalace.NET — port of https://github.com/MemPalace/mempalace
 - **User:** Bruno Capuano

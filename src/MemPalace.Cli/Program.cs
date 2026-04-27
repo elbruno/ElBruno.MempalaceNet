@@ -1,6 +1,7 @@
 using MemPalace.Cli.Commands;
 using MemPalace.Cli.Commands.Agents;
 using MemPalace.Cli.Commands.Kg;
+using MemPalace.Cli.Commands.Skill;
 using MemPalace.Cli.Infrastructure;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mining;
@@ -42,14 +43,30 @@ internal static class Program
         services.AddMemPalaceKnowledgeGraph(o => 
             o.DatabasePath = Path.Combine(palaceDir, "mempalace-kg.db"));
         
+        // Register wake-up summarization
+        // If IChatClient is registered, use LLMMemorySummarizer; otherwise use NoOpMemorySummarizer
+        services.AddSingleton<MemPalace.Ai.Summarization.IMemorySummarizer>(sp =>
+        {
+            var chatClient = sp.GetService<Microsoft.Extensions.AI.IChatClient>();
+            if (chatClient != null)
+            {
+                return new MemPalace.Ai.Summarization.LLMMemorySummarizer(chatClient);
+            }
+            return new MemPalace.Ai.Summarization.NoOpMemorySummarizer();
+        });
+        
         // Register IChatClient if configured
         // Users must register an IChatClient for agents to work (e.g., via AddChatClient or AddOpenAIChatClient)
         // Example: services.AddOpenAIChatClient("model", Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
         // Without IChatClient, agent commands will fail with a clear error message.
+
         
         // Register Agents
         services.AddMemPalaceAgents(o =>
             o.AgentsPath = Path.Combine(Directory.GetCurrentDirectory(), ".mempalace", "agents"));
+        
+        // Register Skill Manager
+        services.AddSingleton<SkillManager>();
         
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases
@@ -129,6 +146,43 @@ internal static class Program
                     .WithDescription("View entity timeline")
                     .WithExample("mempalacenet kg timeline agent:Tyrell")
                     .WithExample("mempalacenet kg timeline project:MemPalace.Core --from 2026-04-24");
+            });
+
+            // Skills branch
+            config.AddBranch("skill", skill =>
+            {
+                skill.SetDescription("Skill marketplace operations");
+                
+                skill.AddCommand<SkillListCommand>("list")
+                    .WithDescription("List installed skills")
+                    .WithExample("mempalacenet skill list");
+
+                skill.AddCommand<SkillSearchCommand>("search")
+                    .WithDescription("Search for skills (local only in Phase 1)")
+                    .WithExample("mempalacenet skill search embedding")
+                    .WithExample("mempalacenet skill search rag");
+
+                skill.AddCommand<SkillInfoCommand>("info")
+                    .WithDescription("Show skill details")
+                    .WithExample("mempalacenet skill info my-skill");
+
+                skill.AddCommand<SkillInstallCommand>("install")
+                    .WithDescription("Install a skill from local path")
+                    .WithExample("mempalacenet skill install ./my-skill")
+                    .WithExample("mempalacenet skill install ~/Downloads/rag-skill");
+
+                skill.AddCommand<SkillEnableCommand>("enable")
+                    .WithDescription("Enable a skill")
+                    .WithExample("mempalacenet skill enable my-skill");
+
+                skill.AddCommand<SkillDisableCommand>("disable")
+                    .WithDescription("Disable a skill")
+                    .WithExample("mempalacenet skill disable my-skill");
+
+                skill.AddCommand<SkillUninstallCommand>("uninstall")
+                    .WithDescription("Uninstall a skill")
+                    .WithExample("mempalacenet skill uninstall my-skill")
+                    .WithExample("mempalacenet skill uninstall my-skill --force");
             });
         });
 
