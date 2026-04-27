@@ -43,6 +43,50 @@ internal static class Program
         services.AddMemPalaceKnowledgeGraph(o => 
             o.DatabasePath = Path.Combine(palaceDir, "mempalace-kg.db"));
         
+        // Register IChatClient (local-first default)
+        // Cloud opt-in can be added via manual DI override before building the app
+        services.AddSingleton<Microsoft.Extensions.AI.IChatClient>(sp =>
+        {
+            // Local-first default: ElBruno.LocalLLMs with Phi-3.5-mini (default model)
+            try
+            {
+                // Use default Phi-3.5-mini from ElBruno.LocalLLMs (auto-downloads on first run)
+                Console.WriteLine("[INFO] Initializing local LLM (Phi-3.5-mini)...");
+                var client = ElBruno.LocalLLMs.LocalChatClient.CreateAsync().GetAwaiter().GetResult();
+                Console.WriteLine("[INFO] Local LLM ready.");
+                return client;
+            }
+            catch (Exception ex)
+            {
+                // Log warning and fall back to NoOp
+                Console.Error.WriteLine($"[WARN] Failed to initialize local LLM: {ex.Message}");
+                Console.Error.WriteLine($"[WARN] Falling back to NoOpMemorySummarizer (no LLM summarization)");
+                return null!; // Will trigger NoOpMemorySummarizer fallback below
+            }
+        });
+        
+        // Register IChatClient (local-first default)
+        // Cloud opt-in can be added via manual DI override before building the app
+        services.AddSingleton<Microsoft.Extensions.AI.IChatClient>(sp =>
+        {
+            // Local-first default: ElBruno.LocalLLMs with Phi-3.5-mini (default model)
+            try
+            {
+                // Use default Phi-3.5-mini from ElBruno.LocalLLMs (auto-downloads on first run)
+                Console.WriteLine("[INFO] Initializing local LLM (Phi-3.5-mini)...");
+                var client = ElBruno.LocalLLMs.LocalChatClient.CreateAsync().GetAwaiter().GetResult();
+                Console.WriteLine("[INFO] Local LLM ready.");
+                return client;
+            }
+            catch (Exception ex)
+            {
+                // Log warning and fall back to NoOp
+                Console.Error.WriteLine($"[WARN] Failed to initialize local LLM: {ex.Message}");
+                Console.Error.WriteLine($"[WARN] Falling back to NoOpMemorySummarizer (no LLM summarization)");
+                return null!; // Will trigger NoOpMemorySummarizer fallback below
+            }
+        });
+        
         // Register wake-up summarization
         // If IChatClient is registered, use LLMMemorySummarizer; otherwise use NoOpMemorySummarizer
         services.AddSingleton<MemPalace.Ai.Summarization.IMemorySummarizer>(sp =>
@@ -54,11 +98,6 @@ internal static class Program
             }
             return new MemPalace.Ai.Summarization.NoOpMemorySummarizer();
         });
-        
-        // Register IChatClient if configured
-        // Users must register an IChatClient for agents to work (e.g., via AddChatClient or AddOpenAIChatClient)
-        // Example: services.AddOpenAIChatClient("model", Environment.GetEnvironmentVariable("OPENAI_API_KEY"));
-        // Without IChatClient, agent commands will fail with a clear error message.
 
         
         // Register Agents

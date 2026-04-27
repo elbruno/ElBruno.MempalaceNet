@@ -5,6 +5,8 @@ namespace MemPalace.Ai.Summarization;
 
 /// <summary>
 /// LLM-based summarizer using Microsoft.Extensions.AI IChatClient.
+/// Default: Local-first LLM (Qwen2.5-0.5B via ElBruno.LocalLLMs).
+/// Cloud opt-in: OpenAI/Azure via environment variables or DI override.
 /// </summary>
 public sealed class LLMMemorySummarizer : IMemorySummarizer
 {

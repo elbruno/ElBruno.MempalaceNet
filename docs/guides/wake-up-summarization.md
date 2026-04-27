@@ -2,7 +2,7 @@
 
 **Feature:** Conversational context summaries for starting new sessions  
 **Status:** v0.7.0 (preview)  
-**Dependencies:** Microsoft.Extensions.AI.Abstractions (included), user-provided IChatClient
+**Dependencies:** Microsoft.Extensions.AI.Abstractions (included), ElBruno.LocalLLMs (included)
 
 ---
 
@@ -12,12 +12,12 @@ The `mempalacenet wake-up` command generates a **natural language summary** of y
 
 **What it does:**
 1. Fetches recent memories from your palace (last N days, configurable)
-2. Sends them to an LLM (OpenAI, Azure OpenAI, Ollama, or custom) for summarization
+2. Sends them to an LLM for summarization (local-first by default)
 3. Displays a formatted summary with metadata (last session, memory count, active wings)
 
 **Design philosophy:**
-- **Cloud-first default:** OpenAI/Azure (user configures API key)
-- **Local opt-in:** Ollama or custom LLM via `IChatClient` DI
+- **Local-first default:** Qwen2.5-0.5B (via ElBruno.LocalLLMs) — zero config, no API keys
+- **Cloud opt-in:** OpenAI/Azure via environment variables for faster/better summaries
 - **Graceful degradation:** Works without LLM (shows metadata only)
 - **Pluggable:** Leverage Microsoft.Extensions.AI abstractions (no hard SDK dependencies)
 
@@ -25,15 +25,22 @@ The `mempalacenet wake-up` command generates a **natural language summary** of y
 
 ## Quick Start
 
-### 1. Run Wake-Up (Metadata Only)
+### 1. Run Wake-Up (Local LLM — First Time)
 
-Without LLM configuration, wake-up shows basic metadata:
+**First run automatically downloads Qwen2.5-0.5B (~500 MB):**
 
 ```bash
 mempalacenet wake-up
 ```
 
-**Output:**
+**Output (first run):**
+```
+[INFO] Downloading model: Qwen2.5-0.5B-Instruct (~500 MB)
+[INFO] Progress: 25%... 50%... 75%... 100%
+[INFO] Model cached at ~/.cache/mempalace/models/qwen2.5-0.5b-instruct
+```
+
+**Output (subsequent runs):**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            mempalacenet wake-up
@@ -45,50 +52,6 @@ mempalacenet wake-up
 │ Active wings: code, conversations, docs             │
 ╰─────────────────────────────────────────────────────╯
 
-╭─ Summary ───────────────────────────────────────────╮
-│ Recent Activity Summary (LLM not configured):       │
-│ - Last session: 2026-04-23 16:45 (1.2 days ago)    │
-│ - Memory count: 47                                  │
-│ - Active wings: code, conversations, docs           │
-│                                                      │
-│ To enable AI-powered summaries, register an         │
-│ IChatClient via DI. See docs/guides/                │
-│ wake-up-summarization.md for configuration examples.│
-╰─────────────────────────────────────────────────────╯
-```
-
-### 2. Configure LLM (OpenAI Example)
-
-**Install NuGet package:**
-```bash
-dotnet add package Microsoft.Extensions.AI.OpenAI
-```
-
-**Register IChatClient in Program.cs:**
-```csharp
-using Microsoft.Extensions.AI;
-
-// In Program.cs (before building ServiceCollection)
-var openAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-services.AddChatClient(builder => builder
-    .UseOpenAI("gpt-4o-mini", openAiKey));
-
-services.AddMemPalaceWakeUp(o =>
-{
-    o.DefaultDays = 7;
-    o.DefaultLimit = 100;
-    o.Enabled = true;
-});
-```
-
-**Run wake-up:**
-```bash
-export OPENAI_API_KEY="sk-..."
-mempalacenet wake-up
-```
-
-**Output (with LLM):**
-```
 ╭─ Summary ───────────────────────────────────────────╮
 │ Recent Activity Summary:                             │
 │                                                      │
@@ -102,38 +65,73 @@ mempalacenet wake-up
 │ • MemPalace.Search (BM25 + hybrid search)           │
 │ • MemPalace.KnowledgeGraph (temporal triples)       │
 │ • MemPalace.Mcp (Model Context Protocol server)     │
-│                                                      │
-│ Recent decisions:                                    │
-│ • Switched from Ollama to LocalEmbeddings (ONNX)    │
-│ • Custom BM25 implementation (no external deps)     │
-│ • RRF fusion for hybrid search (v0.6.0)             │
 ╰─────────────────────────────────────────────────────╯
 ```
+
+**Performance (local):**
+- First run: ~1 minute (model download)
+- Subsequent runs: 5-10 seconds (CPU) or 2-3 seconds (GPU)
+
+### 2. Cloud Opt-In (OpenAI — Faster/Better)
+
+If you prefer cloud LLMs (faster, higher quality), set your API key:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+mempalacenet wake-up
+```
+
+**Performance (cloud):**
+- Response time: 1-3 seconds
+- Cost: ~$0.001 per run (gpt-4o-mini)
 
 ---
 
 ## Configuration Examples
 
-### OpenAI (Cloud)
+### Local-First (Default — Zero Config)
+
+**No setup required!** The first `wake-up` command automatically:
+1. Downloads Qwen2.5-0.5B-Instruct (~500 MB) from HuggingFace
+2. Caches the model locally in `~/.cache/mempalace/models/`
+3. Uses CPU inference (or GPU if CUDA/DirectML is available)
+
+**Requirements:**
+- ~500 MB disk space for model
+- 2 GB RAM minimum
+- CPU with AVX2 support (most modern CPUs)
+
+**Optional GPU acceleration:**
+- NVIDIA GPU: Install `Microsoft.ML.OnnxRuntimeGenAI.Cuda` NuGet package
+- Any Windows GPU: Install `Microsoft.ML.OnnxRuntimeGenAI.DirectML` NuGet package
+
+**Model caching:**
+Models are cached at:
+- **Windows:** `%USERPROFILE%\.cache\mempalace\models`
+- **Linux/macOS:** `~/.cache/mempalace/models`
+
+To clear cache (force re-download):
+```bash
+rm -rf ~/.cache/mempalace/models
+```
 
 **Prerequisites:**
 - OpenAI API key (https://platform.openai.com/api-keys)
-- `Microsoft.Extensions.AI.OpenAI` NuGet package
 
-**Registration:**
-```csharp
-using Microsoft.Extensions.AI;
+**Setup (override default local LLM):**
+```bash
+export OPENAI_API_KEY="sk-..."
+mempalacenet wake-up
+```
 
-var openAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-if (string.IsNullOrEmpty(openAiKey))
+**Or configure via appsettings.json:**
+```json
 {
-    throw new InvalidOperationException(
-        "OPENAI_API_KEY environment variable not set. " +
-        "Get your API key at https://platform.openai.com/api-keys");
+  "OpenAI": {
+    "ApiKey": "sk-...",
+    "Model": "gpt-4o-mini"
+  }
 }
-
-services.AddChatClient(builder => builder
-    .UseOpenAI("gpt-4o-mini", openAiKey)); // Or "gpt-4o", "gpt-4-turbo"
 ```
 
 **Cost estimate:**
@@ -145,110 +143,47 @@ services.AddChatClient(builder => builder
 
 ---
 
-### Azure OpenAI (Enterprise)
+### Azure OpenAI (Enterprise — Opt-In)
 
 **Prerequisites:**
 - Azure OpenAI resource (https://portal.azure.com)
 - Deployed model (e.g., `gpt-4o-mini`, `gpt-35-turbo`)
 - Endpoint URL and API key
 
-**Registration:**
-```csharp
-using Azure.AI.OpenAI;
-using Microsoft.Extensions.AI;
-
-var azureEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-var azureKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
-var deploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT");
-
-if (string.IsNullOrEmpty(azureEndpoint) || 
-    string.IsNullOrEmpty(azureKey) || 
-    string.IsNullOrEmpty(deploymentName))
-{
-    throw new InvalidOperationException(
-        "Azure OpenAI environment variables not set. Required: " +
-        "AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, AZURE_OPENAI_DEPLOYMENT");
-}
-
-var azureClient = new AzureOpenAIClient(
-    new Uri(azureEndpoint),
-    new AzureKeyCredential(azureKey));
-
-services.AddChatClient(builder => builder
-    .Use(azureClient.AsChatClient(deploymentName)));
-```
-
-**Environment variables example:**
+**Setup (override default local LLM):**
 ```bash
 export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
 export AZURE_OPENAI_API_KEY="..."
 export AZURE_OPENAI_DEPLOYMENT="gpt-4o-mini"
+mempalacenet wake-up
 ```
 
----
-
-### Ollama (Local)
-
-**Prerequisites:**
-- Ollama installed (https://ollama.ai)
-- Model pulled: `ollama pull llama3.2` (or `mistral`, `phi3`, etc.)
-- `Microsoft.Extensions.AI.Ollama` NuGet package (preview)
-
-**Registration:**
-```csharp
-using Microsoft.Extensions.AI;
-
-services.AddChatClient(builder => builder
-    .UseOllama("llama3.2", new Uri("http://localhost:11434")));
-```
-
-**Recommended models:**
-- **llama3.2** (3B): Fast, good quality, 2GB RAM
-- **mistral** (7B): Excellent balance, 4GB RAM
-- **llama3.1** (8B): High quality, 5GB RAM
-
-**Tradeoffs:**
-- **Pros:** No API costs, privacy-first, offline support
-- **Cons:** Slower than cloud APIs (5-15 seconds vs 1-3 seconds), requires local GPU/CPU
-
-**Pull model:**
-```bash
-ollama pull llama3.2
-```
-
-**Test model:**
-```bash
-ollama run llama3.2 "Summarize recent AI developments"
-```
-
----
-
-### Custom IChatClient
-
-You can register any custom `IChatClient` implementation:
-
-```csharp
-using Microsoft.Extensions.AI;
-
-public class CustomChatClient : IChatClient
+**Or configure via appsettings.json:**
+```json
 {
-    public async Task<ChatCompletion> CompleteAsync(
-        IList<ChatMessage> messages,
-        ChatOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        // Your custom LLM integration (e.g., Anthropic Claude API, local model)
-        var userMessage = messages.Last(m => m.Role == ChatRole.User).Text;
-        var summary = await YourLlmService.GenerateSummary(userMessage);
-        
-        return new ChatCompletion(new ChatMessage(ChatRole.Assistant, summary));
-    }
-
-    // Implement other IChatClient members...
+  "AzureOpenAI": {
+    "Endpoint": "https://your-resource.openai.azure.com/",
+    "ApiKey": "...",
+    "Deployment": "gpt-4o-mini"
+  }
 }
+```
 
-// Register
-services.AddSingleton<IChatClient, CustomChatClient>();
+---
+
+### Ollama (Local — Alternative)
+
+**Note:** Ollama is not directly integrated in v0.7.0. To use Ollama, you must:
+1. Manually register an `IChatClient` using `Microsoft.Extensions.AI.Ollama` (preview)
+2. Override the default ElBruno.LocalLLMs registration in `Program.cs`
+
+**Example (not officially supported):**
+```csharp
+// In Program.cs, replace default IChatClient registration
+services.AddSingleton<IChatClient>(sp =>
+{
+    return new OllamaClient(new Uri("http://localhost:11434"), "llama3.2");
+});
 ```
 
 ---
@@ -367,30 +302,40 @@ Verify it's active at https://platform.openai.com/api-keys.
 
 ---
 
-### Error: "Ollama connection refused"
+### Error: "Failed to initialize local LLM"
 
-**Cause:** Ollama service not running.
+**Cause:** Model download failed or system requirements not met.
 
-**Fix:** Start Ollama:
-```bash
-ollama serve
-```
-
-Verify it's running:
-```bash
-curl http://localhost:11434/api/tags
-```
+**Fix:**
+1. Check internet connection (model downloads from HuggingFace)
+2. Verify disk space: ~500 MB required in `~/.cache/mempalace/models`
+3. Check CPU support: Requires AVX2 (most CPUs since 2013)
+4. Use cloud opt-in as fallback:
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   mempalacenet wake-up
+   ```
 
 ---
 
-### Slow performance (Ollama)
+### Slow performance (local LLM)
 
-**Cause:** CPU inference is slow; model size too large.
+**Cause:** CPU inference is slow on older hardware.
 
 **Fix:**
-1. Use a smaller model: `ollama pull llama3.2` (3B instead of 8B)
-2. Enable GPU acceleration (if available): https://ollama.ai/docs/gpu
-3. Switch to cloud API for faster responses
+1. **GPU acceleration (NVIDIA):**
+   ```bash
+   dotnet add package Microsoft.ML.OnnxRuntimeGenAI.Cuda
+   ```
+2. **GPU acceleration (Windows — any GPU):**
+   ```bash
+   dotnet add package Microsoft.ML.OnnxRuntimeGenAI.DirectML
+   ```
+3. **Cloud fallback:**
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   mempalacenet wake-up
+   ```
 
 ---
 
@@ -443,7 +388,23 @@ Generate a context summary for starting a new session.
 
 ## Cost Estimates
 
-### OpenAI Pricing (as of 2026-04-25)
+### Local LLM (Default — Free)
+
+**Cost:** $0 (no API charges, no subscription)
+
+**Infrastructure:**
+- Local CPU (default): Any modern CPU with AVX2 support
+- Local GPU (optional): NVIDIA RTX 3060 or better (~$300-500) or DirectML (Windows GPU)
+
+**Latency:**
+- CPU: 5-10 seconds
+- GPU: 2-3 seconds
+
+**First-time setup:**
+- Model download: ~1 minute (~500 MB)
+- Cached locally, no re-download needed
+
+### OpenAI Pricing (Cloud Opt-In)
 
 | Model | Input (per 1M tokens) | Output (per 1M tokens) | Wake-Up Cost |
 |-------|----------------------|------------------------|--------------|
@@ -457,19 +418,7 @@ Generate a context summary for starting a new session.
 - 500 tokens output
 - 1 run per day = **$0.30/month** (gpt-4o-mini) or **$0.45/month** (gpt-4o)
 
-**Recommendation:** Use `gpt-4o-mini` for production (excellent quality, 15x cheaper than gpt-4o).
-
-### Ollama (Local)
-
-**Cost:** $0 (no API charges)
-
-**Infrastructure:**
-- Local GPU (recommended): NVIDIA RTX 3060 or better (~$300-500)
-- Local CPU (slower): Any modern CPU with 8GB+ RAM
-
-**Latency:**
-- GPU: 2-5 seconds
-- CPU: 5-15 seconds
+**Recommendation:** Use local LLM (default, free) for most use cases. Use `gpt-4o-mini` (cloud) only if you need faster response times or higher quality summaries.
 
 ---
 
