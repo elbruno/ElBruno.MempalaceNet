@@ -36,18 +36,22 @@
 
 ## Strategic Focus
 
-**Current Phase:** v0.7.0 Kickoff (Agent Workflows & Integrations) — Ready for Implementation
+**Current Phase:** v0.7.0 Phase 2 (Integration & Optimization) — ACTIVE 🚀
 
-**v0.7.0 Launch Date:** 2026-04-27 (Deckard validation + team consensus complete)
+**Phase 1 Status:** ✅ COMPLETE (MCP SSE Transport, Wake-up LLM, Skill CLI Phase 1)
 
-**v0.7.0 Roadmap (8-10 weeks):**
-  - P0: MCP SSE Transport (Tyrell) + LLM Wake-Up (Roy) parallel, Weeks 1-3
-  - P0: Embedder Pluggability (Tyrell), Weeks 1-2
-  - P1: Skill Marketplace CLI (Rachael), Weeks 2-3
-  - P1: Test Coverage Strategy (Bryant), Weeks 1-4 (parallel with dev)
-  - P2: Release prep + integration (Deckard), Week 8-10
+**Phase 2 Timeline:** Weeks 2-3 (2026-04-28 → 2026-05-08)
 
-**Parallel Workstreams:** All 5 decisions architecturally validated. Zero blockers. Teams ready to start immediately.
+**Phase 2 Workstreams (Parallel):**
+  - Workstream A: CLI Integration (Rachael + Tyrell) — 5-7 days
+  - Workstream B: MCP Tool Expansion (Roy) — 4-6 days  
+  - Workstream C: Backend Optimization (Tyrell) — 2-3 days
+
+**Phase 3 Timeline:** Weeks 4-5 (2026-05-08 → 2026-05-20)
+  - Workstream D: Embedder Interface (Tyrell + Roy) — 3-4 days
+  - Workstream E: Release Prep (Deckard + Bryant) — 5-7 days
+
+**Roadmap:** See `docs/guides/v070-phase2-phase3-roadmap.md` for full dependency graph and task breakdown.
 
 **Prior Phase:** v0.6.0 Implementation ✅ COMPLETE (sqlite-vec, BM25, LongMemEval validation, Copilot Skill PR #1 merged)
 
