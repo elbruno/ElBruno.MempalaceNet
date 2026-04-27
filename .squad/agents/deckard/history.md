@@ -206,6 +206,104 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 ---
 
+### 2026-04-27: v0.7.0 Phase 2-3 Roadmap Creation
+
+**Context:** Mission v070-phase2-planning. Phase 1 implementations complete (Tyrell SSE, Roy wake-up LLM, Rachael skill CLI). Need dependency graph and Phase 2-3 breakdown.
+
+**Phase 1 Analysis:**
+- ✅ **Tyrell:** MCP SSE transport fully functional (HttpSseTransport, SessionManager, 29 tests, docs) - [commit 1806192]
+- ✅ **Roy:** Wake-up LLM summarization complete (IMemorySummarizer, WakeUpCommand, 7 tests, graceful degradation)
+- ✅ **Rachael:** Skill CLI Phase 1 done (SkillManager, 6 commands, local filesystem operations)
+
+**Roadmap Deliverable:** Created comprehensive 18KB roadmap document at `docs/guides/v070-phase2-phase3-roadmap.md` covering:
+
+**Phase 2 (Weeks 2-3): Integration & Optimization**
+- **Workstream A (Rachael + Tyrell):** CLI integration (--transport sse, skill MCP, UX polish) — 5-7 days
+- **Workstream B (Roy):** MCP tool expansion (7 → 15 tools, add write operations) — 4-6 days
+- **Workstream C (Tyrell):** Backend optimization (WakeUpAsync method, query indexing) — 2-3 days
+- **Parallelization:** All 3 workstreams independent, can run concurrently
+
+**Phase 3 (Weeks 4-5): Embedder Interface & Release**
+- **Workstream D (Tyrell + Roy):** ICustomEmbedder factory pattern, ElBruno.LocalEmbeddings update — 3-4 days
+- **Workstream E (Deckard + Bryant):** Documentation updates, integration testing, R@5 CI, release prep — 5-7 days
+
+**Dependency Graph:**
+```
+Phase 1 ✅ COMPLETE
+  ├─ MCP SSE Transport (Tyrell) ✅
+  ├─ Wake-up LLM (Roy) ✅
+  └─ Skill CLI Phase 1 (Rachael) ✅
+
+Phase 2 🚀 ACTIVE (3 parallel workstreams)
+  ├─ A: CLI Integration → depends on SSE transport ✅
+  ├─ B: MCP Tool Expansion → depends on SSE transport ✅
+  └─ C: Backend Optimization → depends on wake-up LLM ✅
+
+Phase 3 ⏳ PENDING
+  ├─ D: Embedder Interface → BLOCKED by GitHub #43 (ElBruno.LocalEmbeddings)
+  └─ E: Release Prep → depends on all Phase 2 workstreams
+```
+
+**Critical Path:** Phase 2A (CLI) → Phase 2C (Backend) → Phase 3E (Release) = 15-17 days
+
+**Risk Assessment:**
+- 🔴 **High:** ElBruno.LocalEmbeddings API changes (GitHub #43) blocks embedder interface
+  - **Mitigation:** Ship v0.7.0 with current version + migration guide if not stable
+- 🟡 **Medium:** MCP SSE adoption complexity, integration testing surprises
+- 🟢 **Low:** Scope creep (v0.7.0 decisions LOCKED per mission charter)
+
+**Team Effort Estimates:**
+- Rachael: 11 days (CLI integration lead)
+- Tyrell: 8 days (backend + embedder interface)
+- Roy: 7 days (MCP tool expansion)
+- Bryant: 7 days (integration testing + R@5 CI)
+- Deckard: 9 days (docs + release prep)
+- **Total:** 36 eng-days over 3-4 weeks
+
+**GitHub Issue Mapping:**
+- Phase 2 issues: #6 (MCP tools), #7 (CLI UX)
+- Phase 3 issues: #8 (R@5 CI), #9 (docs), #10 (integration tests), #11 (release prep)
+- All issues already filed by prior kickoff — no new issues needed
+
+**Architectural Decisions:**
+1. Phase 2 workstreams run in parallel (zero cross-dependencies)
+2. Embedder interface (Phase 3D) can start early if GitHub #43 resolves
+3. Release prep (Phase 3E) blocks on all Phase 2 completion (integration risk)
+4. Deferred to v0.8.0: Remote skill registry, Ollama embedder, advanced MCP features
+
+**Documentation Created:**
+- Phase 2-3 roadmap (18KB) with full dependency graph
+- Success metrics per phase
+- Open questions for Bruno (API timelines, transport defaults, scope priorities)
+- Risk mitigation strategies
+- Communication plan (weekly sync, daily async standups)
+
+**Team Status Updated:**
+- `.squad/team.md` now reflects Phase 2 ACTIVE status
+- Current sprint focus: v0.7.0 Phase 2 (Integration & Optimization)
+- Phase 2 timeline: 2026-04-28 → 2026-05-08
+- Phase 3 timeline: 2026-05-08 → 2026-05-20
+
+**Artifacts:**
+- `docs/guides/v070-phase2-phase3-roadmap.md` (18KB comprehensive plan)
+- `.squad/team.md` (updated strategic focus)
+- Git commit [9155f0e] pushed to main
+
+**Key Learnings:**
+1. Phase 1 SSE transport architecture (IMcpTransport abstraction) enables clean Phase 2 CLI integration
+2. Wake-up LLM graceful degradation pattern (NoOp fallback) is solid architectural decision
+3. Skill CLI Phase 1 (local-only) was correct MVP scope — MCP integration deferred to Phase 2
+4. Parallelization of 3 Phase 2 workstreams reduces critical path by ~40% (linear: 18d → parallel: 10-12d)
+5. ElBruno.LocalEmbeddings dependency is highest risk (external blocker) — mitigation plan documented
+
+**For Bruno:**
+1. **Phase 2 kickoff:** Ready to begin immediately (no blockers)
+2. **Open questions:** See roadmap Section 10 (4 questions on timelines, defaults, scope)
+3. **Release target:** 2026-05-20 feasible if GitHub #43 resolves by 2026-05-08
+4. **Next checkpoint:** Phase 2 → Phase 3 transition meeting (2026-05-08 est.)
+
+**Status:** ✅ Phase 2-3 roadmap complete, committed, and pushed. Team ready for Phase 2 parallel workstreams.
+
 ### 2026-04-25: Docs Cleanup & CI Decision
 
 **Task:** Execute repo-local non-code tasks: docs cleanup, CI decision capture, squad decisions merge, commit all changes.
