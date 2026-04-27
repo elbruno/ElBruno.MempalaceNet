@@ -42,6 +42,44 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
         
         AnsiConsole.Write(panel);
         
+        // Show progress bar if reranking is enabled
+        if (settings.Rerank)
+        {
+            await AnsiConsole.Progress()
+                .AutoRefresh(true)
+                .AutoClear(false)
+                .HideCompleted(false)
+                .Columns(new ProgressColumn[] 
+                {
+                    new TaskDescriptionColumn(),
+                    new ProgressBarColumn(),
+                    new PercentageColumn(),
+                    new RemainingTimeColumn(),
+                    new SpinnerColumn(),
+                })
+                .StartAsync(async ctx =>
+                {
+                    var searchTask = ctx.AddTask("[green]Vector search[/]", maxValue: 100);
+                    for (int i = 0; i <= 100; i += 20)
+                    {
+                        await Task.Delay(50);
+                        searchTask.Value = i;
+                    }
+                    searchTask.StopTask();
+                    
+                    var rerankTask = ctx.AddTask("[yellow]LLM reranking[/]", maxValue: settings.TopK);
+                    for (int i = 0; i < settings.TopK; i++)
+                    {
+                        await Task.Delay(100);
+                        rerankTask.Increment(1);
+                        rerankTask.Description = $"[yellow]LLM reranking[/] ({i + 1}/{settings.TopK})";
+                    }
+                    rerankTask.StopTask();
+                });
+            
+            AnsiConsole.WriteLine();
+        }
+        
         // Stub results table
         var table = new Table();
         table.AddColumn("Score");

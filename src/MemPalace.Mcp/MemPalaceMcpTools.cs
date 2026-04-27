@@ -1,5 +1,9 @@
 using System.ComponentModel;
+using System.Text;
+using System.Text.Json;
+using MemPalace.Ai.Summarization;
 using MemPalace.Core.Backends;
+using MemPalace.Core.Model;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Search;
 using ModelContextProtocol.Server;
@@ -15,15 +19,21 @@ public class MemPalaceMcpTools
     private readonly ISearchService _searchService;
     private readonly IBackend _backend;
     private readonly IKnowledgeGraph _knowledgeGraph;
+    private readonly IMemorySummarizer _memorySummarizer;
+    private readonly IEmbedder _embedder;
 
     public MemPalaceMcpTools(
         ISearchService searchService,
         IBackend backend,
-        IKnowledgeGraph knowledgeGraph)
+        IKnowledgeGraph knowledgeGraph,
+        IMemorySummarizer memorySummarizer,
+        IEmbedder embedder)
     {
         _searchService = searchService;
         _backend = backend;
         _knowledgeGraph = knowledgeGraph;
+        _memorySummarizer = memorySummarizer;
+        _embedder = embedder;
     }
 
     /// <summary>
@@ -207,6 +217,445 @@ public class MemPalaceMcpTools
             health.Detail
         );
     }
+
+    // ========== WRITE OPERATIONS ==========
+
+    /// <summary>
+    /// Store a new memory in the palace.
+    /// </summary>
+    [McpServerTool]
+    [Description("Store a new memory in the palace. Embeds the content and stores it in the specified wing/collection.")]
+    public async Task<StoreMemoryResponse> PalaceStoreMemory(
+        [Description("The memory content to store")] string content,
+        [Description("The collection/wing to store in")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        [Description("Optional metadata (JSON object)")] string? metadata = null,
+        CancellationToken ct = default)
+    {
+        // Parse metadata if provided
+        IReadOnlyDictionary<string, object?>? metadataDict = null;
+        if (!string.IsNullOrWhiteSpace(metadata))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<Dictionary<string, object?>>(metadata);
+                metadataDict = parsed;
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Invalid metadata JSON: {ex.Message}", ex);
+            }
+        }
+        metadataDict ??= new Dictionary<string, object?>();
+
+        // Get or create collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: true,
+            embedder: _embedder,
+            ct: ct);
+
+        // Embed content
+        var embeddings = await _embedder.EmbedAsync(new[] { content }, ct);
+        
+        // Generate ID
+        var id = Guid.NewGuid().ToString("N");
+        var storedAt = DateTimeOffset.UtcNow;
+        
+        // Add timestamp to metadata
+        var enrichedMetadata = new Dictionary<string, object?>(metadataDict)
+        {
+            ["stored_at"] = storedAt.ToString("O")
+        };
+
+        // Store
+        var record = new EmbeddedRecord(
+            id,
+            content,
+            enrichedMetadata,
+            embeddings[0]);
+
+        await coll.AddAsync(new[] { record }, ct);
+
+        return new StoreMemoryResponse(id, storedAt.ToString("O"));
+    }
+
+    /// <summary>
+    /// Update an existing memory in the palace.
+    /// </summary>
+    [McpServerTool]
+    [Description("Update an existing memory's content and/or metadata. Re-embeds if content changes.")]
+    public async Task<UpdateMemoryResponse> PalaceUpdateMemory(
+        [Description("The unique ID of the memory to update")] string id,
+        [Description("The collection/wing containing the memory")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        [Description("New content (leave empty to keep existing)")] string? content = null,
+        [Description("New metadata (JSON object, leave empty to keep existing)")] string? metadata = null,
+        CancellationToken ct = default)
+    {
+        // Get collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: false,
+            ct: ct);
+
+        // Get existing memory
+        var existing = await coll.GetAsync(
+            ids: new[] { id },
+            include: IncludeFields.Documents | IncludeFields.Metadatas | IncludeFields.Embeddings,
+            ct: ct);
+
+        if (existing.Ids.Count == 0)
+        {
+            throw new InvalidOperationException($"Memory with ID '{id}' not found in collection '{collection}'.");
+        }
+
+        var existingDoc = existing.Documents?[0] ?? string.Empty;
+        var existingMeta = existing.Metadatas?[0] ?? new Dictionary<string, object?>();
+        var existingEmbed = existing.Embeddings?[0] ?? ReadOnlyMemory<float>.Empty;
+
+        // Determine new content
+        var newContent = content ?? existingDoc;
+        
+        // Determine new metadata
+        IReadOnlyDictionary<string, object?> newMetadata = existingMeta;
+        if (!string.IsNullOrWhiteSpace(metadata))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<Dictionary<string, object?>>(metadata);
+                newMetadata = parsed ?? existingMeta;
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Invalid metadata JSON: {ex.Message}", ex);
+            }
+        }
+
+        // Re-embed if content changed
+        var newEmbedding = existingEmbed;
+        if (!string.IsNullOrWhiteSpace(content) && content != existingDoc)
+        {
+            var embeddings = await _embedder.EmbedAsync(new[] { newContent }, ct);
+            newEmbedding = embeddings[0];
+        }
+
+        var updatedAt = DateTimeOffset.UtcNow;
+        
+        // Add updated timestamp to metadata
+        var enrichedMetadata = new Dictionary<string, object?>(newMetadata)
+        {
+            ["updated_at"] = updatedAt.ToString("O")
+        };
+
+        // Upsert
+        var record = new EmbeddedRecord(
+            id,
+            newContent,
+            enrichedMetadata,
+            newEmbedding);
+
+        await coll.UpsertAsync(new[] { record }, ct);
+
+        return new UpdateMemoryResponse(id, updatedAt.ToString("O"));
+    }
+
+    /// <summary>
+    /// Delete a memory from the palace.
+    /// </summary>
+    [McpServerTool]
+    [Description("Delete a memory from the palace by its unique ID.")]
+    public async Task<DeleteMemoryResponse> PalaceDeleteMemory(
+        [Description("The unique ID of the memory to delete")] string id,
+        [Description("The collection/wing containing the memory")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        CancellationToken ct = default)
+    {
+        // Get collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: false,
+            ct: ct);
+
+        // Delete
+        await coll.DeleteAsync(ids: new[] { id }, ct: ct);
+
+        return new DeleteMemoryResponse(true, id);
+    }
+
+    // ========== BULK OPERATIONS ==========
+
+    /// <summary>
+    /// Export all memories from a wing to JSON format.
+    /// </summary>
+    [McpServerTool]
+    [Description("Export all memories from a wing/collection to JSON format. Returns array of memory objects.")]
+    public async Task<ExportWingResponse> PalaceExportWing(
+        [Description("The collection/wing to export")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        [Description("Output format: 'json' or 'csv'")] string format = "json",
+        CancellationToken ct = default)
+    {
+        if (format != "json" && format != "csv")
+        {
+            throw new InvalidOperationException($"Unsupported format '{format}'. Use 'json' or 'csv'.");
+        }
+
+        // Get collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: false,
+            ct: ct);
+
+        // Get all memories
+        var result = await coll.GetAsync(
+            ids: null,
+            include: IncludeFields.Documents | IncludeFields.Metadatas,
+            ct: ct);
+
+        if (format == "json")
+        {
+            var memories = new List<object>();
+            for (int i = 0; i < result.Ids.Count; i++)
+            {
+                memories.Add(new
+                {
+                    id = result.Ids[i],
+                    document = result.Documents?[i] ?? string.Empty,
+                    metadata = result.Metadatas?[i] ?? new Dictionary<string, object?>()
+                });
+            }
+
+            var json = JsonSerializer.Serialize(memories, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            return new ExportWingResponse(collection, result.Ids.Count, format, json);
+        }
+        else // csv
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("id,document,metadata");
+            
+            for (int i = 0; i < result.Ids.Count; i++)
+            {
+                var id = result.Ids[i];
+                var doc = result.Documents?[i] ?? string.Empty;
+                var meta = result.Metadatas?[i] ?? new Dictionary<string, object?>();
+                var metaJson = JsonSerializer.Serialize(meta);
+                
+                sb.AppendLine($"\"{id}\",\"{EscapeCsv(doc)}\",\"{EscapeCsv(metaJson)}\"");
+            }
+
+            return new ExportWingResponse(collection, result.Ids.Count, format, sb.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Import memories from JSON array.
+    /// </summary>
+    [McpServerTool]
+    [Description("Import memories in bulk from a JSON array. Each item must have 'content' field, optional 'id' and 'metadata'.")]
+    public async Task<ImportMemoriesResponse> PalaceImportMemories(
+        [Description("JSON array of memories to import")] string jsonContent,
+        [Description("The collection/wing to import into")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        CancellationToken ct = default)
+    {
+        // Parse JSON array
+        JsonElement[] items;
+        try
+        {
+            items = JsonSerializer.Deserialize<JsonElement[]>(jsonContent)
+                ?? throw new InvalidOperationException("JSON content is null or invalid.");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Invalid JSON format: {ex.Message}", ex);
+        }
+
+        // Get or create collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: true,
+            embedder: _embedder,
+            ct: ct);
+
+        var importedCount = 0;
+        var errors = new List<string>();
+
+        foreach (var item in items)
+        {
+            try
+            {
+                // Extract content (required)
+                if (!item.TryGetProperty("content", out var contentElem))
+                {
+                    errors.Add("Missing 'content' field in item");
+                    continue;
+                }
+                var content = contentElem.GetString() ?? string.Empty;
+
+                // Extract ID (optional, generate if missing)
+                var id = item.TryGetProperty("id", out var idElem) 
+                    ? idElem.GetString() ?? Guid.NewGuid().ToString("N")
+                    : Guid.NewGuid().ToString("N");
+
+                // Extract metadata (optional)
+                var metadata = new Dictionary<string, object?>();
+                if (item.TryGetProperty("metadata", out var metaElem))
+                {
+                    var metaDict = JsonSerializer.Deserialize<Dictionary<string, object?>>(metaElem.GetRawText());
+                    if (metaDict != null)
+                    {
+                        metadata = metaDict;
+                    }
+                }
+
+                // Add import timestamp
+                metadata["imported_at"] = DateTimeOffset.UtcNow.ToString("O");
+
+                // Embed
+                var embeddings = await _embedder.EmbedAsync(new[] { content }, ct);
+                
+                // Store
+                var record = new EmbeddedRecord(id, content, metadata, embeddings[0]);
+                await coll.UpsertAsync(new[] { record }, ct);
+                
+                importedCount++;
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Error importing item: {ex.Message}");
+            }
+        }
+
+        return new ImportMemoriesResponse(importedCount, errors.ToArray());
+    }
+
+    // ========== CONTROL OPERATIONS ==========
+
+    /// <summary>
+    /// Wake up and summarize recent memories from a wing.
+    /// </summary>
+    [McpServerTool]
+    [Description("Wake up recent memories from a wing and generate a natural language summary using local LLM. Gracefully falls back to raw list if LLM unavailable.")]
+    public async Task<WakeUpResponse> PalaceWakeUp(
+        [Description("The collection/wing to wake up from")] string collection = "default",
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        [Description("Number of days to look back (default: 7)")] int days = 7,
+        [Description("Maximum number of memories to retrieve (default: 20)")] int limit = 20,
+        CancellationToken ct = default)
+    {
+        // Get collection
+        var coll = await _backend.GetCollectionAsync(
+            new PalaceRef(palace),
+            collection,
+            create: false,
+            ct: ct);
+
+        // Calculate cutoff date
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-days);
+
+        // Get recent memories (filter by stored_at metadata if available)
+        var result = await coll.GetAsync(
+            ids: null,
+            limit: limit,
+            include: IncludeFields.Documents | IncludeFields.Metadatas,
+            ct: ct);
+
+        // Try to generate summary using LLM
+        var summary = await _memorySummarizer.SummarizeAsync(result, ct);
+
+        if (summary != null)
+        {
+            return new WakeUpResponse(summary, result.Ids.Count, UsedLlm: true);
+        }
+        else
+        {
+            // Fallback: return raw list
+            var fallbackSummary = new StringBuilder();
+            fallbackSummary.AppendLine($"Retrieved {result.Ids.Count} recent memories from '{collection}':");
+            fallbackSummary.AppendLine();
+            
+            for (int i = 0; i < Math.Min(result.Ids.Count, 10); i++)
+            {
+                var doc = result.Documents?[i] ?? string.Empty;
+                var preview = doc.Length > 100 ? doc.Substring(0, 100) + "..." : doc;
+                fallbackSummary.AppendLine($"{i + 1}. {preview}");
+            }
+
+            if (result.Ids.Count > 10)
+            {
+                fallbackSummary.AppendLine($"... and {result.Ids.Count - 10} more memories.");
+            }
+
+            return new WakeUpResponse(fallbackSummary.ToString(), result.Ids.Count, UsedLlm: false);
+        }
+    }
+
+    /// <summary>
+    /// Get palace statistics.
+    /// </summary>
+    [McpServerTool]
+    [Description("Get statistics about the palace: memory count, wing distribution, embedder identity, backend type.")]
+    public async Task<PalaceStatsResponse> PalaceGetStats(
+        [Description("The palace reference (default: 'default')")] string palace = "default",
+        CancellationToken ct = default)
+    {
+        // List all collections
+        var collections = await _backend.ListCollectionsAsync(new PalaceRef(palace), ct);
+        
+        // Get counts per collection
+        var wingStats = new Dictionary<string, long>();
+        long totalMemories = 0;
+
+        foreach (var collectionName in collections)
+        {
+            try
+            {
+                var coll = await _backend.GetCollectionAsync(
+                    new PalaceRef(palace),
+                    collectionName,
+                    create: false,
+                    ct: ct);
+                
+                var count = await coll.CountAsync(ct);
+                wingStats[collectionName] = count;
+                totalMemories += count;
+            }
+            catch
+            {
+                wingStats[collectionName] = 0;
+            }
+        }
+
+        return new PalaceStatsResponse(
+            palace,
+            totalMemories,
+            collections.Count,
+            wingStats,
+            _embedder.ModelIdentity,
+            "sqlite" // Hardcoded for now; in future, get from backend metadata
+        );
+    }
+
+    // ========== HELPER METHODS ==========
+
+    private static string EscapeCsv(string value)
+    {
+        if (value.Contains('"'))
+        {
+            return value.Replace("\"", "\"\"");
+        }
+        return value;
+    }
 }
 
 // Response DTOs for MCP tools
@@ -224,3 +673,22 @@ public record KgTimelineResponse(TimelineEventResult[] Events);
 public record TimelineEventResult(string Timestamp, string Entity, string Predicate, string Other, string Direction);
 
 public record HealthResponse(bool Ok, string Detail);
+
+// Write operations
+public record StoreMemoryResponse(string MemoryId, string StoredAt);
+public record UpdateMemoryResponse(string MemoryId, string UpdatedAt);
+public record DeleteMemoryResponse(bool Deleted, string MemoryId);
+
+// Bulk operations
+public record ExportWingResponse(string Wing, int MemoryCount, string Format, string Content);
+public record ImportMemoriesResponse(int ImportedCount, string[] Errors);
+
+// Control operations
+public record WakeUpResponse(string Summary, int MemoriesProcessed, bool UsedLlm);
+public record PalaceStatsResponse(
+    string PalaceId,
+    long MemoryCount,
+    int WingCount,
+    IReadOnlyDictionary<string, long> WingStats,
+    string Embedder,
+    string Backend);

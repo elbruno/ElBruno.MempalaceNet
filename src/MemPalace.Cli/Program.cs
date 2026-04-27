@@ -141,7 +141,9 @@ internal static class Program
             config.AddCommand<McpCommand>("mcp")
                 .WithDescription("Start MCP server (Model Context Protocol)")
                 .WithExample("mempalacenet mcp")
-                .WithExample("mempalacenet mcp --transport stdio");
+                .WithExample("mempalacenet mcp --transport stdio")
+                .WithExample("mempalacenet mcp --transport sse --port 5050")
+                .WithExample("mempalacenet mcp --transport both --port 5050");
 
             // Agents branch
             config.AddBranch("agents", agents =>
@@ -222,6 +224,15 @@ internal static class Program
                     .WithDescription("Uninstall a skill")
                     .WithExample("mempalacenet skill uninstall my-skill")
                     .WithExample("mempalacenet skill uninstall my-skill --force");
+
+                skill.AddCommand<SkillMarketplaceSearchCommand>("marketplace-search")
+                    .WithDescription("Search remote skill marketplace (requires MCP)")
+                    .WithExample("mempalacenet skill marketplace-search rag")
+                    .WithExample("mempalacenet skill marketplace-search vector-db");
+
+                skill.AddCommand<SkillSourceListCommand>("source-list")
+                    .WithDescription("List configured marketplace sources")
+                    .WithExample("mempalacenet skill source-list");
             });
         });
 

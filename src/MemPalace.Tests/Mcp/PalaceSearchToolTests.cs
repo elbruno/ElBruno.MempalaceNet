@@ -2,6 +2,7 @@ using MemPalace.Core.Backends;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mcp;
 using MemPalace.Search;
+using MemPalace.Ai.Summarization;
 using NSubstitute;
 using Xunit;
 
@@ -27,7 +28,9 @@ public class PalaceSearchToolTests
                 new("id1", "doc1", 0.95f, new Dictionary<string, object?> { ["key"] = "value" })
             });
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.PalaceSearch("test query", "default", 10);
@@ -58,7 +61,9 @@ public class PalaceSearchToolTests
                 new("id1", "doc1", 0.95f, null)
             });
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.PalaceRecall("test query", "default", 5);
@@ -86,7 +91,9 @@ public class PalaceSearchToolTests
             Arg.Any<CancellationToken>())
             .Returns(new List<string> { "wing1", "wing2", "wing3" });
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.PalaceListWings("default");

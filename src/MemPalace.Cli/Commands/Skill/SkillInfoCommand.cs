@@ -27,11 +27,25 @@ internal sealed class SkillInfoCommand : AsyncCommand<SkillInfoSettings>
 
         if (skill == null)
         {
-            AnsiConsole.MarkupLine($"[red]Skill '[blue]{settings.SkillId}[/]' not found.[/]");
+            var panel = new Panel(
+                $"[red]Skill not found:[/] {Markup.Escape(settings.SkillId)}\n\n" +
+                "[white]Remediation steps:[/]\n" +
+                "1. List installed skills: [cyan]mempalacenet skill list[/]\n" +
+                "2. Search for similar skills: [cyan]mempalacenet skill search " + Markup.Escape(settings.SkillId) + "[/]\n" +
+                "3. Install the skill first: [cyan]mempalacenet skill install <path>[/]\n\n" +
+                $"[dim]Hint: Skill IDs are case-sensitive. Common installed location: ~/.palace/skills/{Markup.Escape(settings.SkillId)}[/]"
+            )
+            {
+                Header = new PanelHeader("[red]Skill Not Found[/]"),
+                Border = BoxBorder.Rounded,
+                BorderStyle = new Style(Color.Red)
+            };
+            
+            AnsiConsole.Write(panel);
             return 1;
         }
 
-        var panel = new Panel(
+        var panel2 = new Panel(
             $"[bold]{skill.Name}[/] v{skill.Version}\n\n" +
             $"{skill.Description}\n\n" +
             $"[dim]ID:[/] {skill.Id}\n" +
@@ -49,7 +63,7 @@ internal sealed class SkillInfoCommand : AsyncCommand<SkillInfoSettings>
             Border = BoxBorder.Rounded
         };
         
-        AnsiConsole.Write(panel);
+        AnsiConsole.Write(panel2);
         
         await Task.CompletedTask;
         return 0;
