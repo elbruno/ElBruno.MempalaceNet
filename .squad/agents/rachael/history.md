@@ -1,5 +1,40 @@
 # Rachael — History
 
+## 2026-04-27: Phase 2 Final Task — SkillManager Test Isolation Fix
+
+**Mission:** Resolve 7 failing SkillManager tests caused by test isolation issues (deferred from Phase 1).
+
+**Root Cause:** Static `SkillsPath` field in `SkillManager` caused cross-test pollution when tests ran in parallel.
+
+**Solution:**
+1. **SkillManager Refactoring:**
+   - Changed `static readonly string SkillsPath` to instance field `readonly string _skillsPath`
+   - Added `internal SkillManager(string skillsPath)` constructor for dependency injection
+   - Default parameterless constructor chains to `GetDefaultSkillsPath()` for production use
+   - Updated all 8 method usages to reference instance field
+   - Added better JSON deserialization error handling
+
+2. **Test Improvements:**
+   - Refactored `SkillManagerTests` to create unique temp directories per test
+   - Added `CreateTestSkillsPath()` helper that generates isolated paths via `Guid.NewGuid()`
+   - Each of the 9 tests now uses constructor injection with isolated temp paths
+   - Improved cleanup with `_dirsToClean` list and try-catch in `Dispose()`
+
+3. **CommandAppParseTests Fixes:**
+   - Added proper mocks for `IBackend`, `ICollection`, `IMemorySummarizer`
+   - Fixed `MineCommand` test to use real temp directory instead of "./path"
+
+**Results:**
+- ✅ **246/246 tests passing** (all SkillManager tests now pass)
+- ✅ **10/10 SkillManager tests isolated** (no cross-test pollution)
+- ✅ Build: GREEN (0 errors, 0 warnings)
+
+**Commit:** `fix(cli): Refactor SkillManager for test isolation` (SHA: 1551c94)
+
+**Key Learning:** When designing testable services, always prefer instance fields with constructor injection over static fields, even for "global" configuration like paths.
+
+---
+
 ## 2026-04-27: v070-skill-marketplace-cli (Phase 1 Implementation)
 
 **Mission:** Scaffold Phase 1 of skill marketplace CLI (local filesystem operations, no MCP integration yet).
