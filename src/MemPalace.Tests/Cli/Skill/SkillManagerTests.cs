@@ -6,36 +6,52 @@ namespace MemPalace.Tests.Cli.Skill;
 
 public sealed class SkillManagerTests : IDisposable
 {
-    private readonly string _tempSkillsPath;
-    private readonly string _originalHome;
+    private readonly string _tempBaseDir;
+    private readonly List<string> _dirsToClean = new();
 
     public SkillManagerTests()
     {
-        // Create temp directory for tests
-        _tempSkillsPath = Path.Combine(Path.GetTempPath(), "mempalace-tests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_tempSkillsPath);
-
-        // Override home directory for testing
-        _originalHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        
-        // Note: We can't actually change the home directory, so tests will use a helper
-        // that overrides the SkillManager path behavior
+        // Create base temp directory for tests
+        _tempBaseDir = Path.Combine(Path.GetTempPath(), "mempalace-tests", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(_tempBaseDir);
     }
 
     public void Dispose()
     {
-        // Clean up temp directory
-        if (Directory.Exists(_tempSkillsPath))
+        // Clean up all created directories
+        foreach (var dir in _dirsToClean.Where(Directory.Exists))
         {
-            Directory.Delete(_tempSkillsPath, recursive: true);
+            Directory.Delete(dir, recursive: true);
         }
+        
+        // Clean up base temp directory
+        if (Directory.Exists(_tempBaseDir))
+        {
+            try
+            {
+                Directory.Delete(_tempBaseDir, recursive: true);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+    }
+
+    private string CreateTestSkillsPath()
+    {
+        var path = Path.Combine(_tempBaseDir, Guid.NewGuid().ToString());
+        Directory.CreateDirectory(path);
+        _dirsToClean.Add(path);
+        return path;
     }
 
     [Fact]
     public void List_ReturnsEmpty_WhenNoSkillsInstalled()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
 
         // Act
         var skills = manager.List();
@@ -48,7 +64,8 @@ public sealed class SkillManagerTests : IDisposable
     public async Task InstallAsync_CopiesSkillDirectory_WhenValidManifest()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
         var sourceDir = CreateTestSkill("test-skill", "1.0.0", "Test Skill");
 
         try
@@ -73,8 +90,9 @@ public sealed class SkillManagerTests : IDisposable
     public async Task InstallAsync_ThrowsFileNotFoundException_WhenManifestMissing()
     {
         // Arrange
-        var manager = new SkillManager();
-        var sourceDir = Path.Combine(_tempSkillsPath, "no-manifest");
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
+        var sourceDir = Path.Combine(skillsPath, "no-manifest");
         Directory.CreateDirectory(sourceDir);
 
         // Act & Assert
@@ -88,8 +106,9 @@ public sealed class SkillManagerTests : IDisposable
     public async Task InstallAsync_ThrowsInvalidDataException_WhenManifestInvalid()
     {
         // Arrange
-        var manager = new SkillManager();
-        var sourceDir = Path.Combine(_tempSkillsPath, "invalid-skill");
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
+        var sourceDir = Path.Combine(skillsPath, "invalid-skill");
         Directory.CreateDirectory(sourceDir);
         
         // Create invalid manifest (missing required fields)
@@ -107,7 +126,8 @@ public sealed class SkillManagerTests : IDisposable
     public async Task Search_ReturnsMatchingSkills_ByName()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
         var skill1 = CreateTestSkill("embedding-skill", "1.0.0", "Embedding helper");
         var skill2 = CreateTestSkill("rag-skill", "1.0.0", "RAG implementation");
 
@@ -134,7 +154,8 @@ public sealed class SkillManagerTests : IDisposable
     public void GetInfo_ReturnsNull_WhenSkillNotFound()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
 
         // Act
         var skill = manager.GetInfo("nonexistent-skill");
@@ -147,7 +168,8 @@ public sealed class SkillManagerTests : IDisposable
     public async Task EnableAsync_UpdatesManifest_WhenSkillExists()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
         var sourceDir = CreateTestSkill("test-skill", "1.0.0", "Test Skill", enabled: false);
 
         try
@@ -173,7 +195,8 @@ public sealed class SkillManagerTests : IDisposable
     public async Task DisableAsync_UpdatesManifest_WhenSkillExists()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
         var sourceDir = CreateTestSkill("test-skill", "1.0.0", "Test Skill", enabled: true);
 
         try
@@ -199,7 +222,8 @@ public sealed class SkillManagerTests : IDisposable
     public async Task Uninstall_RemovesSkillDirectory_WhenSkillExists()
     {
         // Arrange
-        var manager = new SkillManager();
+        var skillsPath = CreateTestSkillsPath();
+        var manager = new SkillManager(skillsPath);
         var sourceDir = CreateTestSkill("test-skill", "1.0.0", "Test Skill");
 
         try
@@ -241,8 +265,11 @@ public sealed class SkillManagerTests : IDisposable
         bool enabled = true,
         string[]? tags = null)
     {
-        var skillDir = Path.Combine(_tempSkillsPath, id);
+        // Create a unique temp directory for the source skill
+        var tempSourceDir = Path.Combine(Path.GetTempPath(), "mempalace-skill-source", Guid.NewGuid().ToString());
+        var skillDir = Path.Combine(tempSourceDir, id);
         Directory.CreateDirectory(skillDir);
+        _dirsToClean.Add(tempSourceDir);
 
         var manifest = new
         {

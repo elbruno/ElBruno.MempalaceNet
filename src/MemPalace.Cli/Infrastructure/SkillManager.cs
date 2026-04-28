@@ -9,7 +9,24 @@ namespace MemPalace.Cli.Infrastructure;
 /// </summary>
 public sealed class SkillManager
 {
-    private static readonly string SkillsPath = Path.Combine(
+    private readonly string _skillsPath;
+
+    /// <summary>
+    /// Initialize SkillManager with default path (~/.palace/skills).
+    /// </summary>
+    public SkillManager() : this(GetDefaultSkillsPath())
+    {
+    }
+
+    /// <summary>
+    /// Initialize SkillManager with a custom path (for testing).
+    /// </summary>
+    internal SkillManager(string skillsPath)
+    {
+        _skillsPath = skillsPath ?? throw new ArgumentNullException(nameof(skillsPath));
+    }
+
+    private static string GetDefaultSkillsPath() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".palace",
         "skills");
@@ -19,12 +36,12 @@ public sealed class SkillManager
     /// </summary>
     public IReadOnlyList<SkillManifest> List()
     {
-        if (!Directory.Exists(SkillsPath))
+        if (!Directory.Exists(_skillsPath))
             return Array.Empty<SkillManifest>();
 
         var manifests = new List<SkillManifest>();
         
-        foreach (var skillDir in Directory.GetDirectories(SkillsPath))
+        foreach (var skillDir in Directory.GetDirectories(_skillsPath))
         {
             var manifestPath = Path.Combine(skillDir, "skill.json");
             if (File.Exists(manifestPath))
@@ -65,7 +82,7 @@ public sealed class SkillManager
     /// </summary>
     public SkillManifest? GetInfo(string skillId)
     {
-        var manifestPath = Path.Combine(SkillsPath, skillId, "skill.json");
+        var manifestPath = Path.Combine(_skillsPath, skillId, "skill.json");
         
         if (!File.Exists(manifestPath))
             return null;
@@ -105,10 +122,10 @@ public sealed class SkillManager
         ValidateManifest(manifest);
 
         // Determine destination
-        var destDir = Path.Combine(SkillsPath, manifest.Id);
+        var destDir = Path.Combine(_skillsPath, manifest.Id);
 
         // Create skills directory if needed
-        Directory.CreateDirectory(SkillsPath);
+        Directory.CreateDirectory(_skillsPath);
 
         // Check if already installed
         if (Directory.Exists(destDir))
@@ -141,7 +158,7 @@ public sealed class SkillManager
     /// </summary>
     public bool Uninstall(string skillId)
     {
-        var skillDir = Path.Combine(SkillsPath, skillId);
+        var skillDir = Path.Combine(_skillsPath, skillId);
         
         if (!Directory.Exists(skillDir))
             return false;
@@ -155,12 +172,19 @@ public sealed class SkillManager
     private static SkillManifest LoadManifest(string path)
     {
         var json = File.ReadAllText(path);
-        var manifest = JsonSerializer.Deserialize<SkillManifest>(json, new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true
-        });
-        
-        return manifest ?? throw new InvalidDataException("Invalid skill manifest");
+            var manifest = JsonSerializer.Deserialize<SkillManifest>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            return manifest ?? throw new InvalidDataException("Invalid skill manifest");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException($"Invalid manifest format: {ex.Message}", ex);
+        }
     }
 
     private static void ValidateManifest(SkillManifest manifest)
@@ -183,7 +207,7 @@ public sealed class SkillManager
 
     private async Task<bool> SetEnabledAsync(string skillId, bool enabled, CancellationToken cancellationToken)
     {
-        var manifestPath = Path.Combine(SkillsPath, skillId, "skill.json");
+        var manifestPath = Path.Combine(_skillsPath, skillId, "skill.json");
         
         if (!File.Exists(manifestPath))
             return false;

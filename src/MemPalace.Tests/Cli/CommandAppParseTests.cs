@@ -29,6 +29,33 @@ public sealed class CommandAppParseTests
         fakeRegistry.List().Returns(Array.Empty<MemPalace.Agents.AgentDescriptor>());
         services.AddSingleton<IAgentRegistry>(fakeRegistry);
 
+        // Register required services for commands
+        var fakeCollection = Substitute.For<MemPalace.Core.Backends.ICollection>();
+        fakeCollection.GetAsync(
+                Arg.Any<IReadOnlyList<string>>(),
+                Arg.Any<MemPalace.Core.Backends.WhereClause>(),
+                Arg.Any<int?>(),
+                Arg.Any<int>(),
+                Arg.Any<MemPalace.Core.Backends.IncludeFields>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValueTask<MemPalace.Core.Backends.GetResult>(new MemPalace.Core.Backends.GetResult(
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                Array.Empty<IReadOnlyDictionary<string, object?>>())));
+
+        var fakeBackend = Substitute.For<MemPalace.Core.Backends.IBackend>();
+        fakeBackend.GetCollectionAsync(
+                Arg.Any<MemPalace.Core.Model.PalaceRef>(),
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
+                Arg.Any<MemPalace.Core.Backends.IEmbedder>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValueTask<MemPalace.Core.Backends.ICollection>(fakeCollection));
+        services.AddSingleton<MemPalace.Core.Backends.IBackend>(fakeBackend);
+        
+        var fakeSummarizer = Substitute.For<MemPalace.Ai.Summarization.IMemorySummarizer>();
+        services.AddSingleton<MemPalace.Ai.Summarization.IMemorySummarizer>(fakeSummarizer);
+
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);
 
@@ -92,8 +119,26 @@ public sealed class CommandAppParseTests
     public void MineCommand_ParsesWithMode()
     {
         var app = CreateApp();
-        var result = app.Run(["mine", "./path", "--mode", "convos", "--wing", "conversations"]);
-        Assert.Equal(0, result);
+        
+        // Create a temporary directory with a test file
+        var testDir = Path.Combine(Path.GetTempPath(), "mempalace-cli-test", Guid.NewGuid().ToString());
+        Directory.CreateDirectory(testDir);
+        
+        // Create a test file to mine
+        File.WriteAllText(Path.Combine(testDir, "test.txt"), "test content");
+        
+        try
+        {
+            var result = app.Run(["mine", testDir, "--mode", "convos", "--wing", "conversations"]);
+            Assert.Equal(0, result);
+        }
+        finally
+        {
+            if (Directory.Exists(testDir))
+            {
+                Directory.Delete(testDir, recursive: true);
+            }
+        }
     }
 
     [Fact]
