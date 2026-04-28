@@ -9,6 +9,51 @@
 
 ## Learnings
 
+### 2026-04-29: Phase 3 Embedder Pluggability Implementation ✅
+
+**Mission:** Implement pluggable embedder backends with OpenAI/Azure support
+
+**Accomplished:**
+1. ✅ **EmbedderType enum** added (Local, OpenAI, AzureOpenAI)
+2. ✅ **OpenAI embedder** wrapper implemented (wraps OpenAI SDK directly)
+3. ✅ **Azure OpenAI embedder** wrapper implemented (endpoint + deployment support)
+4. ✅ **19 new tests** added (EmbedderTypeSelectionTests) — Target: 276 tests
+5. ✅ **3 comprehensive docs** written (embedder-guide.md, embedder-architecture.md, cli-embedder-config.md)
+6. ✅ **Architecture decision** documented (.squad/decisions/inbox/deckard-embedder-pluggability.md)
+
+**Design Decisions:**
+- **No ICustomEmbedder interface:** Kept existing IEmbedder as single abstraction (cleaner, no ecosystem fragmentation)
+- **Direct OpenAI SDK wrappers:** M.E.AI.OpenAI package lacks AsEmbeddingGenerator extensions in current version, so implemented custom wrappers
+- **EmbedderType enum:** Cleaner than string-based provider selection, marked old Provider property as Obsolete
+- **Singleton lifecycle:** All embedders registered as singletons (model caching, HTTP client state, thread safety)
+- **Backward compatible:** Zero breaking changes, all 257 baseline tests still pass
+
+**Key Learnings:**
+1. **M.E.AI integration is the right abstraction layer** — Works with any IEmbeddingGenerator, no vendor lock-in
+2. **OpenAI SDK evolution:** Package versions matter — AsEmbeddingGenerator not available in current releases, so implemented custom wrappers
+3. **Embedder identity enforcement is critical** — Backends must validate identity to prevent semantic inconsistencies
+4. **Local-first default is the right call** — Zero-config experience for developers, privacy-first approach aligns with project values
+5. **Test execution time:** Local embedder tests can take minutes due to ONNX model downloads (CI will need caching strategy)
+
+**Architecture Insights:**
+- **Three-layer model works well:** User code → IEmbedder → M.E.AI adapter → Provider implementations
+- **Extension points are clear:** Users can implement IEmbedder directly OR wrap IEmbeddingGenerator via MeaiEmbedder
+- **Future enhancements identified:** Dimension adapters, embedding cache, vector store backends, batch optimization
+
+**Technical Challenges:**
+- **Azure.AI.OpenAI version conflicts:** Latest stable is v2.1.0 (not v2.2.0), resolved version constraints
+- **IEmbeddingGenerator interface evolution:** Added GetService(Type, object?) method alongside generic version for full compliance
+- **EmbeddingGeneratorMetadata constructor:** Single-parameter constructor (provider name only), not two-parameter
+
+**Commit History:**
+- `00b9afb` — EmbedderType enum and OpenAI/Azure support
+- `1ff5c7e` — 19 new embedder pluggability tests
+- `abac87e` — Comprehensive documentation (3 files + ai.md update)
+
+**Outcome:** Phase 3 core implementation complete. Ready for v1.0 enhancements (dimension adapters, embedding cache, vector backends).
+
+---
+
 ### 2026-04-27: Phase 2 Kickoff Complete ✅
 
 **Mission:** Coordinate Phase 2 squad kickoff across 3 parallel workstreams
