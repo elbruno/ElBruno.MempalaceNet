@@ -62,11 +62,11 @@ public class PalaceControlOperationToolTests
             .Returns(new GetResult(
                 Ids: new[] { "id1", "id2", "id3" },
                 Documents: new[] { "Memory 1", "Memory 2", "Memory 3" },
-                Metadatas: new[]
+                Metadatas: new IReadOnlyDictionary<string, object?>[]
                 {
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>,
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>,
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>
+                    new Dictionary<string, object?>(),
+                    new Dictionary<string, object?>(),
+                    new Dictionary<string, object?>()
                 },
                 Embeddings: null));
 
@@ -105,11 +105,11 @@ public class PalaceControlOperationToolTests
             .Returns(new GetResult(
                 Ids: new[] { "id1", "id2", "id3" },
                 Documents: new[] { "Memory 1 with some content", "Memory 2 with different content", "Memory 3 with more content" },
-                Metadatas: new[]
+                Metadatas: new IReadOnlyDictionary<string, object?>[]
                 {
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>,
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>,
-                    new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?>
+                    new Dictionary<string, object?>(),
+                    new Dictionary<string, object?>(),
+                    new Dictionary<string, object?>()
                 },
                 Embeddings: null));
 
@@ -144,7 +144,7 @@ public class PalaceControlOperationToolTests
             .Returns(new GetResult(
                 Ids: new[] { "id1" },
                 Documents: new[] { "Memory 1" },
-                Metadatas: new[] { new Dictionary<string, object?>() as IReadOnlyDictionary<string, object?> },
+                Metadatas: new IReadOnlyDictionary<string, object?>[] { new Dictionary<string, object?>() },
                 Embeddings: null));
 
         _memorySummarizer.SummarizeAsync(Arg.Any<GetResult>(), Arg.Any<CancellationToken>())
@@ -178,9 +178,9 @@ public class PalaceControlOperationToolTests
         var collection2 = Substitute.For<ICollection>();
         var collection3 = Substitute.For<ICollection>();
 
-        collection1.CountAsync(Arg.Any<CancellationToken>()).Returns(10);
-        collection2.CountAsync(Arg.Any<CancellationToken>()).Returns(25);
-        collection3.CountAsync(Arg.Any<CancellationToken>()).Returns(15);
+        collection1.CountAsync(Arg.Any<CancellationToken>()).Returns(ValueTask.FromResult(10L));
+        collection2.CountAsync(Arg.Any<CancellationToken>()).Returns(ValueTask.FromResult(25L));
+        collection3.CountAsync(Arg.Any<CancellationToken>()).Returns(ValueTask.FromResult(15L));
 
         _backend.GetCollectionAsync(
             Arg.Any<PalaceRef>(),
@@ -254,7 +254,7 @@ public class PalaceControlOperationToolTests
             .Returns(new List<string> { "wing1", "wing2" });
 
         var collection1 = Substitute.For<ICollection>();
-        collection1.CountAsync(Arg.Any<CancellationToken>()).Returns(10);
+        collection1.CountAsync(Arg.Any<CancellationToken>()).Returns(ValueTask.FromResult(10L));
 
         // wing2 will throw exception
         _backend.GetCollectionAsync(
@@ -271,7 +271,7 @@ public class PalaceControlOperationToolTests
             Arg.Any<bool>(),
             Arg.Any<IEmbedder?>(),
             Arg.Any<CancellationToken>())
-            .Returns(callInfo => throw new Exception("Collection error"));
+            .Returns<ValueTask<ICollection>>(callInfo => throw new Exception("Collection error"));
 
         // Act
         var result = await _tools.PalaceGetStats(palace: "default");

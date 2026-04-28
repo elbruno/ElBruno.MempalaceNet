@@ -183,9 +183,9 @@ public class PalaceWriteToolTests
             Arg.Any<CancellationToken>())
             .Returns(new GetResult(
                 Ids: Array.Empty<string>(),
-                Documents: null,
-                Metadatas: null,
-                Embeddings: null));
+                Documents: Array.Empty<string>(),
+                Metadatas: Array.Empty<IReadOnlyDictionary<string, object?>>(),
+                Embeddings: Array.Empty<ReadOnlyMemory<float>>()));
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
