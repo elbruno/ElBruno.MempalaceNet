@@ -29,6 +29,15 @@ All project documentation lives under this folder.
 - [cli.md](cli.md) — command reference (`mempalacenet init`, `mine`, `search`, `agents`, `kg`, `mcp`)
 - [benchmarks.md](benchmarks.md) — LongMemEval / LoCoMo / ConvoMem harnesses, R@5 validation
 
+### Guides & Tutorials
+- **Library Development:**
+  - [C# Library Developer Guide](guides/csharp-library-developers.md) — Build applications on MemPalace.NET
+- **Extensibility & Integration:**
+  - [Embedder Pluggability Guide](guides/embedder-pluggability.md) — Swap embedders (Local/OpenAI/Azure), implement custom embedders
+  - [Skill Integration Deep Dive](guides/skill-integration-deep-dive.md) — Create reusable skills, publishing, manifest schema
+- **Advanced:**
+  - [Wake-Up Summarization](guides/wake-up-summarization.md) — LLM-powered memory summarization
+
 ### Release
 - [CHANGELOG.md](CHANGELOG.md) — version history
 - [RELEASE-v0.1.md](RELEASE-v0.1.md) — v0.1.0 release notes

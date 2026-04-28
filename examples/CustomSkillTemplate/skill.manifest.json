@@ -1,0 +1,37 @@
+{
+  "id": "custom-skill",
+  "name": "Custom Skill Template",
+  "version": "1.0.0",
+  "description": "A minimal working template for creating MemPalace.NET skills with semantic search and results display.",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": "https://github.com/elbruno/mempalacenet",
+  "documentation": "https://github.com/elbruno/mempalacenet/tree/main/examples/CustomSkillTemplate",
+  "tags": ["template", "example", "skill", "semantic-search"],
+  "discoverable": true,
+  "dependencies": [
+    {
+      "name": "mempalacenet",
+      "version": ">=0.5.0-preview.1"
+    },
+    {
+      "name": "Microsoft.Extensions.AI",
+      "version": ">=10.3.0"
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "version": ">=10.0.5"
+    }
+  ],
+  "commands": [
+    {
+      "name": "custom-skill",
+      "description": "Run the custom skill with semantic search"
+    }
+  ],
+  "configuration": {
+    "schema": "appsettings.json",
+    "required": ["custom-skill:enabled"],
+    "optional": ["custom-skill:result-limit", "custom-skill:default-wing"]
+  }
+}
