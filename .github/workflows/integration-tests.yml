@@ -1,0 +1,119 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    # Run nightly at 2 AM UTC to catch performance regressions
+    - cron: '0 2 * * *'
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build
+      run: dotnet build src/ --no-restore -c Release
+
+    - name: Run Integration Tests
+      run: |
+        dotnet test src/MemPalace.Tests/MemPalace.Tests.csproj \
+          --no-build \
+          -c Release \
+          --filter "FullyQualifiedName~MemPalace.Tests.Integration" \
+          --logger "console;verbosity=detailed"
+      
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-test-results
+        path: src/MemPalace.Tests/TestResults/
+        retention-days: 30
+
+  performance-baseline:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build
+      run: dotnet build src/ --no-restore -c Release
+
+    - name: Capture performance baseline
+      run: |
+        echo "=== Performance Baseline ===" > performance-baseline.txt
+        dotnet test src/MemPalace.Tests/MemPalace.Tests.csproj \
+          --no-build \
+          -c Release \
+          --filter "FullyQualifiedName~MemPalace.Tests.Integration" \
+          --logger "console;verbosity=detailed" \
+          2>&1 | tee -a performance-baseline.txt
+        
+        echo "" >> performance-baseline.txt
+        echo "=== Run Details ===" >> performance-baseline.txt
+        echo "Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> performance-baseline.txt
+        echo "Commit: ${{ github.sha }}" >> performance-baseline.txt
+        echo "Ref: ${{ github.ref }}" >> performance-baseline.txt
+
+    - name: Upload performance baseline
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-baseline-${{ github.run_number }}
+        path: performance-baseline.txt
+        retention-days: 90
+
+    - name: Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const baseline = fs.readFileSync('performance-baseline.txt', 'utf8');
+          const perfMetrics = baseline.match(/\[PERF\].*$/gm) || [];
+          
+          const comment = `## 📊 Performance Baseline
+          
+          ${perfMetrics.join('\n')}
+          
+          <details>
+          <summary>Full baseline output</summary>
+          
+          \`\`\`
+          ${baseline}
+          \`\`\`
+          </details>`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
