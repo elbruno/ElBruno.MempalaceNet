@@ -255,3 +255,9 @@ The test suite includes:
 - **Phase 4**: Complete OpenAI/Azure OpenAI provider integration, end-to-end embedding → SQLite storage → query pipeline.
 - **Phase 7**: MCP server integration for embedding APIs.
 - **Phase 9**: Full LLM reranker with optimized prompts.
+
+---
+
+## Further Reading
+
+- **[Embedder Pluggability Guide](guides/embedder-pluggability.md)** — Step-by-step examples of swapping embedders and implementing custom embedders for specialized use cases.

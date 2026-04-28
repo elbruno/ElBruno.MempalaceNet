@@ -325,3 +325,9 @@ All commands use the following exit code convention:
 - Phase 4: Backend and search pipeline implementations
 - Phase 6: Knowledge graph operations
 - Phase 8: Agent management features
+
+---
+
+## Further Reading
+
+- **[Skill Integration Deep Dive](guides/skill-integration-deep-dive.md)** — Create reusable skills that extend the CLI with custom commands and domain-specific patterns.
