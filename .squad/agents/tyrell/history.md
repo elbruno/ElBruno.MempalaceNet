@@ -245,3 +245,34 @@ Lower distance = higher similarity. Results sorted ascending.
 
 **Next:** Issue #2 (wake-up summarization) and Issue #4 (Ollama support).
 
+### Issue #13 Resolution: Backend Query Optimization (WakeUpAsync) (2026-04-28)
+
+**Problem:** WakeUpAsync queries were inefficient, performing client-side date filtering and sorting without database indexes.
+
+**Solution Implemented (Previous Commits):**
+- **ICollection.WakeUpAsync()**: Added optimized backend method with server-side date filtering
+- **SqliteBackend indexing**: Created `idx_{collectionName}_timestamp` index on `json_extract(metadata, '$.timestamp')` for fast ORDER BY DESC queries
+- **SqliteCollection.WakeUpAsync()**: Implements indexed query with SQL-side timestamp filtering and sorting
+- **InMemoryCollection.WakeUpAsync()**: Implements in-memory sorting by timestamp descending
+- **WakeUpService**: Updated to use new backend method instead of client-side filtering
+
+**This Session:**
+- **WakeUpCommand API update**: Fixed to use correct `IBackend.GetCollectionAsync()` with `PalaceRef` parameter (was using non-existent `GetOrCreateCollectionAsync()`)
+- **WhereClause syntax fix**: Corrected to use top-level `Eq("wing", value)` instead of nested `WhereClause.Eq()`
+- **Added using directive**: `MemPalace.Core.Model` for `PalaceRef` type
+
+**Performance Target:**
+- **Goal**: <50ms for 10K memories
+- **Implementation**: Timestamp index + LIMIT clause pushes filtering/sorting to SQLite engine
+- **Note**: Full conformance tests blocked by pre-existing namespace issues in test project (unrelated)
+
+**Verification:**
+- ✅ Backend implementation complete (commit `0efe53a`)
+- ✅ WakeUpCommand syntax corrected (commit `5cf08e4`)
+- ✅ Code builds successfully
+- ⚠️ Integration tests cannot run due to pre-existing `Core.Embedders` namespace errors in test project
+
+**Commit:** `5cf08e4` on `feat/resolve-all-issues` branch
+
+**Next:** Issue #14 (Query performance benchmarks) to validate <50ms target.
+
