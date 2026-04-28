@@ -36,6 +36,13 @@ public class McpToolDiscoveryTests
     [InlineData("KgQuery")]
     [InlineData("KgTimeline")]
     [InlineData("PalaceHealth")]
+    [InlineData("PalaceStoreMemory")]
+    [InlineData("PalaceUpdateMemory")]
+    [InlineData("PalaceDeleteMemory")]
+    [InlineData("PalaceExportWing")]
+    [InlineData("PalaceImportMemories")]
+    [InlineData("PalaceWakeUp")]
+    [InlineData("PalaceGetStats")]
     public void ToolMethod_Exists(string methodName)
     {
         // Arrange & Act
