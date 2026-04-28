@@ -31,13 +31,7 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, McpSettings settings)
     {
-        if (settings.Transport.ToLowerInvariant() != "stdio")
-        {
-            // For now, only stdio is supported
-            // SSE would require MemPalace.Mcp.AspNetCore package
-            await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not yet supported. Only 'stdio' is currently available.");
-            return 1;
-        }
+        var transport = settings.Transport.ToLowerInvariant();
 
         // Build a host for the MCP server
         var builder = Host.CreateApplicationBuilder();
@@ -49,15 +43,27 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
             options.LogToStandardErrorThreshold = LogLevel.Trace;
         });
 
-        // Copy services from CLI's DI container to the host builder
-        // This ensures the MCP server has access to the same backend, search, KG instances
-        var cliServices = _serviceProvider;
+        // Copy core services from CLI's DI container
+        // In production, we'd use a proper service registration pattern
+        // For now, we'll register the MCP server with the appropriate transport
         
-        // Re-register core services in the host
-        // Note: In a real implementation, we'd need to pass configuration and properly
-        // register all services. For now, we'll register the MCP server which will
-        // expect injected services to be available.
-        builder.Services.AddMemPalaceMcpWithStdio();
+        switch (transport)
+        {
+            case "stdio":
+                builder.Services.AddMemPalaceMcpWithStdio();
+                await Console.Error.WriteLineAsync("[INFO] Starting MCP server with stdio transport");
+                break;
+
+            case "sse":
+                builder.Services.AddMemPalaceMcpWithSse(settings.Port);
+                await Console.Error.WriteLineAsync($"[INFO] Starting MCP server with SSE transport on port {settings.Port}");
+                await Console.Error.WriteLineAsync($"[INFO] Connect to http://localhost:{settings.Port}/sse");
+                break;
+
+            default:
+                await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not supported. Available: stdio, sse");
+                return 1;
+        }
 
         // Build and run the host
         var host = builder.Build();
