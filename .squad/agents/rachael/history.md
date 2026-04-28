@@ -9,6 +9,59 @@
 
 ## Learnings
 
+### 2026-04-28: CLI UX Improvements & Documentation (Issues #16, #20, #7, #15)
+
+**What:** Implemented comprehensive CLI UX improvements with error messages, progress bars, and MCP tool documentation.
+
+**Completed:**
+- Created ErrorFormatter utility for context-aware errors with remediation steps
+- Created ProgressDisplay utility for mining and rerank progress bars with TTY detection
+- Created OutputFormatter utility for tables, panels, and formatting helpers
+- Enhanced InitCommand, MineCommand, SearchCommand, WakeUpCommand with improved UX
+- Created comprehensive troubleshooting.md documentation (346 lines)
+- Created mcp-tools-catalog.md with all 15 MCP tools documented (697 lines)
+
+**Key Learnings:**
+- Spectre.Console Progress API requires TTY detection for non-interactive terminals (CI/CD)
+- ErrorFormatter provides centralized error handling with consistent remediation patterns
+- Progress bars significantly improve UX for long-running operations (mine, rerank)
+- OutputFormatter utilities reduce code duplication across commands
+- CLI commands now have --verbose flag for detailed diagnostics
+- All CLI utilities live in src/MemPalace.Cli/Output/ namespace
+
+**Architecture Decisions:**
+- Used Spectre.Console for all CLI output (progress, tables, panels)
+- ErrorFormatter.Display* methods for each error category (palace, mining, search, embedder, backend, config)
+- ProgressDisplay.With*Progress methods for different operation types (mining, rerank, generic)
+- OutputFormatter.Create* methods for table types (search results, KG, agents, collections)
+- TTY detection with fallback to log-style output for CI/CD environments
+- IProgress<T> pattern for progress reporting (decoupled from Spectre)
+
+**Files Created:**
+- src/MemPalace.Cli/Output/ErrorFormatter.cs (131 lines)
+- src/MemPalace.Cli/Output/ProgressDisplay.cs (190 lines)
+- src/MemPalace.Cli/Output/OutputFormatter.cs (154 lines)
+- docs/troubleshooting.md (346 lines)
+- docs/mcp-tools-catalog.md (697 lines)
+
+**Files Modified:**
+- src/MemPalace.Cli/Commands/InitCommand.cs (added path validation, progress tracking, next steps)
+- src/MemPalace.Cli/Commands/MineCommand.cs (added progress bars, verbose mode, error handling)
+- src/MemPalace.Cli/Commands/SearchCommand.cs (added results table, rerank progress, formatting)
+- src/MemPalace.Cli/Commands/WakeUpCommand.cs (added tree display, statistics panel)
+
+**Testing:**
+- Manual testing of all commands with progress bars
+- Error scenarios tested (invalid paths, missing files, empty queries)
+- Non-TTY fallback tested with output redirection
+
+**Commit:** 6ccb8f8 - Polish #16 #20 #7 #15: CLI UX improvements and documentation
+
+**Next Steps:**
+- Integrate real mining pipeline when backend/embedder are wired
+- Add health check command with ErrorFormatter
+- Consider adding spinner for short operations (< 1 second)
+
 ### 2026-04-24: Phase 5 CLI Scaffold Complete
 
 **What:** Implemented complete CLI surface using Spectre.Console.Cli with Microsoft.Extensions.Hosting for DI.

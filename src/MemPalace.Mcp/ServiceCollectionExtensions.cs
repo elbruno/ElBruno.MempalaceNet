@@ -1,3 +1,5 @@
+using MemPalace.Mcp.Security;
+using MemPalace.Mcp.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 
@@ -15,8 +17,15 @@ public static class ServiceCollectionExtensions
     /// <returns>The MCP server builder for further configuration</returns>
     public static IMcpServerBuilder AddMemPalaceMcp(this IServiceCollection services)
     {
-        // Register the tools type
+        // Register security services
+        services.AddSingleton<IAuditLogger, FileAuditLogger>();
+        services.AddSingleton<SecurityValidator>();
+        services.AddSingleton<IConfirmationPrompt, DefaultConfirmationPrompt>();
+
+        // Register the tools types
         services.AddSingleton<MemPalaceMcpTools>();
+        services.AddSingleton<WriteTools>();
+        services.AddSingleton<KnowledgeGraphWriteTools>();
 
         // Register MCP server
         return services

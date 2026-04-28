@@ -50,7 +50,8 @@ public class WriteTools
         }
 
         // Generate embedding
-        var embedding = await _embedder.GenerateEmbeddingAsync(content, ct);
+        var embeddings = await _embedder.EmbedAsync(new[] { content }, ct);
+        var embedding = embeddings[0];
         
         // Generate ID
         var id = Guid.NewGuid().ToString("N");
@@ -63,11 +64,15 @@ public class WriteTools
             ct: ct);
 
         // Store record
+        var metadataDict = metadata != null 
+            ? new Dictionary<string, object?>(metadata.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value)))
+            : new Dictionary<string, object?>();
+
         var record = new EmbeddedRecord(
             Id: id,
             Embedding: embedding,
             Document: content,
-            Metadata: metadata != null ? new Dictionary<string, object?>(metadata) : null
+            Metadata: metadataDict
         );
 
         await coll.AddAsync(new[] { record }, ct);
@@ -116,13 +121,16 @@ public class WriteTools
 
         // Prepare updated record
         var updatedContent = content ?? existing.Documents![0];
-        var updatedMetadata = metadata ?? existing.Metadatas![0];
+        var updatedMetadata = metadata != null 
+            ? new Dictionary<string, object?>(metadata.Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value)))
+            : existing.Metadatas![0];
 
         // Generate new embedding if content changed
         ReadOnlyMemory<float> embedding;
         if (content != null)
         {
-            embedding = await _embedder.GenerateEmbeddingAsync(content, ct);
+            var embeddings = await _embedder.EmbedAsync(new[] { content }, ct);
+            embedding = embeddings[0];
         }
         else
         {
@@ -138,7 +146,7 @@ public class WriteTools
             Id: id,
             Embedding: embedding,
             Document: updatedContent,
-            Metadata: new Dictionary<string, object?>(updatedMetadata)
+            Metadata: updatedMetadata
         );
 
         await coll.UpsertAsync(new[] { record }, ct);
@@ -216,8 +224,8 @@ public class WriteTools
         var embeddings = new List<ReadOnlyMemory<float>>();
         foreach (var doc in documents)
         {
-            var emb = await _embedder.GenerateEmbeddingAsync(doc, ct);
-            embeddings.Add(emb);
+            var embResult = await _embedder.EmbedAsync(new[] { doc }, ct);
+            embeddings.Add(embResult[0]);
         }
 
         // Get or create collection
@@ -236,13 +244,15 @@ public class WriteTools
             var id = Guid.NewGuid().ToString("N");
             ids.Add(id);
             
+            var metadataDict = metadataArray?[i] != null 
+                ? new Dictionary<string, object?>(metadataArray[i].Select(kvp => new KeyValuePair<string, object?>(kvp.Key, kvp.Value)))
+                : new Dictionary<string, object?>();
+
             records.Add(new EmbeddedRecord(
                 Id: id,
                 Embedding: embeddings[i],
                 Document: documents[i],
-                Metadata: metadataArray?[i] != null 
-                    ? new Dictionary<string, object?>(metadataArray[i]) 
-                    : null
+                Metadata: metadataDict
             ));
         }
 

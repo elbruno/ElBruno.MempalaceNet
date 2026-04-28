@@ -6,6 +6,7 @@ using MemPalace.KnowledgeGraph;
 using MemPalace.Mining;
 using MemPalace.Search;
 using MemPalace.Agents;
+using MemPalace.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -50,6 +51,13 @@ internal static class Program
         // Register Agents
         services.AddMemPalaceAgents(o =>
             o.AgentsPath = Path.Combine(Directory.GetCurrentDirectory(), ".mempalace", "agents"));
+        
+        // Register WakeUp service
+        services.AddSingleton<IWakeUpService>(sp =>
+        {
+            var chatClient = sp.GetService<Microsoft.Extensions.AI.IChatClient>();
+            return new WakeUpService(chatClient);
+        });
         
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases

@@ -226,3 +226,22 @@ Lower distance = higher similarity. Results sorted ascending.
 
 **Status:** Research complete, ready for spike PR approval.
 
+### Issue #3 Resolution: EmptyAgentRegistry Fallback (2026-04-25)
+
+**Problem:** CLI `agents list` command failed when no IChatClient was registered in DI container, though the private EmptyAgentRegistry existed, it wasn't testable or well-documented.
+
+**Solution:**
+- **Extracted EmptyAgentRegistry** from private nested class to public `EmptyAgentRegistry.cs` in `src/MemPalace.Agents/Registry/`
+- **Behavior:** `List()` returns empty array; `Get(id)` throws `InvalidOperationException` with clear message about missing IChatClient
+- **Tests added:** `EmptyRegistry_List_ReturnsEmpty()` and `EmptyRegistry_Get_ThrowsInvalidOperationException()` in `AgentRegistryTests.cs`
+- **Side fix:** Corrected `IEmbedder` namespace in `WriteTools.cs` (was `Core.Ai.IEmbedder`, should be `Core.Backends.IEmbedder`)
+
+**Verification:**
+- ✅ All 3 agent registry tests pass (including 2 new EmptyAgentRegistry tests)
+- ✅ `mempalacenet agents list` returns friendly "No agents found" message (exit code 0)
+- ✅ DI container gracefully resolves EmptyAgentRegistry when IChatClient is null
+
+**Commit:** `8b67a42` on `feat/resolve-all-issues` branch
+
+**Next:** Issue #2 (wake-up summarization) and Issue #4 (Ollama support).
+
