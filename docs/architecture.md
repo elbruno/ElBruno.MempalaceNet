@@ -77,3 +77,9 @@ All backend errors inherit from `BackendException` for uniform handling.
 - **Subclass pattern:** Override `CreateBackend()` to test your backend
 - **In-memory backend:** `InMemoryBackend` — brute-force cosine similarity, lives in Core for test reuse
 - **Fake embedder:** Deterministic hash-based embedding for reproducible tests
+
+---
+
+## Further Reading
+
+- **[C# Library Developer Guide](guides/csharp-library-developers.md)** — Build applications on top of MemPalace.NET, integrating semantic search into your .NET projects.

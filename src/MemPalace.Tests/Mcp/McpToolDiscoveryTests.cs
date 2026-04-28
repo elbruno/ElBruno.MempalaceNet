@@ -3,6 +3,7 @@ using MemPalace.Core.Model;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mcp;
 using MemPalace.Search;
+using MemPalace.Ai.Summarization;
 using NSubstitute;
 using Xunit;
 
@@ -19,7 +20,9 @@ public class McpToolDiscoveryTests
         var knowledgeGraph = Substitute.For<IKnowledgeGraph>();
 
         // Act
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Assert
         Assert.NotNull(tools);
@@ -33,6 +36,13 @@ public class McpToolDiscoveryTests
     [InlineData("KgQuery")]
     [InlineData("KgTimeline")]
     [InlineData("PalaceHealth")]
+    [InlineData("PalaceStoreMemory")]
+    [InlineData("PalaceUpdateMemory")]
+    [InlineData("PalaceDeleteMemory")]
+    [InlineData("PalaceExportWing")]
+    [InlineData("PalaceImportMemories")]
+    [InlineData("PalaceWakeUp")]
+    [InlineData("PalaceGetStats")]
     public void ToolMethod_Exists(string methodName)
     {
         // Arrange & Act

@@ -34,16 +34,25 @@
 2. **Docs location** — all documentation under `docs/`. Only `README.md` and `LICENSE` may sit at repo root.
 3. **Code location** — all source code under `src/`.
 
-## Strategic Focus (Post-v0.5.0 → v0.6.0)
+## Strategic Focus
 
-**Current Phase:** v0.6.0 Implementation (Production-Grade Search Foundation)
+**Current Phase:** v0.7.0 Phase 2 (Integration & Optimization) — ACTIVE 🚀
 
-**Skill Status:** PR #1 open for team review; publish post-v0.6.0
+**Phase 1 Status:** ✅ COMPLETE (MCP SSE Transport, Wake-up LLM, Skill CLI Phase 1)
 
-**v0.6.0 Roadmap:** 
-  - P0: sqlite-vec (Tyrell) + BM25 (Roy) parallel, Weeks 1-4
-  - P1: LongMemEval R@5 validation (Bryant), Weeks 5-8
-  - P2: Release prep (Deckard), Week 9
-  - P2+: Copilot Skill publication, Weeks 10+
+**Phase 2 Timeline:** Weeks 2-3 (2026-04-28 → 2026-05-08)
 
-**Next Milestone:** Team approval of research recommendations → Spike PRs
+**Phase 2 Workstreams (Parallel):**
+  - Workstream A: CLI Integration (Rachael + Tyrell) — 5-7 days
+  - Workstream B: MCP Tool Expansion (Roy) — 4-6 days  
+  - Workstream C: Backend Optimization (Tyrell) — 2-3 days
+
+**Phase 3 Timeline:** Weeks 4-5 (2026-05-08 → 2026-05-20)
+  - Workstream D: Embedder Interface (Tyrell + Roy) — 3-4 days
+  - Workstream E: Release Prep (Deckard + Bryant) — 5-7 days
+
+**Roadmap:** See `docs/guides/v070-phase2-phase3-roadmap.md` for full dependency graph and task breakdown.
+
+**Prior Phase:** v0.6.0 Implementation ✅ COMPLETE (sqlite-vec, BM25, LongMemEval validation, Copilot Skill PR #1 merged)
+
+**Next Milestone:** v0.7.0 Phase 12 kickoff → skill delivery in 8-10 weeks

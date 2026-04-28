@@ -89,6 +89,14 @@ Full documentation lives in [`docs/`](docs/):
 - **[Benchmarks](docs/benchmarks.md)** — reproducibility, dataset sources, R@5 parity
 - **[GitHub Copilot Skill](docs/COPILOT_SKILL.md)** — integration guide, pattern library, code generation hints
 
+## Building Custom Integrations
+
+Integrating MemPalace.NET into your .NET projects? Start with our developer guides:
+
+- **[C# Library Developer Guide](docs/guides/csharp-library-developers.md)** — Build applications on MemPalace.NET
+- **[Embedder Pluggability Guide](docs/guides/embedder-pluggability.md)** — Swap or implement custom embedders
+- **[Skill Integration Deep Dive](docs/guides/skill-integration-deep-dive.md)** — Extend the platform with reusable skills
+
 ## Development
 
 ```bash

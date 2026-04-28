@@ -1,7 +1,9 @@
 using MemPalace.Mcp.Security;
 using MemPalace.Mcp.Tools;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using MemPalace.Mcp.Transports;
 
 namespace MemPalace.Mcp;
 
@@ -41,5 +43,29 @@ public static class ServiceCollectionExtensions
         return services
             .AddMemPalaceMcp()
             .WithStdioServerTransport();
+    }
+
+    /// <summary>
+    /// Adds MemPalace MCP server with HTTP/SSE transport (for web-based clients).
+    /// </summary>
+    /// <param name="services">The service collection</param>
+    /// <param name="port">HTTP server port (default: 5050)</param>
+    /// <param name="basePath">Base path for SSE endpoints (default: /mcp)</param>
+    public static void AddMemPalaceMcpWithSse(this IServiceCollection services, int port = 5050, string basePath = "/mcp")
+    {
+        // Register HttpSseTransport as singleton
+        services.AddSingleton<HttpSseTransport>(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<HttpSseTransport>>();
+            var sessionManager = sp.GetRequiredService<SessionManager>();
+            return new HttpSseTransport(logger, sessionManager, basePath, port);
+        });
+
+        // Register SessionManager if not already registered
+        services.AddSingleton<SessionManager>();
+
+        // Note: HttpSseTransport will be started manually in the CLI command
+        // We don't use the IMcpServerBuilder pattern here because SSE requires
+        // different lifecycle management (web server hosting vs. stdio stream)
     }
 }

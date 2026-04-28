@@ -34,6 +34,47 @@ The `MemPalace.Ai` library provides:
 
 ---
 
+## Embedder Pluggability
+
+MemPalace.NET v0.6+ supports **pluggable embedders** with three built-in providers:
+
+| Provider | Requires API Key | Runs Offline | Cost | Use Case |
+|----------|------------------|--------------|------|----------|
+| **Local (ONNX)** | ❌ No | ✅ Yes | Free | Development, privacy-sensitive apps |
+| **OpenAI** | ✅ Yes | ❌ No | $0.02-$0.13 per 1M tokens | Production apps, cloud deployments |
+| **Azure OpenAI** | ✅ Yes | ❌ No | Usage-based | Enterprise with Azure infrastructure |
+
+### Quick Configuration
+
+```csharp
+// Local (default)
+services.AddMemPalaceAi();
+
+// OpenAI
+services.AddMemPalaceAi(options =>
+{
+    options.Type = EmbedderType.OpenAI;
+    options.ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+    options.Model = "text-embedding-3-small";
+});
+
+// Azure OpenAI
+services.AddMemPalaceAi(options =>
+{
+    options.Type = EmbedderType.AzureOpenAI;
+    options.Endpoint = "https://YOUR_RESOURCE.openai.azure.com";
+    options.ApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+    options.DeploymentName = "text-embedding-ada-002";
+});
+```
+
+**Detailed guides:**
+- **[Embedder Guide](./embedder-guide.md)** — Complete user guide with examples
+- **[Embedder Architecture](./embedder-architecture.md)** — Developer reference for custom embedders
+- **[CLI Embedder Config](./cli-embedder-config.md)** — CLI tool configuration
+
+---
+
 ## Using the Embedder
 
 ### 1. Default (Local) — No Installation Required
@@ -214,3 +255,9 @@ The test suite includes:
 - **Phase 4**: Complete OpenAI/Azure OpenAI provider integration, end-to-end embedding → SQLite storage → query pipeline.
 - **Phase 7**: MCP server integration for embedding APIs.
 - **Phase 9**: Full LLM reranker with optimized prompts.
+
+---
+
+## Further Reading
+
+- **[Embedder Pluggability Guide](guides/embedder-pluggability.md)** — Step-by-step examples of swapping embedders and implementing custom embedders for specialized use cases.

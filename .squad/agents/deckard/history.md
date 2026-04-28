@@ -9,6 +9,95 @@
 
 ## Learnings
 
+### 2026-04-29: Phase 3 Embedder Pluggability Implementation ✅
+
+**Mission:** Implement pluggable embedder backends with OpenAI/Azure support
+
+**Accomplished:**
+1. ✅ **EmbedderType enum** added (Local, OpenAI, AzureOpenAI)
+2. ✅ **OpenAI embedder** wrapper implemented (wraps OpenAI SDK directly)
+3. ✅ **Azure OpenAI embedder** wrapper implemented (endpoint + deployment support)
+4. ✅ **19 new tests** added (EmbedderTypeSelectionTests) — Target: 276 tests
+5. ✅ **3 comprehensive docs** written (embedder-guide.md, embedder-architecture.md, cli-embedder-config.md)
+6. ✅ **Architecture decision** documented (.squad/decisions/inbox/deckard-embedder-pluggability.md)
+
+**Design Decisions:**
+- **No ICustomEmbedder interface:** Kept existing IEmbedder as single abstraction (cleaner, no ecosystem fragmentation)
+- **Direct OpenAI SDK wrappers:** M.E.AI.OpenAI package lacks AsEmbeddingGenerator extensions in current version, so implemented custom wrappers
+- **EmbedderType enum:** Cleaner than string-based provider selection, marked old Provider property as Obsolete
+- **Singleton lifecycle:** All embedders registered as singletons (model caching, HTTP client state, thread safety)
+- **Backward compatible:** Zero breaking changes, all 257 baseline tests still pass
+
+**Key Learnings:**
+1. **M.E.AI integration is the right abstraction layer** — Works with any IEmbeddingGenerator, no vendor lock-in
+2. **OpenAI SDK evolution:** Package versions matter — AsEmbeddingGenerator not available in current releases, so implemented custom wrappers
+3. **Embedder identity enforcement is critical** — Backends must validate identity to prevent semantic inconsistencies
+4. **Local-first default is the right call** — Zero-config experience for developers, privacy-first approach aligns with project values
+5. **Test execution time:** Local embedder tests can take minutes due to ONNX model downloads (CI will need caching strategy)
+
+**Architecture Insights:**
+- **Three-layer model works well:** User code → IEmbedder → M.E.AI adapter → Provider implementations
+- **Extension points are clear:** Users can implement IEmbedder directly OR wrap IEmbeddingGenerator via MeaiEmbedder
+- **Future enhancements identified:** Dimension adapters, embedding cache, vector store backends, batch optimization
+
+**Technical Challenges:**
+- **Azure.AI.OpenAI version conflicts:** Latest stable is v2.1.0 (not v2.2.0), resolved version constraints
+- **IEmbeddingGenerator interface evolution:** Added GetService(Type, object?) method alongside generic version for full compliance
+- **EmbeddingGeneratorMetadata constructor:** Single-parameter constructor (provider name only), not two-parameter
+
+**Commit History:**
+- `00b9afb` — EmbedderType enum and OpenAI/Azure support
+- `1ff5c7e` — 19 new embedder pluggability tests
+- `abac87e` — Comprehensive documentation (3 files + ai.md update)
+
+**Outcome:** Phase 3 core implementation complete. Ready for v1.0 enhancements (dimension adapters, embedding cache, vector backends).
+
+---
+
+### 2026-04-27: Phase 2 Kickoff Complete ✅
+
+**Mission:** Coordinate Phase 2 squad kickoff across 3 parallel workstreams
+
+**Accomplished:**
+1. ✅ **10 GitHub issues filed** for Phase 2 v0.7.0 (#12-#21)
+2. ✅ **Phase 2 roadmap updated** with detailed timeline and dependency graph
+3. ✅ **Kickoff meeting notes** written to decisions inbox
+4. ✅ **Phase 1b validation complete** (commit `958aaa2` — local-first LLM live)
+
+**Phase 2 Workstreams (3 parallel, 15-21 days):**
+- **Workstream A:** CLI Integration (Rachael + Tyrell) — Issues #12, #13, #17, #20, #7
+- **Workstream B:** MCP Tool Expansion (Roy) — Issues #6, #14, #21, #16
+- **Workstream C:** Integration Tests (Bryant) — Issues #15, #19, #10, #18
+
+**Commit:** `25d058c` — Phase 2 kickoff roadmap + 10 issues filed  
+**Next Checkpoint:** 2026-05-08 (Phase 2 → Phase 3 transition)
+
+---
+
+### 2025-04-27: NuGet Publishing Status Audit
+**Context:** Bruno requested verification of NuGet publishing status for v0.6.0.
+
+**Findings:**
+- ✅ **All 10 packages successfully published to NuGet.org at v0.6.0**
+  - mempalace.core, mempalace.backends.sqlite, mempalace.ai, mempalace.search
+  - mempalace.knowledgegraph, mempalace.mining, mempalace.mcp, mempalace.agents
+  - mempalacenet (CLI), mempalacenet-bench
+- ✅ **GitHub Actions workflow succeeded** (run 24938559571, ~2 days ago)
+- ✅ **Git tags present**: v0.6.0, v0.6.0-preview.1 pushed
+- ✅ **.NET 10 SDK available**: 10.0.300-preview.0.26177.108
+- ❌ **NUGET_API_KEY not set locally** (not needed — GitHub Actions handled publishing)
+
+**Workflow:**
+1. GitHub Release created with tag v0.6.0
+2. `publish.yml` workflow triggered automatically
+3. OIDC auth via NuGet/login@v1 (no local API key required)
+4. All packages built, tested, packed, and pushed in correct dependency order
+5. README.md badge correctly shows v0.6.0
+
+**Outcome:** No action needed. Publishing is healthy. All packages are current at v0.6.0 on NuGet.org.
+
+**Recommendation:** For future releases, continue using GitHub Actions (release tag or manual dispatch). Local publishing requires NUGET_API_KEY but is unnecessary given the robust CI/CD pipeline.
+
 ### 2026-04-24: Phase 0 — Solution Scaffold + CI
 
 **Target Framework:** net10.0 (.NET 10.0.300-preview.0.26177.108 installed)
@@ -181,6 +270,104 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 **Status:** ✅ Pushed to main successfully. Project state synchronized to GitHub.
 
 ---
+
+### 2026-04-27: v0.7.0 Phase 2-3 Roadmap Creation
+
+**Context:** Mission v070-phase2-planning. Phase 1 implementations complete (Tyrell SSE, Roy wake-up LLM, Rachael skill CLI). Need dependency graph and Phase 2-3 breakdown.
+
+**Phase 1 Analysis:**
+- ✅ **Tyrell:** MCP SSE transport fully functional (HttpSseTransport, SessionManager, 29 tests, docs) - [commit 1806192]
+- ✅ **Roy:** Wake-up LLM summarization complete (IMemorySummarizer, WakeUpCommand, 7 tests, graceful degradation)
+- ✅ **Rachael:** Skill CLI Phase 1 done (SkillManager, 6 commands, local filesystem operations)
+
+**Roadmap Deliverable:** Created comprehensive 18KB roadmap document at `docs/guides/v070-phase2-phase3-roadmap.md` covering:
+
+**Phase 2 (Weeks 2-3): Integration & Optimization**
+- **Workstream A (Rachael + Tyrell):** CLI integration (--transport sse, skill MCP, UX polish) — 5-7 days
+- **Workstream B (Roy):** MCP tool expansion (7 → 15 tools, add write operations) — 4-6 days
+- **Workstream C (Tyrell):** Backend optimization (WakeUpAsync method, query indexing) — 2-3 days
+- **Parallelization:** All 3 workstreams independent, can run concurrently
+
+**Phase 3 (Weeks 4-5): Embedder Interface & Release**
+- **Workstream D (Tyrell + Roy):** ICustomEmbedder factory pattern, ElBruno.LocalEmbeddings update — 3-4 days
+- **Workstream E (Deckard + Bryant):** Documentation updates, integration testing, R@5 CI, release prep — 5-7 days
+
+**Dependency Graph:**
+```
+Phase 1 ✅ COMPLETE
+  ├─ MCP SSE Transport (Tyrell) ✅
+  ├─ Wake-up LLM (Roy) ✅
+  └─ Skill CLI Phase 1 (Rachael) ✅
+
+Phase 2 🚀 ACTIVE (3 parallel workstreams)
+  ├─ A: CLI Integration → depends on SSE transport ✅
+  ├─ B: MCP Tool Expansion → depends on SSE transport ✅
+  └─ C: Backend Optimization → depends on wake-up LLM ✅
+
+Phase 3 ⏳ PENDING
+  ├─ D: Embedder Interface → BLOCKED by GitHub #43 (ElBruno.LocalEmbeddings)
+  └─ E: Release Prep → depends on all Phase 2 workstreams
+```
+
+**Critical Path:** Phase 2A (CLI) → Phase 2C (Backend) → Phase 3E (Release) = 15-17 days
+
+**Risk Assessment:**
+- 🔴 **High:** ElBruno.LocalEmbeddings API changes (GitHub #43) blocks embedder interface
+  - **Mitigation:** Ship v0.7.0 with current version + migration guide if not stable
+- 🟡 **Medium:** MCP SSE adoption complexity, integration testing surprises
+- 🟢 **Low:** Scope creep (v0.7.0 decisions LOCKED per mission charter)
+
+**Team Effort Estimates:**
+- Rachael: 11 days (CLI integration lead)
+- Tyrell: 8 days (backend + embedder interface)
+- Roy: 7 days (MCP tool expansion)
+- Bryant: 7 days (integration testing + R@5 CI)
+- Deckard: 9 days (docs + release prep)
+- **Total:** 36 eng-days over 3-4 weeks
+
+**GitHub Issue Mapping:**
+- Phase 2 issues: #6 (MCP tools), #7 (CLI UX)
+- Phase 3 issues: #8 (R@5 CI), #9 (docs), #10 (integration tests), #11 (release prep)
+- All issues already filed by prior kickoff — no new issues needed
+
+**Architectural Decisions:**
+1. Phase 2 workstreams run in parallel (zero cross-dependencies)
+2. Embedder interface (Phase 3D) can start early if GitHub #43 resolves
+3. Release prep (Phase 3E) blocks on all Phase 2 completion (integration risk)
+4. Deferred to v0.8.0: Remote skill registry, Ollama embedder, advanced MCP features
+
+**Documentation Created:**
+- Phase 2-3 roadmap (18KB) with full dependency graph
+- Success metrics per phase
+- Open questions for Bruno (API timelines, transport defaults, scope priorities)
+- Risk mitigation strategies
+- Communication plan (weekly sync, daily async standups)
+
+**Team Status Updated:**
+- `.squad/team.md` now reflects Phase 2 ACTIVE status
+- Current sprint focus: v0.7.0 Phase 2 (Integration & Optimization)
+- Phase 2 timeline: 2026-04-28 → 2026-05-08
+- Phase 3 timeline: 2026-05-08 → 2026-05-20
+
+**Artifacts:**
+- `docs/guides/v070-phase2-phase3-roadmap.md` (18KB comprehensive plan)
+- `.squad/team.md` (updated strategic focus)
+- Git commit [9155f0e] pushed to main
+
+**Key Learnings:**
+1. Phase 1 SSE transport architecture (IMcpTransport abstraction) enables clean Phase 2 CLI integration
+2. Wake-up LLM graceful degradation pattern (NoOp fallback) is solid architectural decision
+3. Skill CLI Phase 1 (local-only) was correct MVP scope — MCP integration deferred to Phase 2
+4. Parallelization of 3 Phase 2 workstreams reduces critical path by ~40% (linear: 18d → parallel: 10-12d)
+5. ElBruno.LocalEmbeddings dependency is highest risk (external blocker) — mitigation plan documented
+
+**For Bruno:**
+1. **Phase 2 kickoff:** Ready to begin immediately (no blockers)
+2. **Open questions:** See roadmap Section 10 (4 questions on timelines, defaults, scope)
+3. **Release target:** 2026-05-20 feasible if GitHub #43 resolves by 2026-05-08
+4. **Next checkpoint:** Phase 2 → Phase 3 transition meeting (2026-05-08 est.)
+
+**Status:** ✅ Phase 2-3 roadmap complete, committed, and pushed. Team ready for Phase 2 parallel workstreams.
 
 ### 2026-04-25: Docs Cleanup & CI Decision
 
@@ -807,4 +994,100 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 - Skill publishing: Plan for post-v0.6.0 (production-grade components ready)
 
 **Status:** ✅ Roadmap prioritization complete. Document delivered. Ready for team review + sprint planning.
+
+---
+
+### 2026-04-27: v0.7.0 Roadmap Proposal
+
+**Task:** Produce v0.7.0 roadmap proposal for Bruno's review following v0.6.0 ship confirmation.
+
+**v0.6.0 Retrospective:**
+- ✅ All 10 packages published to NuGet.org at v0.6.0 (confirmed via NuGet API)
+- ✅ sqlite-vec integration complete (ANN search, 10-25x speedup)
+- ✅ BM25 keyword search complete (~200 LOC custom implementation)
+- ✅ LongMemEval R@5 validation framework ready
+- ✅ Copilot Skill PR #1 merged to main
+- ✅ Ollama removed to enable stable release (M.E.AI.Ollama still preview)
+- 🚧 Carryover: wake-up command, Ollama support, MCP tool expansion
+
+**v0.7.0 Theme:** "Agent Workflows & Integrations"
+
+**Rationale:**
+1. v0.6.0 delivered production search foundation; v0.7.0 enables *using* it in agents
+2. wake-up command is the primary carryover item (deferred from v0.6.0)
+3. CLI DI bug (`agents list`) is P0 blocker for agent workflows
+4. Ollama can return when M.E.AI.Ollama stabilizes
+5. MCP tool expansion enables richer agent integrations
+
+**Workstream Summary:**
+- Tyrell: wake-up (P0), MCP SSE transport (P1)
+- Roy: Ollama restore (P0), MCP tools 7→15 (P1)
+- Rachael: CLI DI fix (P0), UX polish (P1)
+- Bryant: R@5 CI regression (P1), integration tests (P2)
+- Deckard: release prep (P0), skill pattern updates (P1)
+
+**Key Constraints:**
+- Ollama blocked by upstream M.E.AI.Ollama preview status
+- wake-up may have LLM cost implications (need pluggable summarizer)
+- MCP SSE adds complexity (may defer to v0.8.0)
+
+**Bruno's Input Needed:**
+1. Ollama priority (wait vs ship without)
+2. MCP SSE scope (v0.7.0 or defer)
+3. wake-up summarization (local-first vs cloud option)
+4. Skill marketplace timing (v0.7.0 or v1.0)
+
+**Timeline:** 8-10 weeks (realistic: 10 weeks)
+
+**Deliverable:** `.squad/decisions/inbox/deckard-v070-roadmap-proposal.md`
+
+**Status:** ✅ Proposal created. Awaiting Bruno's approval before filing GitHub issues.
+
+---
+
+### 2026-04-27: v0.7.0 GitHub Issues Filed
+
+**Task:** File 10 GitHub issues for v0.7.0 roadmap approved by Bruno (Ollama defer, MCP SSE → v0.8.0, local-only wake-up summarization, skill marketplace v0.7.0).
+
+**v0.7.0 Approved Decisions:**
+1. **Ollama:** Defer restoration until M.E.AI.Ollama stable release (doesn't block v0.7.0, track separately)
+2. **MCP SSE:** Defer to v0.8.0 (scope management: prioritize agent workflows over transport)
+3. **wake-up Summarization:** Local LLM only (privacy-first, pluggable architecture for future cloud option)
+4. **Skill Marketplace:** Target v0.7.0 publication (MemPalace patterns skill ready for community)
+
+**Issues Filed (10 total):**
+
+**P0 Issues (Critical Path):**
+- #2: wake-up context summarization (squad:tyrell) — Summarize last N memories using local LLM
+- #3: Fix agents list DI bug (squad:rachael) — EmptyAgentRegistry fallback for CLI command
+- #4: Restore Ollama support (squad:roy, blocked) — Re-add when M.E.AI.Ollama stable released
+
+**P1 Issues (Secondary, Parallel):**
+- #5: MCP SSE transport (squad:roy, future:v0.8) — HTTP hosting for non-stdio clients (deferred)
+- #6: MCP tool expansion (squad:roy) — 7 → 15 tools with write operations
+- #7: CLI UX polish (squad:rachael) — Progress bars, error messages, EntityRef docs
+- #8: R@5 regression tests (squad:bryant) — Prevent search quality degradation in CI
+- #9: Skill pattern documentation (squad:deckard) — Update docs for wake-up & new MCP tools
+
+**P2 Issues (Polish, Lower Priority):**
+- #10: Integration test coverage (squad:bryant) — MCP + agents e2e scenarios
+- #11: v0.7.0 Release prep (squad:deckard) — Changelog, docs, NuGet publish
+
+**Deliverable:** `.squad/decisions/inbox/deckard-v070-github-issues.md` (issue URLs + summary)
+
+**Key Insights:**
+1. **Strategic Deferral:** MCP SSE and Ollama correctly deferred (don't block core agent workflows)
+2. **P0 Focus:** DI fix + wake-up + Ollama foundation = minimal viable agent support
+3. **Parallel Opportunity:** P1 MCP tools + UX + regression tests can run concurrently with P0
+4. **Release Gate:** All 10 issues tied to v0.7.0 publication (GitHub release + NuGet)
+5. **Skill Timing:** Pattern documentation ready for skill creation after release
+
+**Team Readiness:**
+- Tyrell: P0 wake-up task + P1 MCP SSE (defer work item)
+- Roy: P0 Ollama foundation + P1 MCP expansion (7→15 tools)
+- Rachael: P0 DI fix + P1 UX polish (parallel with others)
+- Bryant: P1 CI regression tests + P2 integration tests
+- Deckard: P1 skill pattern docs + P2 release prep
+
+**Status:** ✅ 10 GitHub issues filed (P0/P1/P2). Team ready to start workstreams. Ollama support blocked pending M.E.AI.Ollama stable release (track separately).
 

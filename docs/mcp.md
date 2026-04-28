@@ -18,9 +18,9 @@ The server will continue running until stopped (Ctrl+C).
 
 ## MCP Tools Reference
 
-The MemPalace MCP server exposes the following tools:
+The MemPalace MCP server exposes **15 tools** organized by category:
 
-### Palace Tools
+### Read Operations
 
 #### `palace_search`
 Search for memories in the palace matching a query.
@@ -78,6 +78,150 @@ Check the health and status of the MemPalace backend.
 **Parameters:** None
 
 **Returns:** Object with `ok` (boolean) and `detail` (string).
+
+---
+
+### Write Operations
+
+#### `palace_store_memory`
+Store a new memory in the palace. Embeds the content and stores it in the specified wing/collection.
+
+**Parameters:**
+- `content` (string, required): The memory content to store
+- `collection` (string, optional): The collection/wing to store in (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+- `metadata` (string, optional): Optional metadata as JSON object
+
+**Returns:** Object with `memoryId` (string) and `storedAt` (ISO8601 timestamp).
+
+**Example:**
+```json
+{
+  "content": "Meeting notes: Q1 planning session",
+  "collection": "meetings",
+  "metadata": "{\"attendees\":[\"Alice\",\"Bob\"],\"date\":\"2024-01-15\"}"
+}
+```
+
+#### `palace_update_memory`
+Update an existing memory's content and/or metadata. Re-embeds if content changes.
+
+**Parameters:**
+- `id` (string, required): The unique ID of the memory to update
+- `collection` (string, optional): The collection/wing containing the memory (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+- `content` (string, optional): New content (leave empty to keep existing)
+- `metadata` (string, optional): New metadata as JSON object (leave empty to keep existing)
+
+**Returns:** Object with `memoryId` (string) and `updatedAt` (ISO8601 timestamp).
+
+**Example:**
+```json
+{
+  "id": "abc123",
+  "content": "Updated meeting notes with action items",
+  "collection": "meetings"
+}
+```
+
+#### `palace_delete_memory`
+Delete a memory from the palace by its unique ID.
+
+**Parameters:**
+- `id` (string, required): The unique ID of the memory to delete
+- `collection` (string, optional): The collection/wing containing the memory (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+
+**Returns:** Object with `deleted` (boolean) and `memoryId` (string).
+
+**Example:**
+```json
+{
+  "id": "abc123",
+  "collection": "meetings"
+}
+```
+
+---
+
+### Bulk Operations
+
+#### `palace_export_wing`
+Export all memories from a wing/collection to JSON or CSV format.
+
+**Parameters:**
+- `collection` (string, optional): The collection/wing to export (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+- `format` (string, optional): Output format: `"json"` or `"csv"` (default: "json")
+
+**Returns:** Object with `wing` (string), `memoryCount` (int), `format` (string), and `content` (string).
+
+**Example:**
+```json
+{
+  "collection": "meetings",
+  "format": "json"
+}
+```
+
+#### `palace_import_memories`
+Import memories in bulk from a JSON array. Each item must have a `content` field, optional `id` and `metadata`.
+
+**Parameters:**
+- `jsonContent` (string, required): JSON array of memories to import
+- `collection` (string, optional): The collection/wing to import into (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+
+**Returns:** Object with `importedCount` (int) and `errors` (string array).
+
+**Example:**
+```json
+{
+  "jsonContent": "[{\"content\":\"Memory 1\",\"metadata\":{\"source\":\"import\"}},{\"content\":\"Memory 2\"}]",
+  "collection": "meetings"
+}
+```
+
+---
+
+### Control Operations
+
+#### `palace_wake_up`
+Wake up recent memories from a wing and generate a natural language summary using local LLM. Gracefully falls back to raw list if LLM unavailable.
+
+**Parameters:**
+- `collection` (string, optional): The collection/wing to wake up from (default: "default")
+- `palace` (string, optional): The palace reference (default: "default")
+- `days` (int, optional): Number of days to look back (default: 7)
+- `limit` (int, optional): Maximum number of memories to retrieve (default: 20)
+
+**Returns:** Object with `summary` (string), `memoriesProcessed` (int), and `usedLlm` (boolean).
+
+**Example:**
+```json
+{
+  "collection": "meetings",
+  "days": 30,
+  "limit": 50
+}
+```
+
+#### `palace_get_stats`
+Get statistics about the palace: memory count, wing distribution, embedder identity, backend type.
+
+**Parameters:**
+- `palace` (string, optional): The palace reference (default: "default")
+
+**Returns:** Object with `palaceId` (string), `memoryCount` (long), `wingCount` (int), `wingStats` (dictionary), `embedder` (string), and `backend` (string).
+
+**Example:**
+```json
+{
+  "palace": "default"
+}
+```
+
+---
 
 ### Knowledge Graph Tools
 

@@ -2,6 +2,7 @@ using MemPalace.Core.Backends;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mcp;
 using MemPalace.Search;
+using MemPalace.Ai.Summarization;
 using NSubstitute;
 using Xunit;
 
@@ -38,7 +39,9 @@ public class KgQueryToolTests
             Arg.Any<CancellationToken>())
             .Returns(expectedTriples);
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.KgQuery("agent:roy", "worked-on", "?");
@@ -77,7 +80,9 @@ public class KgQueryToolTests
             Arg.Any<CancellationToken>())
             .Returns(expectedEvents);
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.KgTimeline("agent:roy");
@@ -101,7 +106,9 @@ public class KgQueryToolTests
         backend.HealthAsync(Arg.Any<CancellationToken>())
             .Returns(new Core.Model.HealthStatus(true, "All systems operational"));
 
-        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph);
+        var memorySummarizer = Substitute.For<IMemorySummarizer>();
+        var embedder = Substitute.For<IEmbedder>();
+        var tools = new MemPalaceMcpTools(searchService, backend, knowledgeGraph, memorySummarizer, embedder);
 
         // Act
         var result = await tools.PalaceHealth();
