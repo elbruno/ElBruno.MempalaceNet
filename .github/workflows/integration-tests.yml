@@ -1,0 +1,135 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build
+      run: dotnet build src/ --no-restore -c Release
+
+    - name: Run integration tests with coverage
+      run: |
+        dotnet test src/ \
+          --no-build \
+          -c Release \
+          --filter "Category=Integration" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage \
+          --logger "trx;LogFileName=test-results.trx"
+
+    - name: Install ReportGenerator
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+    - name: Generate coverage report
+      run: |
+        reportgenerator \
+          -reports:./coverage/**/coverage.cobertura.xml \
+          -targetdir:./coverage-report \
+          -reporttypes:"Html;Cobertura;MarkdownSummary" \
+          -verbosity:Info
+
+    - name: Extract coverage percentage
+      id: coverage
+      run: |
+        if [ -f ./coverage-report/Summary.md ]; then
+          COVERAGE=$(grep -oP 'Line coverage: \K[\d.]+' ./coverage-report/Summary.md || echo "0")
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage: $COVERAGE%"
+        else
+          echo "coverage=0" >> $GITHUB_OUTPUT
+          echo "⚠️ Coverage report not generated"
+        fi
+
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: ./coverage-report
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: ./coverage/*.trx
+
+    - name: Validate coverage threshold
+      run: |
+        COVERAGE=${{ steps.coverage.outputs.coverage }}
+        THRESHOLD=85
+        
+        echo "Coverage: $COVERAGE%"
+        echo "Threshold: $THRESHOLD%"
+        
+        if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+          echo "❌ COVERAGE BELOW THRESHOLD: $COVERAGE% < $THRESHOLD%"
+          echo ""
+          echo "Integration test coverage must be ≥ ${THRESHOLD}%"
+          echo "Current coverage: ${COVERAGE}%"
+          echo ""
+          echo "Please add tests to cover:"
+          echo "  - MCP tool discovery and execution"
+          echo "  - Palace operations (store, search, recall)"
+          echo "  - Agent context injection and memory workflows"
+          echo "  - Knowledge graph operations"
+          exit 1
+        else
+          echo "✅ PASS: Coverage $COVERAGE% ≥ $THRESHOLD%"
+        fi
+
+    - name: Comment PR with coverage
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const coverage = '${{ steps.coverage.outputs.coverage }}';
+          const threshold = '85';
+          const pass = parseFloat(coverage) >= parseFloat(threshold);
+          const emoji = pass ? '✅' : '❌';
+          
+          const comment = `## ${emoji} Integration Test Coverage
+          
+          **Coverage:** ${coverage}%
+          **Threshold:** ${threshold}%
+          **Status:** ${pass ? 'PASS' : 'FAIL'}
+          
+          ${pass ? 
+            'Integration test coverage meets quality standards.' : 
+            '⚠️ **Coverage below threshold!** Please add more integration tests.'
+          }
+          
+          [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ---
+          *Target: ≥85% line coverage for integration tests*
+          *Filter: \`Category=Integration\`*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

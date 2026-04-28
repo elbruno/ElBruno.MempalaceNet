@@ -69,4 +69,21 @@ public interface ICollection : IAsyncDisposable
         IReadOnlyList<string>? ids = null,
         WhereClause? where = null,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Retrieves recent memories ordered by timestamp (descending).
+    /// Optimized for wake-up operations with server-side date filtering.
+    /// </summary>
+    /// <param name="limit">Maximum number of records to return.</param>
+    /// <param name="where">Optional filter clause.</param>
+    /// <param name="sinceDate">Optional date filter to retrieve only records after this date.</param>
+    /// <param name="include">Fields to include in the result.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>List of records ordered by timestamp descending.</returns>
+    ValueTask<IReadOnlyList<EmbeddedRecord>> WakeUpAsync(
+        int limit = 20,
+        WhereClause? where = null,
+        DateTime? sinceDate = null,
+        IncludeFields include = IncludeFields.Documents | IncludeFields.Metadatas,
+        CancellationToken ct = default);
 }

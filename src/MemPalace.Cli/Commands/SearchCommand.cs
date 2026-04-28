@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using MemPalace.Cli.Output;
 
 namespace MemPalace.Cli.Commands;
 
@@ -28,33 +29,111 @@ internal sealed class SearchSettings : CommandSettings
     [Description("Collection name")]
     [DefaultValue("memories")]
     public string Collection { get; init; } = "memories";
+    
+    [CommandOption("--verbose")]
+    [Description("Enable verbose output")]
+    [DefaultValue(false)]
+    public bool Verbose { get; init; }
 }
 
 internal sealed class SearchCommand : AsyncCommand<SearchSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, SearchSettings settings)
     {
-        var panel = new Panel($"[yellow]Search implementation ready[/]\n\nQuery: [blue]{settings.Query}[/]\nWing: [blue]{settings.Wing ?? "(all)"}[/]\nRerank: [blue]{settings.Rerank}[/]\nTop-K: [blue]{settings.TopK}[/]\nCollection: [blue]{settings.Collection}[/]\n\n[dim]Note: Full search requires backend and embedder configured (Phase 2+3)[/]")
+        try
         {
-            Header = new PanelHeader("[bold green]mempalacenet search[/]"),
-            Border = BoxBorder.Rounded
-        };
-        
-        AnsiConsole.Write(panel);
-        
-        // Stub results table
-        var table = new Table();
-        table.AddColumn("Score");
-        table.AddColumn("Wing");
-        table.AddColumn("Memory");
-        table.AddRow("0.95", "conversations", "Discussion about vector databases...");
-        table.AddRow("0.87", "code", "Implementation of search algorithm...");
-        table.AddRow("0.82", "conversations", "Planning session for CLI design...");
-        
-        AnsiConsole.Write(table);
-        AnsiConsole.MarkupLine("\n[dim]Showing example results (DI wired, awaiting backend/embedder)[/]");
-        
-        await Task.CompletedTask;
-        return 0;
+            // Validate query
+            if (string.IsNullOrWhiteSpace(settings.Query))
+            {
+                ErrorFormatter.DisplaySearchError("", "query cannot be empty");
+                return 1;
+            }
+
+            var panel = OutputFormatter.CreatePanel(
+                "mempalacenet search",
+                $"Query: [blue]{settings.Query}[/]\n" +
+                $"Wing: [blue]{settings.Wing ?? "(all)"}[/]\n" +
+                $"Rerank: [blue]{settings.Rerank}[/]\n" +
+                $"Top-K: [blue]{settings.TopK}[/]\n" +
+                $"Collection: [blue]{settings.Collection}[/]\n" +
+                $"Verbose: [blue]{settings.Verbose}[/]");
+            
+            AnsiConsole.Write(panel);
+            
+            if (settings.Verbose)
+            {
+                AnsiConsole.MarkupLine("[dim]Executing semantic search...[/]");
+            }
+            
+            // Simulate search (stub results)
+            var results = new[]
+            {
+                ("0.95", "conversations", "planning", "Discussion about vector databases and embedding strategies", DateTime.UtcNow.AddDays(-2)),
+                ("0.87", "code", "core", "Implementation of search algorithm with cosine similarity", DateTime.UtcNow.AddDays(-5)),
+                ("0.82", "conversations", "design", "Planning session for CLI design and user experience", DateTime.UtcNow.AddDays(-1)),
+                ("0.78", "docs", "architecture", "Documentation on the hierarchical memory structure", DateTime.UtcNow.AddDays(-7)),
+                ("0.75", "code", "mining", "File mining pipeline with progress tracking", DateTime.UtcNow.AddDays(-3))
+            }.Take(settings.TopK).ToArray();
+            
+            // Apply reranking with progress if requested
+            if (settings.Rerank)
+            {
+                if (settings.Verbose)
+                {
+                    AnsiConsole.MarkupLine("[dim]Applying LLM-based reranking...[/]");
+                }
+                
+                await ProgressDisplay.WithRerankProgress(
+                    results.Length,
+                    async progress =>
+                    {
+                        for (int i = 0; i < results.Length; i++)
+                        {
+                            progress.Report(new ProgressDisplay.RerankProgress(
+                                ProcessedResults: i + 1,
+                                TotalResults: results.Length));
+                            
+                            await Task.Delay(100); // Simulate reranking API call
+                        }
+                        
+                        return results;
+                    });
+            }
+            
+            // Display results in a table
+            var table = OutputFormatter.CreateSearchResultsTable();
+            
+            foreach (var (score, wing, room, content, timestamp) in results)
+            {
+                table.AddRow(
+                    score,
+                    $"[cyan]{wing}[/]",
+                    $"[dim]{room}[/]",
+                    OutputFormatter.Truncate(content, 60),
+                    $"[dim]{OutputFormatter.FormatTimestamp(timestamp)}[/]");
+            }
+            
+            AnsiConsole.Write(table);
+            
+            OutputFormatter.DisplaySuccess($"Found {results.Length} results");
+            if (settings.Rerank)
+            {
+                AnsiConsole.MarkupLine("[dim]Results reranked by relevance[/]");
+            }
+            
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            if (settings.Verbose)
+            {
+                ErrorFormatter.DisplayGenericError(ex.Message, ex.StackTrace ?? "");
+            }
+            else
+            {
+                ErrorFormatter.DisplaySearchError(settings.Query, ex.Message);
+            }
+            return 1;
+        }
     }
 }

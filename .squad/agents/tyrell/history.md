@@ -226,3 +226,53 @@ Lower distance = higher similarity. Results sorted ascending.
 
 **Status:** Research complete, ready for spike PR approval.
 
+### Issue #3 Resolution: EmptyAgentRegistry Fallback (2026-04-25)
+
+**Problem:** CLI `agents list` command failed when no IChatClient was registered in DI container, though the private EmptyAgentRegistry existed, it wasn't testable or well-documented.
+
+**Solution:**
+- **Extracted EmptyAgentRegistry** from private nested class to public `EmptyAgentRegistry.cs` in `src/MemPalace.Agents/Registry/`
+- **Behavior:** `List()` returns empty array; `Get(id)` throws `InvalidOperationException` with clear message about missing IChatClient
+- **Tests added:** `EmptyRegistry_List_ReturnsEmpty()` and `EmptyRegistry_Get_ThrowsInvalidOperationException()` in `AgentRegistryTests.cs`
+- **Side fix:** Corrected `IEmbedder` namespace in `WriteTools.cs` (was `Core.Ai.IEmbedder`, should be `Core.Backends.IEmbedder`)
+
+**Verification:**
+- ✅ All 3 agent registry tests pass (including 2 new EmptyAgentRegistry tests)
+- ✅ `mempalacenet agents list` returns friendly "No agents found" message (exit code 0)
+- ✅ DI container gracefully resolves EmptyAgentRegistry when IChatClient is null
+
+**Commit:** `8b67a42` on `feat/resolve-all-issues` branch
+
+**Next:** Issue #2 (wake-up summarization) and Issue #4 (Ollama support).
+
+### Issue #13 Resolution: Backend Query Optimization (WakeUpAsync) (2026-04-28)
+
+**Problem:** WakeUpAsync queries were inefficient, performing client-side date filtering and sorting without database indexes.
+
+**Solution Implemented (Previous Commits):**
+- **ICollection.WakeUpAsync()**: Added optimized backend method with server-side date filtering
+- **SqliteBackend indexing**: Created `idx_{collectionName}_timestamp` index on `json_extract(metadata, '$.timestamp')` for fast ORDER BY DESC queries
+- **SqliteCollection.WakeUpAsync()**: Implements indexed query with SQL-side timestamp filtering and sorting
+- **InMemoryCollection.WakeUpAsync()**: Implements in-memory sorting by timestamp descending
+- **WakeUpService**: Updated to use new backend method instead of client-side filtering
+
+**This Session:**
+- **WakeUpCommand API update**: Fixed to use correct `IBackend.GetCollectionAsync()` with `PalaceRef` parameter (was using non-existent `GetOrCreateCollectionAsync()`)
+- **WhereClause syntax fix**: Corrected to use top-level `Eq("wing", value)` instead of nested `WhereClause.Eq()`
+- **Added using directive**: `MemPalace.Core.Model` for `PalaceRef` type
+
+**Performance Target:**
+- **Goal**: <50ms for 10K memories
+- **Implementation**: Timestamp index + LIMIT clause pushes filtering/sorting to SQLite engine
+- **Note**: Full conformance tests blocked by pre-existing namespace issues in test project (unrelated)
+
+**Verification:**
+- ✅ Backend implementation complete (commit `0efe53a`)
+- ✅ WakeUpCommand syntax corrected (commit `5cf08e4`)
+- ✅ Code builds successfully
+- ⚠️ Integration tests cannot run due to pre-existing `Core.Embedders` namespace errors in test project
+
+**Commit:** `5cf08e4` on `feat/resolve-all-issues` branch
+
+**Next:** Issue #14 (Query performance benchmarks) to validate <50ms target.
+

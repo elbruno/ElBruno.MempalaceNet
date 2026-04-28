@@ -31,11 +31,13 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, McpSettings settings)
     {
-        if (settings.Transport.ToLowerInvariant() != "stdio")
+        var transport = settings.Transport.ToLowerInvariant();
+
+        if (transport != "stdio")
         {
-            // For now, only stdio is supported
-            // SSE would require MemPalace.Mcp.AspNetCore package
-            await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not yet supported. Only 'stdio' is currently available.");
+            await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not yet supported.");
+            await Console.Error.WriteLineAsync("SSE transport is planned for a future release.");
+            await Console.Error.WriteLineAsync("Currently available: stdio");
             return 1;
         }
 
@@ -49,15 +51,9 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
             options.LogToStandardErrorThreshold = LogLevel.Trace;
         });
 
-        // Copy services from CLI's DI container to the host builder
-        // This ensures the MCP server has access to the same backend, search, KG instances
-        var cliServices = _serviceProvider;
-        
-        // Re-register core services in the host
-        // Note: In a real implementation, we'd need to pass configuration and properly
-        // register all services. For now, we'll register the MCP server which will
-        // expect injected services to be available.
+        // Register the MCP server with stdio transport
         builder.Services.AddMemPalaceMcpWithStdio();
+        await Console.Error.WriteLineAsync("[INFO] Starting MCP server with stdio transport");
 
         // Build and run the host
         var host = builder.Build();

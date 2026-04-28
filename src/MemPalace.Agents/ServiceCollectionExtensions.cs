@@ -67,13 +67,6 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
-    // Empty registry for when IChatClient is not available
-    private class EmptyAgentRegistry : IAgentRegistry
-    {
-        public IReadOnlyList<AgentDescriptor> List() => Array.Empty<AgentDescriptor>();
-        public IMemPalaceAgent Get(string id) => throw new InvalidOperationException("No chat client configured. Call AddMemPalaceAi() before AddMemPalaceAgents().");
-    }
-    
     // In-memory diary for when backend/embedder/search not available
     private class InMemoryAgentDiary : IAgentDiary
     {

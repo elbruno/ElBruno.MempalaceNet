@@ -130,7 +130,67 @@ internal sealed class InMemoryCollection : ICollection
         return ValueTask.CompletedTask;
     }
 
+    public ValueTask<IReadOnlyList<EmbeddedRecord>> WakeUpAsync(
+        int limit = 20,
+        WhereClause? where = null,
+        DateTime? sinceDate = null,
+        IncludeFields include = IncludeFields.Documents | IncludeFields.Metadatas,
+        CancellationToken ct = default)
+    {
+        var filtered = FilterRecords(null, where);
+
+        // Apply date filter if specified
+        if (sinceDate.HasValue)
+        {
+            filtered = filtered.Where(kv =>
+            {
+                if (kv.Value.Metadata.TryGetValue("timestamp", out var ts))
+                {
+                    var timestamp = ParseTimestamp(ts);
+                    return timestamp >= sinceDate.Value;
+                }
+                return false;
+            });
+        }
+
+        // Sort by timestamp descending (most recent first) and take limit
+        var sorted = filtered
+            .Select(kv => new
+            {
+                Id = kv.Key,
+                Record = kv.Value,
+                Timestamp = kv.Value.Metadata.TryGetValue("timestamp", out var ts)
+                    ? ParseTimestamp(ts)
+                    : DateTime.MinValue
+            })
+            .OrderByDescending(x => x.Timestamp)
+            .Take(limit)
+            .ToList();
+
+        var results = sorted
+            .Select(x => new EmbeddedRecord(
+                x.Id,
+                x.Record.Document,
+                x.Record.Metadata,
+                include.HasFlag(IncludeFields.Embeddings) ? x.Record.Embedding : ReadOnlyMemory<float>.Empty))
+            .ToList();
+
+        return ValueTask.FromResult<IReadOnlyList<EmbeddedRecord>>(results);
+    }
+
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private static DateTime ParseTimestamp(object? value)
+    {
+        if (value == null) return DateTime.MinValue;
+        
+        if (value is DateTime dt) return dt;
+        if (value is DateTimeOffset dto) return dto.UtcDateTime;
+        if (value is string str && DateTime.TryParse(str, out var parsed)) return parsed;
+        if (value is long ticks) return new DateTime(ticks, DateTimeKind.Utc);
+        
+        return DateTime.MinValue;
+    }
 
     private void ValidateDimensions(ReadOnlyMemory<float> embedding)
     {
