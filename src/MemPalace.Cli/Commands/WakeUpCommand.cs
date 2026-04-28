@@ -4,6 +4,7 @@ using Spectre.Console.Cli;
 using MemPalace.Cli.Output;
 using MemPalace.Core.Services;
 using MemPalace.Core.Backends;
+using MemPalace.Core.Model;
 
 namespace MemPalace.Cli.Commands;
 
@@ -65,10 +66,12 @@ internal sealed class WakeUpCommand : AsyncCommand<WakeUpSettings>
             ICollection collection;
             try
             {
-                collection = await _backend.GetOrCreateCollectionAsync(
+                var palace = new PalaceRef("default", null); // Use default palace
+                collection = await _backend.GetCollectionAsync(
+                    palace,
                     settings.Collection,
-                    dimensions: 384, // Default dimension (will be ignored if collection exists)
-                    embedderIdentity: "local", // Default embedder
+                    create: false,
+                    embedder: null,
                     ct: default);
             }
             catch (Exception ex)
@@ -79,7 +82,7 @@ internal sealed class WakeUpCommand : AsyncCommand<WakeUpSettings>
 
             // Build where clause if wing is specified
             WhereClause? whereClause = settings.Wing != null
-                ? new WhereClause.Eq("wing", settings.Wing)
+                ? new Eq("wing", settings.Wing)
                 : null;
 
             // Retrieve and optionally summarize memories
