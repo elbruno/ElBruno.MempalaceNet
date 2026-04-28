@@ -9,6 +9,22 @@ namespace MemPalace.Tests.Agents;
 public sealed class AgentRegistryTests
 {
     [Fact]
+    public void EmptyRegistry_List_ReturnsEmpty()
+    {
+        var registry = new EmptyAgentRegistry();
+        var agents = registry.List();
+        Assert.Empty(agents);
+    }
+
+    [Fact]
+    public void EmptyRegistry_Get_ThrowsInvalidOperationException()
+    {
+        var registry = new EmptyAgentRegistry();
+        var ex = Assert.Throws<InvalidOperationException>(() => registry.Get("any-id"));
+        Assert.Contains("No chat client configured", ex.Message);
+    }
+
+    [Fact]
     public void List_EmptyDirectory_ReturnsEmpty()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
