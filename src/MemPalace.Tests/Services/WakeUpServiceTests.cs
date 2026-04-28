@@ -15,24 +15,25 @@ public sealed class WakeUpServiceTests
         var collection = Substitute.For<ICollection>();
         collection.CountAsync(Arg.Any<CancellationToken>()).Returns(100);
         
-        var getResult = new GetResult(
-            Ids: new[] { "m1", "m2", "m3" },
-            Documents: new[] { "Doc 1", "Doc 2", "Doc 3" },
-            Metadatas: new[]
-            {
-                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-1) },
-                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-2) },
-                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-3) }
-            },
-            Embeddings: null);
+        var memories = new List<EmbeddedRecord>
+        {
+            new EmbeddedRecord("m1", "Doc 1",
+                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-1).Ticks },
+                ReadOnlyMemory<float>.Empty),
+            new EmbeddedRecord("m2", "Doc 2",
+                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-2).Ticks },
+                ReadOnlyMemory<float>.Empty),
+            new EmbeddedRecord("m3", "Doc 3",
+                new Dictionary<string, object?> { ["timestamp"] = DateTime.UtcNow.AddHours(-3).Ticks },
+                ReadOnlyMemory<float>.Empty)
+        };
         
-        collection.GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Any<WhereClause?>(),
-            Arg.Any<int?>(),
+        collection.WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
-            Arg.Any<CancellationToken>()).Returns(getResult);
+            Arg.Any<CancellationToken>()).Returns(memories);
 
         var service = new WakeUpService();
 
@@ -53,19 +54,19 @@ public sealed class WakeUpServiceTests
         var collection = Substitute.For<ICollection>();
         collection.CountAsync(Arg.Any<CancellationToken>()).Returns(10);
         
-        var getResult = new GetResult(
-            Ids: new[] { "m1" },
-            Documents: new[] { "Doc 1" },
-            Metadatas: new[] { new Dictionary<string, object?>() },
-            Embeddings: null);
+        var memories = new List<EmbeddedRecord>
+        {
+            new EmbeddedRecord("m1", "Doc 1",
+                new Dictionary<string, object?>(),
+                ReadOnlyMemory<float>.Empty)
+        };
         
-        collection.GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Any<WhereClause?>(),
-            Arg.Any<int?>(),
+        collection.WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
-            Arg.Any<CancellationToken>()).Returns(getResult);
+            Arg.Any<CancellationToken>()).Returns(memories);
 
         var service = new WakeUpService(chatClient: null);
 
@@ -84,27 +85,26 @@ public sealed class WakeUpServiceTests
         var collection = Substitute.For<ICollection>();
         collection.CountAsync(Arg.Any<CancellationToken>()).Returns(10);
         
-        var getResult = new GetResult(
-            Ids: new[] { "m1", "m2" },
-            Documents: new[] { "Doc 1", "Doc 2" },
-            Metadatas: new[]
-            {
-                new Dictionary<string, object?> { ["wing"] = "code", ["timestamp"] = DateTime.UtcNow },
-                new Dictionary<string, object?> { ["wing"] = "docs", ["timestamp"] = DateTime.UtcNow }
-            },
-            Embeddings: null);
+        var memories = new List<EmbeddedRecord>
+        {
+            new EmbeddedRecord("m1", "Doc 1", 
+                new Dictionary<string, object?> { ["wing"] = "code", ["timestamp"] = DateTime.UtcNow.Ticks },
+                ReadOnlyMemory<float>.Empty),
+            new EmbeddedRecord("m2", "Doc 2",
+                new Dictionary<string, object?> { ["wing"] = "docs", ["timestamp"] = DateTime.UtcNow.Ticks },
+                ReadOnlyMemory<float>.Empty)
+        };
         
-        collection.GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Any<WhereClause?>(),
-            Arg.Any<int?>(),
+        collection.WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
-            Arg.Any<CancellationToken>()).Returns(getResult);
+            Arg.Any<CancellationToken>()).Returns(memories);
 
         var chatClient = Substitute.For<IChatClient>();
-        var chatResponse = new ChatCompletion(new ChatMessage(ChatRole.Assistant, "This is a summary of recent activities."));
-        chatClient.CompleteAsync(Arg.Any<IEnumerable<ChatMessage>>(), Arg.Any<ChatOptions?>(), Arg.Any<CancellationToken>())
+        var chatResponse = new ChatResponse(new ChatMessage(ChatRole.Assistant, "This is a summary of recent activities."));
+        chatClient.GetResponseAsync(Arg.Any<IEnumerable<ChatMessage>>(), Arg.Any<ChatOptions?>(), Arg.Any<CancellationToken>())
             .Returns(chatResponse);
 
         var service = new WakeUpService(chatClient);
@@ -126,24 +126,26 @@ public sealed class WakeUpServiceTests
         collection.CountAsync(Arg.Any<CancellationToken>()).Returns(3);
         
         var now = DateTime.UtcNow;
-        var getResult = new GetResult(
-            Ids: new[] { "m1", "m2", "m3" },
-            Documents: new[] { "Oldest", "Newest", "Middle" },
-            Metadatas: new[]
-            {
-                new Dictionary<string, object?> { ["timestamp"] = now.AddHours(-3) }, // Oldest
-                new Dictionary<string, object?> { ["timestamp"] = now }, // Newest
-                new Dictionary<string, object?> { ["timestamp"] = now.AddHours(-1) }  // Middle
-            },
-            Embeddings: null);
+        // WakeUpAsync returns memories already sorted by timestamp DESC (newest first)
+        var memories = new List<EmbeddedRecord>
+        {
+            new EmbeddedRecord("m2", "Newest",
+                new Dictionary<string, object?> { ["timestamp"] = now.Ticks },
+                ReadOnlyMemory<float>.Empty),
+            new EmbeddedRecord("m3", "Middle",
+                new Dictionary<string, object?> { ["timestamp"] = now.AddHours(-1).Ticks },
+                ReadOnlyMemory<float>.Empty),
+            new EmbeddedRecord("m1", "Oldest",
+                new Dictionary<string, object?> { ["timestamp"] = now.AddHours(-3).Ticks },
+                ReadOnlyMemory<float>.Empty)
+        };
         
-        collection.GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Any<WhereClause?>(),
-            Arg.Any<int?>(),
+        collection.WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
-            Arg.Any<CancellationToken>()).Returns(getResult);
+            Arg.Any<CancellationToken>()).Returns(memories);
 
         var service = new WakeUpService();
 
@@ -163,19 +165,19 @@ public sealed class WakeUpServiceTests
         var collection = Substitute.For<ICollection>();
         collection.CountAsync(Arg.Any<CancellationToken>()).Returns(5);
         
-        var getResult = new GetResult(
-            Ids: new[] { "m1" },
-            Documents: new[] { "Doc 1" },
-            Metadatas: new[] { new Dictionary<string, object?>() },
-            Embeddings: null);
+        var memories = new List<EmbeddedRecord>
+        {
+            new EmbeddedRecord("m1", "Doc 1",
+                new Dictionary<string, object?>(),
+                ReadOnlyMemory<float>.Empty)
+        };
         
-        collection.GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Any<WhereClause?>(),
-            Arg.Any<int?>(),
+        collection.WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
-            Arg.Any<CancellationToken>()).Returns(getResult);
+            Arg.Any<CancellationToken>()).Returns(memories);
 
         var service = new WakeUpService();
         var whereClause = new WhereClause.Eq("wing", "code");
@@ -184,11 +186,10 @@ public sealed class WakeUpServiceTests
         var result = await service.WakeUpAsync(collection, limit: 10, where: whereClause);
 
         // Assert
-        await collection.Received(1).GetAsync(
-            Arg.Any<IReadOnlyList<string>?>(),
-            Arg.Is<WhereClause?>(w => w == whereClause),
-            Arg.Any<int?>(),
+        await collection.Received(1).WakeUpAsync(
             Arg.Any<int>(),
+            Arg.Is<WhereClause?>(w => w == whereClause),
+            Arg.Any<DateTime?>(),
             Arg.Any<IncludeFields>(),
             Arg.Any<CancellationToken>());
     }

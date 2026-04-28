@@ -255,6 +255,67 @@ public sealed class SqliteCollection : ICollection
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
+    public async ValueTask<IReadOnlyList<EmbeddedRecord>> WakeUpAsync(
+        int limit = 20,
+        WhereClause? where = null,
+        DateTime? sinceDate = null,
+        IncludeFields include = IncludeFields.Documents | IncludeFields.Metadatas,
+        CancellationToken ct = default)
+    {
+        var sb = new StringBuilder($"SELECT id, document, metadata");
+        
+        if (include.HasFlag(IncludeFields.Embeddings))
+        {
+            sb.Append(", embedding");
+        }
+
+        sb.Append($" FROM [{_tableName}] WHERE 1=1");
+
+        using var cmd = _connection.CreateCommand();
+
+        // Add date filter if specified
+        if (sinceDate.HasValue)
+        {
+            sb.Append(" AND json_extract(metadata, '$.timestamp') >= @sinceDate");
+            cmd.Parameters.AddWithValue("@sinceDate", sinceDate.Value.Ticks);
+        }
+
+        // Add user-specified where clause
+        if (where != null)
+        {
+            sb.Append(" AND ");
+            sb.Append(TranslateWhereClause(where, cmd));
+        }
+
+        // Order by timestamp descending (most recent first)
+        sb.Append(" ORDER BY json_extract(metadata, '$.timestamp') DESC");
+        sb.Append($" LIMIT {limit}");
+
+        cmd.CommandText = sb.ToString();
+
+        var results = new List<EmbeddedRecord>();
+
+        using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            var id = reader.GetString(0);
+            var document = reader.GetString(1);
+            var metaJson = reader.GetString(2);
+            var metadata = JsonSerializer.Deserialize<Dictionary<string, object?>>(metaJson) ?? new Dictionary<string, object?>();
+            
+            ReadOnlyMemory<float> embedding = ReadOnlyMemory<float>.Empty;
+            if (include.HasFlag(IncludeFields.Embeddings))
+            {
+                var embBytes = (byte[])reader.GetValue(3);
+                embedding = BytesToEmbedding(embBytes);
+            }
+
+            results.Add(new EmbeddedRecord(id, document, metadata, embedding));
+        }
+
+        return results;
+    }
+
     public ValueTask DisposeAsync()
     {
         return ValueTask.CompletedTask;

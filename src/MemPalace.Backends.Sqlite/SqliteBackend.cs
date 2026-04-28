@@ -206,6 +206,12 @@ public sealed class SqliteBackend : IBackend
             )";
         await cmd.ExecuteNonQueryAsync(ct);
 
+        // Create index on timestamp for efficient wake-up queries
+        cmd.CommandText = $@"
+            CREATE INDEX IF NOT EXISTS idx_{collectionName}_timestamp 
+            ON [{tableName}] (json_extract(metadata, '$.timestamp'))";
+        await cmd.ExecuteNonQueryAsync(ct);
+
         cmd.CommandText = @"
             INSERT INTO _meta (collection_name, embedder_identity, dimensions)
             VALUES (@name, @identity, @dim)";

@@ -1,5 +1,6 @@
 using MemPalace.Core.Backends;
 using MemPalace.Core.Model;
+using Microsoft.Extensions.AI;
 
 namespace MemPalace.Core.Services;
 
@@ -38,6 +39,13 @@ public sealed record WakeUpResult(
 /// </summary>
 public sealed class WakeUpService : IWakeUpService
 {
+    private readonly IChatClient? _chatClient;
+
+    public WakeUpService(IChatClient? chatClient = null)
+    {
+        _chatClient = chatClient;
+    }
+
     public async ValueTask<WakeUpResult> WakeUpAsync(
         ICollection collection,
         int limit = 20,
@@ -45,47 +53,81 @@ public sealed class WakeUpService : IWakeUpService
         bool summarize = false,
         CancellationToken ct = default)
     {
-        // Retrieve recent memories (limit + order by timestamp would be ideal, but not supported yet)
-        var result = await collection.GetAsync(
-            ids: null,
-            where: where,
+        // Use the optimized backend method
+        var memories = await collection.WakeUpAsync(
             limit: limit,
-            offset: 0,
+            where: where,
+            sinceDate: null,
             include: IncludeFields.Documents | IncludeFields.Metadatas,
             ct: ct);
-
-        // Sort by timestamp in metadata (if available), most recent first
-        var sorted = result.Documents
-            .Select((doc, idx) => new
-            {
-                Id = result.Ids[idx],
-                Document = doc,
-                Metadata = result.Metadatas?[idx] ?? new Dictionary<string, object?>(),
-                Timestamp = result.Metadatas?[idx]?.TryGetValue("timestamp", out var ts) == true
-                    ? ParseTimestamp(ts)
-                    : DateTime.MinValue
-            })
-            .OrderByDescending(x => x.Timestamp)
-            .Take(limit)
-            .ToList();
-
-        // Reconstruct EmbeddedRecords (without embeddings for efficiency)
-        var memories = sorted
-            .Select(x => new EmbeddedRecord(
-                x.Id,
-                x.Document,
-                x.Metadata,
-                ReadOnlyMemory<float>.Empty))
-            .ToList();
 
         // Get total count
         var totalCount = await collection.CountAsync(ct);
 
-        // TODO: Implement summarization using IChatClient when available
-        // For now, summarization is handled at the CLI level or can be added as an extension method
+        // Generate summary if requested and chat client is available
         string? summary = null;
+        if (summarize && memories.Count > 0)
+        {
+            summary = await GenerateSummaryAsync(memories, ct);
+        }
 
         return new WakeUpResult(memories, summary, (int)totalCount);
+    }
+
+    private async Task<string> GenerateSummaryAsync(
+        IReadOnlyList<EmbeddedRecord> memories,
+        CancellationToken ct)
+    {
+        if (_chatClient == null)
+        {
+            // Simple text summary fallback
+            return GenerateTextSummary(memories);
+        }
+
+        // Build context from memories
+        var context = string.Join("\n\n", memories.Select((m, i) =>
+        {
+            var timestamp = m.Metadata.TryGetValue("timestamp", out var ts)
+                ? ParseTimestamp(ts)
+                : DateTime.MinValue;
+            var timeStr = timestamp != DateTime.MinValue
+                ? timestamp.ToString("yyyy-MM-dd HH:mm:ss")
+                : "unknown time";
+            var wing = m.Metadata.TryGetValue("wing", out var w) ? w?.ToString() : "";
+            var room = m.Metadata.TryGetValue("room", out var r) ? r?.ToString() : "";
+            var location = string.IsNullOrEmpty(wing) ? "" : $" [{wing}{(string.IsNullOrEmpty(room) ? "" : $"/{room}")}]";
+            return $"{i + 1}. ({timeStr}{location}): {m.Document}";
+        }));
+
+        // TODO: Implement LLM summarization using IChatClient when available
+        // For now, use the text fallback
+        return GenerateTextSummary(memories);
+    }
+
+    private static string GenerateTextSummary(IReadOnlyList<EmbeddedRecord> memories)
+    {
+        // Generate a simple text summary without LLM
+        var wingGroups = memories
+            .GroupBy(m => m.Metadata.TryGetValue("wing", out var w) ? w?.ToString() : "general")
+            .ToList();
+
+        var summary = $"Recent activity summary ({memories.Count} memories):\n\n";
+        
+        foreach (var group in wingGroups)
+        {
+            summary += $"**{group.Key}** ({group.Count()} memories)\n";
+            var recent = group.Take(3);
+            foreach (var memory in recent)
+            {
+                var preview = memory.Document.Length > 80 
+                    ? memory.Document.Substring(0, 77) + "..." 
+                    : memory.Document;
+                summary += $"  - {preview}\n";
+            }
+            summary += "\n";
+        }
+
+        return summary.TrimEnd();
     }
 
     private static DateTime ParseTimestamp(object? value)
