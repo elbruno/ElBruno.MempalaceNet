@@ -104,7 +104,7 @@ public sealed class WakeUpServiceTests
 
         var chatClient = Substitute.For<IChatClient>();
         var chatResponse = new ChatCompletion(new ChatMessage(ChatRole.Assistant, "This is a summary of recent activities."));
-        chatClient.CompleteAsync(Arg.Any<string>(), Arg.Any<ChatOptions?>(), Arg.Any<CancellationToken>())
+        chatClient.CompleteAsync(Arg.Any<IEnumerable<ChatMessage>>(), Arg.Any<ChatOptions?>(), Arg.Any<CancellationToken>())
             .Returns(chatResponse);
 
         var service = new WakeUpService(chatClient);

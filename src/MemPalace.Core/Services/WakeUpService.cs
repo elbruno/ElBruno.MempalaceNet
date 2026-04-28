@@ -128,7 +128,13 @@ Summary:";
 
         try
         {
-            var response = await _chatClient.CompleteAsync(prompt, cancellationToken: ct);
+            var messages = new[]
+            {
+                new ChatMessage(ChatRole.System, "You are a helpful assistant that provides concise summaries."),
+                new ChatMessage(ChatRole.User, prompt)
+            };
+            
+            var response = await _chatClient.CompleteAsync(messages, cancellationToken: ct);
             return response.Message.Text ?? "Summary generation failed.";
         }
         catch (Exception ex)
