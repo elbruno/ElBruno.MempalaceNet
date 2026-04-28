@@ -1,0 +1,120 @@
+name: Regression Tests (R@5)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build
+      run: dotnet build src/ --no-restore -c Release
+
+    - name: Create artifacts directory
+      run: mkdir -p artifacts/benchmarks
+
+    - name: Download LongMemEval dataset
+      run: |
+        curl -L -o artifacts/benchmarks/longmemeval_s_cleaned.json \
+          https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
+
+    - name: Run LongMemEval R@5 benchmark
+      id: benchmark
+      run: |
+        dotnet run --project src/MemPalace.Benchmarks --no-build -c Release -- \
+          run longmemeval \
+          --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
+          --palace artifacts/benchmarks/palace-ci \
+          --embedder local \
+          > benchmark_output.txt 2>&1
+        
+        cat benchmark_output.txt
+        
+        # Extract R@5 score from output
+        R5_SCORE=$(grep -oP 'Recall@5.*?(\d+\.\d+)' benchmark_output.txt | grep -oP '\d+\.\d+' | head -1 || echo "0")
+        echo "r5_score=$R5_SCORE" >> $GITHUB_OUTPUT
+        echo "R@5 Score: $R5_SCORE"
+
+    - name: Validate R@5 threshold
+      run: |
+        R5_SCORE=${{ steps.benchmark.outputs.r5_score }}
+        THRESHOLD=0.96
+        
+        echo "R@5 Score: $R5_SCORE"
+        echo "Threshold: $THRESHOLD (96%)"
+        
+        if (( $(echo "$R5_SCORE < $THRESHOLD" | bc -l) )); then
+          echo "❌ REGRESSION DETECTED: R@5 $R5_SCORE < $THRESHOLD"
+          echo "Search quality has degraded below acceptable threshold."
+          echo ""
+          echo "Expected: R@5 ≥ 96.0%"
+          echo "Actual:   R@5 = $(echo "$R5_SCORE * 100" | bc -l)%"
+          echo ""
+          echo "Please investigate:"
+          echo "  - Check for changes in embedder, search, or backend logic"
+          echo "  - Verify corpus ingestion strategy"
+          echo "  - Review vector similarity computation"
+          exit 1
+        else
+          echo "✅ PASS: R@5 $R5_SCORE ≥ $THRESHOLD"
+        fi
+
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          benchmark_output.txt
+          artifacts/benchmarks/palace-ci/*.db
+
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const r5Score = '${{ steps.benchmark.outputs.r5_score }}';
+          const threshold = '0.96';
+          const pass = parseFloat(r5Score) >= parseFloat(threshold);
+          const emoji = pass ? '✅' : '❌';
+          
+          const comment = `## ${emoji} LongMemEval R@5 Regression Test
+          
+          **Result:** ${(parseFloat(r5Score) * 100).toFixed(2)}%
+          **Threshold:** ${(parseFloat(threshold) * 100).toFixed(0)}%
+          **Status:** ${pass ? 'PASS' : 'FAIL'}
+          
+          ${pass ? 
+            'Search quality is maintained at acceptable levels.' : 
+            '⚠️ **Regression detected!** Search quality has degraded below threshold.'
+          }
+          
+          ---
+          *Python baseline (reference): 96.6% R@5 with nomic-embed-text (1536-dim)*
+          *MemPalace.NET: MiniLM embedder (384-dim)*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
