@@ -33,6 +33,14 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
     {
         var transport = settings.Transport.ToLowerInvariant();
 
+        if (transport != "stdio")
+        {
+            await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not yet supported.");
+            await Console.Error.WriteLineAsync("SSE transport is planned for a future release.");
+            await Console.Error.WriteLineAsync("Currently available: stdio");
+            return 1;
+        }
+
         // Build a host for the MCP server
         var builder = Host.CreateApplicationBuilder();
         
@@ -43,27 +51,9 @@ internal sealed class McpCommand : AsyncCommand<McpSettings>
             options.LogToStandardErrorThreshold = LogLevel.Trace;
         });
 
-        // Copy core services from CLI's DI container
-        // In production, we'd use a proper service registration pattern
-        // For now, we'll register the MCP server with the appropriate transport
-        
-        switch (transport)
-        {
-            case "stdio":
-                builder.Services.AddMemPalaceMcpWithStdio();
-                await Console.Error.WriteLineAsync("[INFO] Starting MCP server with stdio transport");
-                break;
-
-            case "sse":
-                builder.Services.AddMemPalaceMcpWithSse(settings.Port);
-                await Console.Error.WriteLineAsync($"[INFO] Starting MCP server with SSE transport on port {settings.Port}");
-                await Console.Error.WriteLineAsync($"[INFO] Connect to http://localhost:{settings.Port}/sse");
-                break;
-
-            default:
-                await Console.Error.WriteLineAsync($"Error: Transport '{settings.Transport}' is not supported. Available: stdio, sse");
-                return 1;
-        }
+        // Register the MCP server with stdio transport
+        builder.Services.AddMemPalaceMcpWithStdio();
+        await Console.Error.WriteLineAsync("[INFO] Starting MCP server with stdio transport");
 
         // Build and run the host
         var host = builder.Build();
