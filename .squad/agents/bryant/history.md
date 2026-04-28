@@ -316,3 +316,59 @@
 
 ---
 
+### 2026-04-27 — Phase 2C Unblocked: Verification & Assessment
+
+**Task:** Verify blocker resolution and assess Phase 2C readiness after CLI test fixes.
+
+**Verification Results:**
+- ✅ **234/234 tests passing** (all pre-existing CLI failures resolved)
+- ✅ **7/7 MCP SSE integration tests passing** (my prior work from blocked session now verified)
+- ✅ Build status: GREEN (0 errors, 0 warnings)
+- ✅ **MCP SSE ClientTests.cs fully functional** — real HTTP transport, session management, timeout, concurrent clients all working
+
+**Phase 2C Assessment:**
+1. **Integration Test Foundation (Complete):** MCP SSE integration tests already authored and passing
+2. **E2E Test Gap:** Palace API (planned Phase 11) not yet implemented — current architecture uses IBackend/ISearchService/ICollection directly
+3. **Test Strategy Adjustment Needed:** E2E tests require Palace API facade. Current backend tests (BackendConformanceTests) already validate storage → retrieval → delete lifecycle
+
+**Key Finding:** The Palace high-level API documented in COPILOT_SKILL.md (lines 72-94) doesn't exist in v0.7.0 codebase. This blocks E2E tests that assume `Palace.Create()`, `palace.Store()`, `palace.Search()` interface.
+
+**Current Test Coverage (234 tests):**
+- Backend: 40 tests (SQLite, InMemory, conformance)
+- Search: 5 tests (VectorSearchService, HybridSearchService)
+- Mining: 9 tests
+- KnowledgeGraph: 16 tests
+- AI: 13 tests (embedder, summarization, rerank)
+- Agents: 6 tests
+- MCP: 12 tests (tools + 7 SSE integration)
+- CLI: 10 tests (argument parsing)
+- Benchmarks: 20 tests (harness, metrics, loaders)
+
+**Phase 2C Revised Plan:**
+1. ✅ **MCP SSE Integration Tests** — DONE (7 tests passing)
+2. ⏸️ **E2E Tests** — DEFER to Phase 11 (requires Palace API implementation first)
+3. 📋 **Performance Tests** — CAN PROCEED (backend/search APIs available)
+4. 📋 **CI/CD Workflow** — CAN PROCEED (no API dependencies)
+5. 📋 **Documentation** — CAN PROCEED
+
+**Recommendation:**
+- **Option A:** Complete Phase 2C perf tests + CI/CD + docs (no E2E blockers)
+- **Option B:** Defer entire Phase 2C to Phase 11 (after Palace API exists)
+- **My preference:** Option A — deliver perf baselines and CI workflow now, E2E tests later
+
+**Next Actions:**
+1. Implement 3 performance regression tests (WakeUpAsync, BranchCache, delete-by-filter)
+2. Create `.github/workflows/integration-tests.yml`
+3. Document test strategy in `docs/guides/integration-test-strategy.md`
+4. Update Phase 2C status report with revised scope
+
+**Files analyzed:**
+- `src/MemPalace.Tests/Mcp/Integration/MCP_SSE_ClientTests.cs` (268 lines, 7 tests)
+- `src/MemPalace.Tests/Backends/SqliteBackendConformanceTests.cs` (existing E2E-style test)
+- `docs/COPILOT_SKILL.md` (documents Palace API that doesn't exist yet)
+
+**Test execution times:**
+- Full test suite: ~6 seconds (234 tests)
+- MCP SSE integration tests: ~6 seconds (7 tests, includes HTTP server startup/shutdown)
+
+---

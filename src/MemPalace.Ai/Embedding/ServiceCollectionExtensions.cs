@@ -3,6 +3,9 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ElBruno.LocalEmbeddings.Extensions;
+using OpenAI;
+using Azure.AI.OpenAI;
+using Azure;
 
 namespace MemPalace.Ai.Embedding;
 
@@ -28,33 +31,11 @@ public static class ServiceCollectionExtensions
             services.Configure<EmbedderOptions>(_ => { });
         }
 
-        // For Local provider, register via ElBruno.LocalEmbeddings directly
-        // For other providers, register via factory
-        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-
-            return options.Provider.ToLowerInvariant() switch
-            {
-                "local" => throw new InvalidOperationException(
-                    "Local provider must be registered using AddLocalEmbeddings before AddMemPalaceAi. " +
-                    "This will be fixed in the final implementation."),
-                "ollama" => throw new InvalidOperationException(
-                    "Ollama provider is temporarily unavailable in v0.6.0 (stable release). " +
-                    "Please use 'Local' provider instead. Ollama support will be restored in the next preview release."),
-                "openai" => CreateOpenAiGenerator(options),
-                "azureopenai" => CreateAzureOpenAiGenerator(options),
-                _ => throw new InvalidOperationException(
-                    $"Unknown embedding provider: {options.Provider}. " +
-                    "Supported: Local, OpenAI, AzureOpenAI. (Ollama available in preview versions)")
-            };
-        });
-
         // Pre-register LocalEmbeddings if provider is Local (checked via options snapshot)
         var optionsInstance = services.BuildServiceProvider(validateScopes: false)
             .GetRequiredService<IOptions<EmbedderOptions>>().Value;
         
-        if (optionsInstance.Provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
+        if (optionsInstance.Type == EmbedderType.Local)
         {
             services.AddLocalEmbeddings(localOptions =>
             {
@@ -63,47 +44,162 @@ public static class ServiceCollectionExtensions
             });
         }
 
+        // Register IEmbeddingGenerator factory based on embedder type
+        services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<EmbedderOptions>>().Value;
+
+            return options.Type switch
+            {
+                EmbedderType.Local => sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>(),
+                EmbedderType.OpenAI => CreateOpenAiGenerator(options),
+                EmbedderType.AzureOpenAI => CreateAzureOpenAiGenerator(options),
+                _ => throw new InvalidOperationException(
+                    $"Unknown embedding provider type: {options.Type}. " +
+                    "Supported: Local, OpenAI, AzureOpenAI.")
+            };
+        });
+
         // Register the IEmbedder adapter
         services.AddSingleton<IEmbedder>(sp =>
         {
             var generator = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
             var options = sp.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-            return new MeaiEmbedder(generator, options.Provider, options.Model);
+            var providerName = options.Type.ToString().ToLowerInvariant();
+            return new MeaiEmbedder(generator, providerName, options.Model);
         });
 
         return services;
     }
 
-    // Ollama support temporarily removed for stable v0.6.0 release
-    // Will be restored when Microsoft.Extensions.AI.Ollama has a stable version
-    /*
-    private static IEmbeddingGenerator<string, Embedding<float>> CreateOllamaGenerator(
-        EmbedderOptions options)
-    {
-        var client = new OllamaEmbeddingGenerator(
-            new Uri(options.Endpoint),
-            options.Model);
-        return client;
-    }
-    */
-
     private static IEmbeddingGenerator<string, Embedding<float>> CreateOpenAiGenerator(
         EmbedderOptions options)
     {
-        // TODO: OpenAI provider implementation requires compatible M.E.AI.OpenAI version
-        // Current packages don't expose AsEmbeddingGenerator extension for OpenAIClient
-        // Phase 3 ships with Ollama support; OpenAI/Azure will be completed in Phase 4
-        throw new NotImplementedException(
-            "OpenAI provider not yet implemented. Use 'Local' or 'Ollama' provider.");
+        // Validate API key
+        var apiKey = options.ApiKey ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException(
+                "OpenAI API key is required. Set EmbedderOptions.ApiKey or environment variable OPENAI_API_KEY.");
+        }
+
+        var model = options.Model ?? "text-embedding-3-small";
+        
+        // Create a simple wrapper for OpenAI embeddings
+        return new OpenAIEmbeddingGenerator(apiKey, model);
     }
 
     private static IEmbeddingGenerator<string, Embedding<float>> CreateAzureOpenAiGenerator(
         EmbedderOptions options)
     {
-        // TODO: AzureOpenAI provider implementation requires compatible M.E.AI.OpenAI version  
-        // Current packages don't expose AsEmbeddingGenerator extension for OpenAIClient
-        // Phase 3 ships with Ollama support; OpenAI/Azure will be completed in Phase 4
-        throw new NotImplementedException(
-            "AzureOpenAI provider not yet implemented. Use 'Local' or 'Ollama' provider.");
+        // Validate required parameters
+        var apiKey = options.ApiKey ?? Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException(
+                "Azure OpenAI API key is required. Set EmbedderOptions.ApiKey or environment variable AZURE_OPENAI_API_KEY.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.Endpoint))
+        {
+            throw new InvalidOperationException(
+                "Azure OpenAI endpoint is required. Set EmbedderOptions.Endpoint.");
+        }
+
+        if (string.IsNullOrWhiteSpace(options.DeploymentName))
+        {
+            throw new InvalidOperationException(
+                "Azure OpenAI deployment name is required. Set EmbedderOptions.DeploymentName.");
+        }
+
+        // Create a simple wrapper for Azure OpenAI embeddings
+        return new AzureOpenAIEmbeddingGenerator(
+            options.Endpoint, 
+            apiKey, 
+            options.DeploymentName);
+    }
+
+    // Simple wrapper for OpenAI embeddings
+    private sealed class OpenAIEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+    {
+        private readonly OpenAI.OpenAIClient _client;
+        private readonly string _model;
+
+        public OpenAIEmbeddingGenerator(string apiKey, string model)
+        {
+            _client = new OpenAI.OpenAIClient(apiKey);
+            _model = model;
+        }
+
+        public EmbeddingGeneratorMetadata Metadata => new("openai");
+
+        public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+            IEnumerable<string> values, 
+            EmbeddingGenerationOptions? options = null, 
+            CancellationToken cancellationToken = default)
+        {
+            var embedOptions = new OpenAI.Embeddings.EmbeddingGenerationOptions
+            {
+                Dimensions = options?.Dimensions
+            };
+
+            var response = await _client.GetEmbeddingClient(_model)
+                .GenerateEmbeddingsAsync(values, embedOptions, cancellationToken);
+
+            var embeddings = response.Value
+                .Select(e => new Embedding<float>(e.ToFloats().ToArray()))
+                .ToList();
+
+            return new GeneratedEmbeddings<Embedding<float>>(embeddings);
+        }
+
+        public TService? GetService<TService>(object? key = null) where TService : class => null;
+        
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        
+        public void Dispose() { }
+    }
+
+    // Simple wrapper for Azure OpenAI embeddings
+    private sealed class AzureOpenAIEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
+    {
+        private readonly Azure.AI.OpenAI.AzureOpenAIClient _client;
+        private readonly string _deploymentName;
+
+        public AzureOpenAIEmbeddingGenerator(string endpoint, string apiKey, string deploymentName)
+        {
+            _client = new Azure.AI.OpenAI.AzureOpenAIClient(
+                new Uri(endpoint),
+                new Azure.AzureKeyCredential(apiKey));
+            _deploymentName = deploymentName;
+        }
+
+        public EmbeddingGeneratorMetadata Metadata => new("azureopenai");
+
+        public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+            IEnumerable<string> values, 
+            EmbeddingGenerationOptions? options = null, 
+            CancellationToken cancellationToken = default)
+        {
+            var embedOptions = new OpenAI.Embeddings.EmbeddingGenerationOptions
+            {
+                Dimensions = options?.Dimensions
+            };
+
+            var response = await _client.GetEmbeddingClient(_deploymentName)
+                .GenerateEmbeddingsAsync(values, embedOptions, cancellationToken);
+
+            var embeddings = response.Value
+                .Select(e => new Embedding<float>(e.ToFloats().ToArray()))
+                .ToList();
+
+            return new GeneratedEmbeddings<Embedding<float>>(embeddings);
+        }
+
+        public TService? GetService<TService>(object? key = null) where TService : class => null;
+        
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        
+        public void Dispose() { }
     }
 }

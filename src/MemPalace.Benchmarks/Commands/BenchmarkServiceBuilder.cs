@@ -24,7 +24,7 @@ internal static class BenchmarkServiceBuilder
             case "local":
                 services.AddMemPalaceAi(options =>
                 {
-                    options.Provider = "Local";
+                    options.Type = EmbedderType.Local;
                     if (!string.IsNullOrWhiteSpace(model))
                     {
                         options.Model = model;
@@ -33,16 +33,9 @@ internal static class BenchmarkServiceBuilder
                 break;
 
             case "ollama":
-                services.AddMemPalaceAi(options =>
-                {
-                    options.Provider = "Ollama";
-                    options.Model = string.IsNullOrWhiteSpace(model) ? "nomic-embed-text" : model;
-                    if (!string.IsNullOrWhiteSpace(endpoint))
-                    {
-                        options.Endpoint = endpoint;
-                    }
-                });
-                break;
+                // Ollama is not supported in stable releases, but keep the case for benchmarks
+                throw new InvalidOperationException(
+                    "Ollama embedder is not available in stable releases. Use 'local' or 'deterministic' instead.");
 
             default:
                 throw new InvalidOperationException(

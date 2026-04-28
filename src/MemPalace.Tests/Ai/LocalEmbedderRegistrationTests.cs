@@ -25,7 +25,7 @@ public sealed class LocalEmbedderRegistrationTests
 
         // Assert
         var options = provider.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-        options.Provider.Should().Be("Local");
+        options.Type.Should().Be(EmbedderType.Local);
         options.Model.Should().Be("sentence-transformers/all-MiniLM-L6-v2");
     }
 
@@ -38,13 +38,13 @@ public sealed class LocalEmbedderRegistrationTests
         // Act
         services.AddMemPalaceAi(options =>
         {
-            options.Provider = "Local";
+            options.Type = EmbedderType.Local;
         });
         var provider = services.BuildServiceProvider();
 
         // Assert
         var options = provider.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-        options.Provider.Should().Be("Local");
+        options.Type.Should().Be(EmbedderType.Local);
         options.Model.Should().Be("sentence-transformers/all-MiniLM-L6-v2");
     }
 
@@ -57,19 +57,19 @@ public sealed class LocalEmbedderRegistrationTests
         // Act
         services.AddMemPalaceAi(options =>
         {
-            options.Provider = "Local";
+            options.Type = EmbedderType.Local;
             options.Model = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
         });
         var provider = services.BuildServiceProvider();
 
         // Assert
         var options = provider.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-        options.Provider.Should().Be("Local");
+        options.Type.Should().Be(EmbedderType.Local);
         options.Model.Should().Be("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2");
     }
 
     [Fact]
-    public void AddMemPalaceAi_WithOllamaProvider_ConfiguresOllama()
+    public void AddMemPalaceAi_WithOpenAIProvider_RequiresApiKey()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -77,15 +77,16 @@ public sealed class LocalEmbedderRegistrationTests
         // Act
         services.AddMemPalaceAi(options =>
         {
-            options.Provider = "Ollama";
-            options.Model = "nomic-embed-text";
+            options.Type = EmbedderType.OpenAI;
+            options.Model = "text-embedding-3-small";
+            // No API key set
         });
-        var provider = services.BuildServiceProvider();
 
-        // Assert
-        var options = provider.GetRequiredService<IOptions<EmbedderOptions>>().Value;
-        options.Provider.Should().Be("Ollama");
-        options.Model.Should().Be("nomic-embed-text");
+        // Assert - Should throw when trying to get the generator without API key
+        var provider = services.BuildServiceProvider();
+        var act = () => provider.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*API key is required*");
     }
 
     [Fact]
@@ -93,10 +94,7 @@ public sealed class LocalEmbedderRegistrationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMemPalaceAi(options =>
-        {
-            options.Provider = "Ollama";  // Use Ollama to avoid model download
-        });
+        services.AddMemPalaceAi();  // Use default Local provider
 
         // Act & Assert
         services.Should().Contain(descriptor => 
@@ -108,10 +106,7 @@ public sealed class LocalEmbedderRegistrationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddMemPalaceAi(options =>
-        {
-            options.Provider = "Ollama";  // Use Ollama to avoid model download
-        });
+        services.AddMemPalaceAi();  // Use default Local provider
 
         // Act & Assert
         services.Should().Contain(descriptor => 

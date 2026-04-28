@@ -72,4 +72,10 @@ public sealed record SkillManifest
     /// </summary>
     [JsonPropertyName("license")]
     public string? License { get; init; }
+    
+    /// <summary>
+    /// Whether skill is discoverable in skill registry (default: true).
+    /// </summary>
+    [JsonPropertyName("discoverable")]
+    public bool Discoverable { get; init; } = true;
 }

@@ -30,6 +30,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
     <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI" Version="0.12.2" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
   </ItemGroup>
 
 </Project>

@@ -107,6 +107,9 @@ internal static class Program
         // Register Skill Manager
         services.AddSingleton<SkillManager>();
         
+        // Register Skill Registry (for discovery)
+        services.AddSingleton<SkillRegistry>();
+        
         // Register placeholder services for now so build is green
         // These will be replaced by actual registrations from other phases
         
@@ -193,6 +196,12 @@ internal static class Program
             config.AddBranch("skill", skill =>
             {
                 skill.SetDescription("Skill marketplace operations");
+                
+                skill.AddCommand<SkillDiscoverCommand>("discover")
+                    .WithDescription("Discover available skills in registry")
+                    .WithExample("mempalacenet skill discover")
+                    .WithExample("mempalacenet skill discover --tag rag")
+                    .WithExample("mempalacenet skill discover --limit 20");
                 
                 skill.AddCommand<SkillListCommand>("list")
                     .WithDescription("List installed skills")
