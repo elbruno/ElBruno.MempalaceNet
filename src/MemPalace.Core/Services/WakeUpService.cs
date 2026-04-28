@@ -1,6 +1,5 @@
 using MemPalace.Core.Backends;
 using MemPalace.Core.Model;
-using Microsoft.Extensions.AI;
 
 namespace MemPalace.Core.Services;
 
@@ -39,13 +38,6 @@ public sealed record WakeUpResult(
 /// </summary>
 public sealed class WakeUpService : IWakeUpService
 {
-    private readonly IChatClient? _chatClient;
-
-    public WakeUpService(IChatClient? chatClient = null)
-    {
-        _chatClient = chatClient;
-    }
-
     public async ValueTask<WakeUpResult> WakeUpAsync(
         ICollection collection,
         int limit = 20,
@@ -89,58 +81,11 @@ public sealed class WakeUpService : IWakeUpService
         // Get total count
         var totalCount = await collection.CountAsync(ct);
 
-        // Generate summary if requested
+        // TODO: Implement summarization using IChatClient when available
+        // For now, summarization is handled at the CLI level or can be added as an extension method
         string? summary = null;
-        if (summarize && _chatClient != null && memories.Count > 0)
-        {
-            summary = await GenerateSummaryAsync(memories, ct);
-        }
 
         return new WakeUpResult(memories, summary, (int)totalCount);
-    }
-
-    private async ValueTask<string> GenerateSummaryAsync(
-        IReadOnlyList<EmbeddedRecord> memories,
-        CancellationToken ct)
-    {
-        if (_chatClient == null)
-        {
-            return "Summary unavailable: No chat client configured.";
-        }
-
-        // Build prompt for summarization
-        var memoriesText = string.Join("\n", memories.Select((m, i) => 
-        {
-            var timestamp = m.Metadata.TryGetValue("timestamp", out var ts) 
-                ? ParseTimestamp(ts).ToString("yyyy-MM-dd HH:mm") 
-                : "unknown";
-            var wing = m.Metadata.TryGetValue("wing", out var w) ? w?.ToString() : "general";
-            return $"{i + 1}. [{timestamp}] [{wing}] {m.Document}";
-        }));
-
-        var prompt = $@"You are a helpful assistant summarizing recent memories from a knowledge palace.
-Below are {memories.Count} recent memory entries. Please provide a concise, informative summary (2-4 sentences) that captures the key themes, activities, and context. Focus on what would be most useful for someone catching up on recent work.
-
-Memories:
-{memoriesText}
-
-Summary:";
-
-        try
-        {
-            var messages = new[]
-            {
-                new ChatMessage(ChatRole.System, "You are a helpful assistant that provides concise summaries."),
-                new ChatMessage(ChatRole.User, prompt)
-            };
-            
-            var response = await _chatClient.CompleteAsync(messages, cancellationToken: ct);
-            return response.Message.Text ?? "Summary generation failed.";
-        }
-        catch (Exception ex)
-        {
-            return $"Summary generation failed: {ex.Message}";
-        }
     }
 
     private static DateTime ParseTimestamp(object? value)
