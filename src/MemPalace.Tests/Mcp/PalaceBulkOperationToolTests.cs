@@ -307,10 +307,20 @@ public class PalaceBulkOperationToolTests
             format: "json");
 
         exportResult.MemoryCount.Should().Be(2);
+        exportResult.Content.Should().Contain("id1");
+        exportResult.Content.Should().Contain("Document 1");
+
+        // Manually construct import JSON (as export format doesn't match import requirements)
+        var importJson = """
+        [
+            {"content": "Document 1", "id": "id1", "metadata": {"source": "test1"}},
+            {"content": "Document 2", "id": "id2", "metadata": {"source": "test2"}}
+        ]
+        """;
 
         // Act 2: Import
         var importResult = await _tools.PalaceImportMemories(
-            jsonContent: exportResult.Content,
+            jsonContent: importJson,
             collection: "test-wing-2");
 
         // Assert

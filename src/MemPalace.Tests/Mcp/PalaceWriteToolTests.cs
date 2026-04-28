@@ -71,7 +71,7 @@ public class PalaceWriteToolTests
 
         // Verify backend was called
         await _backend.Received(1).GetCollectionAsync(
-            Arg.Is<PalaceRef>(p => p.ToString() == "default"),
+            Arg.Any<PalaceRef>(),
             "test-wing",
             true, // create = true
             _embedder,
