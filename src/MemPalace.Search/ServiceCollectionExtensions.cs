@@ -27,17 +27,11 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers HybridSearchService as the ISearchService.
+    /// This now uses BM25 for keyword search (upgraded from simple token overlap in v0.5).
     /// </summary>
     public static IServiceCollection AddHybridSearch(this IServiceCollection services)
     {
-        services.AddSingleton<ISearchService>(sp =>
-        {
-            var backend = sp.GetRequiredService<IBackend>();
-            var embedder = sp.GetRequiredService<IEmbedder>();
-            return new HybridSearchService(backend, embedder);
-        });
-        
-        return services;
+        return services.AddEnhancedHybridSearch();
     }
 
     /// <summary>
@@ -49,8 +43,31 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISearchService>(sp =>
         {
             var backend = sp.GetRequiredService<IBackend>();
+            return new Bm25SearchService(backend);
+        });
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Registers an enhanced HybridSearchService that combines vector search with BM25 keyword search.
+    /// Provides the best of both worlds: semantic + keyword relevance with optional reranking.
+    /// </summary>
+    public static IServiceCollection AddEnhancedHybridSearch(this IServiceCollection services)
+    {
+        services.AddSingleton<Bm25SearchService>(sp =>
+        {
+            var backend = sp.GetRequiredService<IBackend>();
+            return new Bm25SearchService(backend);
+        });
+
+        services.AddSingleton<ISearchService>(sp =>
+        {
+            var backend = sp.GetRequiredService<IBackend>();
             var embedder = sp.GetRequiredService<IEmbedder>();
-            return new BM25SearchService(backend, embedder);
+            var bm25Service = sp.GetRequiredService<Bm25SearchService>();
+            var reranker = sp.GetService<IReranker>();
+            return new HybridSearchService(backend, embedder, bm25Service, reranker);
         });
         
         return services;

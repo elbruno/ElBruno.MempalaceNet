@@ -1,21 +1,30 @@
+using MemPalace.Ai.Rerank;
 using MemPalace.Core.Backends;
 using MemPalace.Core.Model;
 
 namespace MemPalace.Search;
 
 /// <summary>
-/// Hybrid search combining vector similarity and keyword matching using Reciprocal Rank Fusion.
-/// Note: v0.1 uses simple token-overlap scoring for keyword component (not full BM25).
+/// Hybrid search combining vector similarity and BM25 keyword matching using Reciprocal Rank Fusion.
+/// Optionally applies LLM-based reranking for improved relevance.
 /// </summary>
 public sealed class HybridSearchService : ISearchService
 {
     private readonly IBackend _backend;
     private readonly IEmbedder _embedder;
+    private readonly Bm25SearchService _bm25Service;
+    private readonly IReranker? _reranker;
 
-    public HybridSearchService(IBackend backend, IEmbedder embedder)
+    public HybridSearchService(
+        IBackend backend,
+        IEmbedder embedder,
+        Bm25SearchService? bm25Service = null,
+        IReranker? reranker = null)
     {
         _backend = backend;
         _embedder = embedder;
+        _bm25Service = bm25Service ?? new Bm25SearchService(backend);
+        _reranker = reranker;
     }
 
     public async Task<IReadOnlyList<SearchHit>> SearchAsync(
@@ -39,7 +48,7 @@ public sealed class HybridSearchService : ISearchService
             return Array.Empty<SearchHit>();
         }
 
-        // Vector search
+        // Perform vector search
         var queryEmbedding = await _embedder.EmbedAsync(new[] { query }, ct);
         var vectorResults = await coll.QueryAsync(
             queryEmbeddings: queryEmbedding,
@@ -51,36 +60,28 @@ public sealed class HybridSearchService : ISearchService
         if (vectorResults.Ids.Count == 0 || vectorResults.Ids[0].Count == 0)
             return Array.Empty<SearchHit>();
 
-        // Keyword search (simple token overlap)
-        var queryTokens = Tokenize(query);
-        var keywordScores = new Dictionary<string, float>();
-        
-        for (var i = 0; i < vectorResults.Ids[0].Count; i++)
-        {
-            var doc = vectorResults.Documents[0][i];
-            var docTokens = Tokenize(doc);
-            var overlap = queryTokens.Intersect(docTokens, StringComparer.OrdinalIgnoreCase).Count();
-            var score = (float)overlap / Math.Max(queryTokens.Count, 1);
-            keywordScores[vectorResults.Ids[0][i]] = score;
-        }
+        // Perform BM25 search
+        var bm25Results = await _bm25Service.SearchAsync(query, collection, opts with { TopK = opts.TopK * 2 }, ct);
 
-        // Reciprocal Rank Fusion
+        // Reciprocal Rank Fusion (RRF)
         const int k = 60; // RRF constant
         var rrfScores = new Dictionary<string, float>();
-        
+
         // Add vector scores
         for (var i = 0; i < vectorResults.Ids[0].Count; i++)
         {
             var id = vectorResults.Ids[0][i];
+            var distance = vectorResults.Distances[0][i];
+            var score = 1.0f - distance; // Convert distance to similarity score
             var rank = i + 1;
             rrfScores[id] = 1.0f / (k + rank);
         }
 
-        // Add keyword scores
-        var keywordRanked = keywordScores.OrderByDescending(kv => kv.Value).ToList();
-        for (var i = 0; i < keywordRanked.Count; i++)
+        // Add BM25 scores
+        var bm25Ranked = bm25Results.OrderByDescending(h => h.Score).ToList();
+        for (var i = 0; i < bm25Ranked.Count; i++)
         {
-            var id = keywordRanked[i].Key;
+            var id = bm25Ranked[i].Id;
             var rank = i + 1;
             rrfScores[id] = rrfScores.GetValueOrDefault(id, 0) + 1.0f / (k + rank);
         }
@@ -103,7 +104,7 @@ public sealed class HybridSearchService : ISearchService
 
             var metadata = new Dictionary<string, object?>(vectorResults.Metadatas[0][index])
             {
-                ["sources"] = new[] { "vector", "keyword" }
+                ["sources"] = new[] { "vector", "bm25" }
             };
 
             hits.Add(new SearchHit(
@@ -113,16 +114,19 @@ public sealed class HybridSearchService : ISearchService
                 Metadata: metadata));
         }
 
-        return hits;
-    }
+        // Apply reranking if requested
+        if (opts.Rerank && _reranker != null && hits.Count > 0)
+        {
+            var rankedHits = hits.Select(h => new RankedHit(h.Id, h.Document, h.Score)).ToList();
+            var reranked = await _reranker.RerankAsync(query, rankedHits, ct);
 
-    private static List<string> Tokenize(string text)
-    {
-        return text
-            .Split(new[] { ' ', '\t', '\n', '\r', '.', ',', '!', '?', ';', ':', '-', '_' },
-                   StringSplitOptions.RemoveEmptyEntries)
-            .Select(t => t.ToLowerInvariant())
-            .Where(t => t.Length > 2) // Skip very short tokens
-            .ToList();
+            hits = reranked.Select(rh =>
+            {
+                var original = hits.First(h => h.Id == rh.Id);
+                return new SearchHit(rh.Id, rh.Document, rh.Score, original.Metadata);
+            }).ToList();
+        }
+
+        return hits;
     }
 }
