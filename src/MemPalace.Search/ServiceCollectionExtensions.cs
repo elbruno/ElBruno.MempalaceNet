@@ -39,4 +39,20 @@ public static class ServiceCollectionExtensions
         
         return services;
     }
+
+    /// <summary>
+    /// Registers BM25SearchService as the ISearchService.
+    /// Provides keyword-only search using the BM25 algorithm.
+    /// </summary>
+    public static IServiceCollection AddBM25Search(this IServiceCollection services)
+    {
+        services.AddSingleton<ISearchService>(sp =>
+        {
+            var backend = sp.GetRequiredService<IBackend>();
+            var embedder = sp.GetRequiredService<IEmbedder>();
+            return new BM25SearchService(backend, embedder);
+        });
+        
+        return services;
+    }
 }

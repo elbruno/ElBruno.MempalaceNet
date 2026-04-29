@@ -86,11 +86,11 @@ mempalacenet mine ./docs --mode files --wing documentation
 
 ## `mempalacenet search`
 
-Search for memories using semantic search.
+Search for memories using semantic, keyword, or hybrid search.
 
 **Usage:**
 ```bash
-mempalacenet search <query> [--wing <wing>] [--rerank] [--top-k <n>]
+mempalacenet search <query> [--wing <wing>] [--bm25] [--hybrid] [--rerank] [--top-k <n>]
 ```
 
 **Arguments:**
@@ -98,19 +98,30 @@ mempalacenet search <query> [--wing <wing>] [--rerank] [--top-k <n>]
 
 **Options:**
 - `--wing` - Limit search to a specific wing (default: all wings)
+- `--bm25` - Enable BM25 keyword-only search (no semantic embeddings)
+- `--hybrid` - Enable hybrid search combining semantic and keyword signals via RRF
 - `--rerank` - Enable LLM-based reranking (default: false)
 - `--top-k` - Number of results to return (default: 10)
 
 **Examples:**
 ```bash
-# Basic search
+# Basic semantic search
 mempalacenet search "vector databases"
 
+# Keyword-only search using BM25
+mempalacenet search "authentication" --bm25
+
+# Hybrid search (semantic + keyword)
+mempalacenet search "CLI design patterns" --hybrid
+
 # Search with reranking
-mempalacenet search "CLI design patterns" --rerank
+mempalacenet search "React patterns" --hybrid --rerank
 
 # Search in a specific wing with custom result count
 mempalacenet search "authentication" --wing code --top-k 5
+
+# BM25 search in specific wing
+mempalacenet search "database optimization" --bm25 --wing docs
 ```
 
 **Exit Codes:**

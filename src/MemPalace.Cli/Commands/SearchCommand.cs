@@ -20,6 +20,16 @@ internal sealed class SearchSettings : CommandSettings
     [DefaultValue(false)]
     public bool Rerank { get; init; }
 
+    [CommandOption("--bm25")]
+    [Description("Enable BM25 keyword-only search (instead of semantic)")]
+    [DefaultValue(false)]
+    public bool BM25 { get; init; }
+
+    [CommandOption("--hybrid")]
+    [Description("Enable hybrid search (semantic + keyword via RRF)")]
+    [DefaultValue(false)]
+    public bool Hybrid { get; init; }
+
     [CommandOption("--top-k")]
     [Description("Number of results to return")]
     [DefaultValue(10)]
@@ -49,9 +59,15 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
                 return 1;
             }
 
+            // Determine search mode
+            var searchMode = settings.BM25 ? "BM25 (keyword)" :
+                            settings.Hybrid ? "Hybrid (semantic + keyword)" :
+                            "Semantic";
+
             var panel = OutputFormatter.CreatePanel(
                 "mempalacenet search",
                 $"Query: [blue]{settings.Query}[/]\n" +
+                $"Mode: [cyan]{searchMode}[/]\n" +
                 $"Wing: [blue]{settings.Wing ?? "(all)"}[/]\n" +
                 $"Rerank: [blue]{settings.Rerank}[/]\n" +
                 $"Top-K: [blue]{settings.TopK}[/]\n" +
@@ -62,7 +78,12 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
             
             if (settings.Verbose)
             {
-                AnsiConsole.MarkupLine("[dim]Executing semantic search...[/]");
+                if (settings.BM25)
+                    AnsiConsole.MarkupLine("[dim]Executing BM25 keyword search...[/]");
+                else if (settings.Hybrid)
+                    AnsiConsole.MarkupLine("[dim]Executing hybrid search (semantic + keyword)...[/]");
+                else
+                    AnsiConsole.MarkupLine("[dim]Executing semantic search...[/]");
             }
             
             // Simulate search (stub results)
@@ -115,7 +136,7 @@ internal sealed class SearchCommand : AsyncCommand<SearchSettings>
             
             AnsiConsole.Write(table);
             
-            OutputFormatter.DisplaySuccess($"Found {results.Length} results");
+            OutputFormatter.DisplaySuccess($"Found {results.Length} results ({searchMode})");
             if (settings.Rerank)
             {
                 AnsiConsole.MarkupLine("[dim]Results reranked by relevance[/]");
