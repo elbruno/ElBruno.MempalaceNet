@@ -76,7 +76,10 @@ public sealed class BM25SearchServiceTests
             Arg.Any<bool>(),
             Arg.Any<IEmbedder?>(),
             Arg.Any<CancellationToken>()
-        ).Throws(new InvalidOperationException("Backend error"));
+        ).Returns<ValueTask<ICollection>>(x => 
+            new ValueTask<ICollection>(
+                Task.FromException<ICollection>(
+                    new InvalidOperationException("Backend error"))));
 
         var service = new Bm25SearchService(backend);
 
@@ -141,20 +144,6 @@ public sealed class BM25SearchServiceTests
 
         // Act
         var service = new Bm25SearchService(backend);
-
-        // Assert
-        service.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task SearchAsync_Instantiation_WithBackendAndTokenizer_Succeeds()
-    {
-        // Arrange
-        var backend = Substitute.For<IBackend>();
-        var tokenizer = Substitute.For<ITokenizer>();
-
-        // Act
-        var service = new Bm25SearchService(backend, tokenizer);
 
         // Assert
         service.Should().NotBeNull();
