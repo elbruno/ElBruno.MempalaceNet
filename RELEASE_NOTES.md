@@ -1,3 +1,18 @@
+# v0.9.0: Stability & Performance Release
+
+## What's New
+
+### 🚀 Core Improvements
+- Performance optimizations and stability enhancements
+- Bug fixes and dependency updates
+- Documentation improvements
+
+### 📦 Package Updates
+- Updated to stable release version 0.9.0
+- Production-ready for enterprise deployment
+
+---
+
 # v0.8.0: Advanced Search & Reranking
  
 ## What's New
