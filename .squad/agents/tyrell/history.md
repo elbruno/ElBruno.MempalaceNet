@@ -431,3 +431,60 @@ mempalacenet mcp --transport sse --port 5050  # new HTTP endpoint
 
 **Status:** Phase 1 complete. Transport layer implemented and documented. Tests written (cannot run due to unrelated build error). Ready for Phase 2 CLI integration after build fix.
 
+
+### Issue #25 Resolution: IVectorFormatValidator Implementation (2026-04-29)
+
+**Problem:** OpenClawNet and other consumers need standardized interface to validate vector BLOB format consistency before upserting to sqlite-vec storage to prevent data corruption.
+
+**Solution Implemented:**
+- **IVectorFormatValidator interface** in MemPalace.Backends.Sqlite namespace with 3 validation methods:
+  - IsValidBlobFormat(ReadOnlySpan<byte>): Validates raw BLOB format (divisible by 4, no NaN/Infinity)
+  - ValidateDimensions(ReadOnlySpan<float>, int): Validates vector dimensions match expected count
+  - ValidateVector(VectorData): Comprehensive validation with detailed error messages
+  
+- **SqliteVecBlobValidator implementation:**
+  - BLOB format validation: checks length divisible by sizeof(float), validates IEEE 754 values
+  - Dimension validation: supports 1 to 1536+ dimensions
+  - NaN/Infinity detection with precise index and byte offset reporting
+  - Uses MemoryMarshal.Cast<byte, float>() for efficient zero-copy validation
+  
+- **Helper types:**
+  - ValidationResult record with IsValid flag and error string array
+  - VectorData record struct wrapping ReadOnlyMemory<float> and expected dimensions
+  
+- **32 comprehensive unit tests:**
+  - Valid BLOB formats (single float, 384-dim, 1536-dim)
+  - Invalid formats (empty, non-divisible by 4, NaN, Infinity)
+  - Dimension mismatches with detailed error messages
+  - Edge cases (zero values, negative values, overflow dimensions)
+  - All tests passing ✓
+
+**BLOB Format Details:**
+- SQLite stores vectors as raw IEEE 754 float arrays (4 bytes each)
+- No header bytes in current implementation
+- Dimensions = lob.length / 4
+- Valid values: all finite floats (no NaN, no ±Infinity)
+
+**Testing Approach:**
+- Pre-existing test project had 76 unrelated compilation errors
+- Created temporary isolated test project to validate implementation
+- All 32 tests passed independently
+- Tests use FluentAssertions for readable assertions
+- Tests use BitConverter.TryWriteBytes() for test BLOB construction
+
+**Performance:**
+- ReadOnlySpan<T> for zero-copy validation
+- MemoryMarshal.Cast avoids allocation
+- Validation cost: O(n) where n = number of floats
+- Expected overhead: <1ms for typical 384-1536 dim vectors
+
+**Verification:**
+- ✅ Interface and implementation compile successfully
+- ✅ All 32 unit tests pass (isolation test)
+- ✅ Files committed to eature/issues-23-24-25 branch
+- ✅ Pushed to remote (commit ecf0871)
+
+**Commit:** cf0871 on eature/issues-23-24-25 branch
+
+**Next:** Ready for OpenClawNet integration (Issue #26).
+
