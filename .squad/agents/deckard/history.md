@@ -1091,3 +1091,77 @@ Once Microsoft.Extensions.AI.Ollama releases a stable version (likely soon), we'
 
 **Status:** ✅ 10 GitHub issues filed (P0/P1/P2). Team ready to start workstreams. Ollama support blocked pending M.E.AI.Ollama stable release (track separately).
 
+
+
+---
+
+### 2026-04-28: Triage of Issues #23, #24, #25 (OpenClawNet Dependencies)
+
+**Context:** Three feature requests from OpenClawNet Phase 2B integration. All propose shared abstractions/utilities that OpenClawNet currently implements in-house. Moving these to MempalaceNet standardizes patterns across the ecosystem.
+
+**Issues Analyzed:**
+1. **#25: IVectorFormatValidator** for sqlite-vec BLOB standardization (Storage layer)
+2. **#24: PerformanceBenchmark** utilities for SLA tracking (Diagnostics layer)
+3. **#23: IEmbedderHealthCheck** interface for embedder monitoring (Core layer)
+
+**Assignments:**
+- **#25 → Tyrell** (Storage specialist) — BLOB validation interface, variable dimension support, 15+ unit tests
+- **#24 → Rachael** (CLI/Diagnostics specialist) — Performance benchmarking, percentile stats, SLA validation, 10+ tests
+- **#23 → Roy** (AI/Agent specialist) — Health check abstraction, Ollama/OpenAI implementations, 10+ tests
+
+**Architectural Decisions:**
+
+1. **Namespace Separation:**
+   - MempalaceNet.Storage: BLOB validation (domain: vector storage)
+   - MempalaceNet.Diagnostics: Performance benchmarking (domain: observability)
+   - MempalaceNet.Core: Health checks (domain: embedder abstractions)
+   - Rationale: Maintains clean boundaries, avoids namespace pollution
+
+2. **Reference Implementations:**
+   - All three interfaces include concrete implementations out-of-the-box
+   - Benefits: Reference patterns for consumers, immediate utility, test coverage for interface contracts
+
+3. **Priority Assignments:**
+   - High: #23 (health checks), #25 (BLOB validation) — Block OpenClawNet Phase 2B production deployments
+   - Medium-High: #24 (benchmarks) — Important for standardization but not a production blocker
+
+**Key Learnings:**
+
+1. **Ecosystem Feedback Loop:** OpenClawNet integration surfaced three reusable patterns. This validates MempalaceNet's "library-first" architecture — consumers drive shared abstractions.
+
+2. **Issue Routing Strategy:**
+   - Storage/backend concerns → Tyrell
+   - CLI/tooling/diagnostics → Rachael
+   - AI/embedders/agents → Roy
+   - This pattern is now established for future triage decisions.
+
+3. **Architectural Boundaries:** New MempalaceNet.Diagnostics namespace emerged from this triage. Performance measurement is a distinct concern from Core/Storage/AI layers.
+
+4. **Reference Implementation Pattern:** Providing concrete implementations (SqliteVecBlobValidator, OllamaHealthCheck, OpenAIHealthCheck) alongside interfaces reduces consumer friction and documents intent.
+
+5. **Dependency Management:** All three issues have zero internal dependencies — can proceed in parallel without coordination overhead.
+
+**Documentation Created:**
+- Detailed triage decision document: .squad/decisions/inbox/deckard-issues-23-24-25-triage.md
+- Contains full architectural notes, acceptance criteria, and GitHub CLI commands for issue comment/label updates
+
+**Blocked Action:**
+- GitHub CLI authentication issue prevented direct comment posting and label application
+- Commands documented in triage decision file for execution when authenticated
+
+**For Bruno:**
+Run these commands to complete the triage:
+`ash
+# From .squad/decisions/inbox/deckard-issues-23-24-25-triage.md
+gh issue comment 25 --body "..."  # Tyrell assignment
+gh issue edit 25 --add-label "squad,squad:tyrell,feature,high-priority"
+
+gh issue comment 24 --body "..."  # Rachael assignment  
+gh issue edit 24 --add-label "squad,squad:rachael,feature"
+
+gh issue comment 23 --body "..."  # Roy assignment
+gh issue edit 23 --add-label "squad,squad:roy,feature,high-priority"
+`
+
+**Status:** ✅ Triage analysis complete. Squad assignments documented. GitHub actions pending authentication.
+
