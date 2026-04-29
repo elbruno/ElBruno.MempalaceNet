@@ -32,6 +32,7 @@
     <ProjectReference Include="..\MemPalace.Agents\MemPalace.Agents.csproj" />
     <ProjectReference Include="..\MemPalace.Mcp\MemPalace.Mcp.csproj" />
     <ProjectReference Include="..\MemPalace.Benchmarks\MemPalace.Benchmarks.csproj" />
+    <ProjectReference Include="..\MemPalace.Diagnostics\MemPalace.Diagnostics.csproj" />
   </ItemGroup>
 
 </Project>

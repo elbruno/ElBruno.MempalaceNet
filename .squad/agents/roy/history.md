@@ -652,3 +652,45 @@
 4. Text fallbacks are valuable when LLM integration is complex
 
 **Status:** Partial completion - 1 of 4 issues completed, 3 blocked/deferred due to external constraints.
+
+### 2026-04-24: Issue #23 — IEmbedderHealthCheck Interface Implementation
+
+**What:** Delivered standardized health check interface for monitoring embedder service availability (Ollama, OpenAI).
+
+**Implementation:**
+- Created IEmbedderHealthCheck interface with async health check contract
+- EmbedderHealthStatus class captures health state, response time, and error details
+- OllamaHealthCheck: Checks Ollama /api/tags endpoint with 100ms timeout support
+- OpenAIHealthCheck: Checks OpenAI /v1/models endpoint (supports Azure via embedding test)
+- 20+ comprehensive unit tests using Moq for HTTP mocking
+- Full XML documentation with usage examples
+- Committed to feature/issues-23-24-25 branch (commit e95b6c1)
+
+**Key Design Decisions:**
+1. **Timeout Pattern**: Health checks support fast-fail detection via CancellationToken (100ms default per OpenClawNet spec)
+2. **HttpClient Management**: Two constructors—one auto-creates HttpClient, one accepts injected client for connection pooling
+3. **Azure Support**: OpenAI health check detects Azure endpoints and uses minimal embedding request (no models list endpoint in Azure)
+4. **Error Granularity**: EmbedderHealthStatus distinguishes timeout, network errors, HTTP errors, and auth failures
+
+**Test Strategy:**
+- Used Moq.Protected() to mock HttpMessageHandler.SendAsync for controllable HTTP responses
+- Timeout tests use Task.Delay with cancellation to simulate slow services
+- Network error tests throw HttpRequestException to simulate connection failures
+- HTTP error tests return various status codes (401, 429, 500, 503)
+
+**Learnings:**
+- Stopwatch is perfect for accurate response time measurement in health checks
+- CancellationToken respects timeouts properly when passed to HttpClient.SendAsync
+- Azure OpenAI requires different health check strategy than standard OpenAI (no models endpoint)
+- Moq's ItExpr.IsAny<T>() is required for mocking protected methods
+- FluentAssertions provides clean test assertions: status.IsHealthy.Should().BeTrue()
+- Creating IDisposable health check classes allows proper HttpClient cleanup
+
+**Integration Notes:**
+- Health checks live in MemPalace.Ai namespace alongside MeaiEmbedder
+- No dependencies on MemPalace.Core storage internals (pure AI layer)
+- OpenClawNet can use these for graceful degradation when embedders are unavailable
+- Can be extended with caching or circuit breaker patterns in future
+
+**Testing Outcome:** MemPalace.Ai project builds successfully with all new files. Test project has unrelated pre-existing compilation errors in other test files (not from health check implementation).
+

@@ -1,3 +1,25 @@
+# v0.8.0: Advanced Search & Reranking
+ 
+## What's New
+
+### ✨ Advanced Search Features
+- **BM25 Keyword Search**: Full TF-IDF keyword search via ElBruno.BM25 integration
+- **Enhanced Hybrid Search**: Vector + BM25 fusion using Reciprocal Rank Fusion (RRF)
+- **LLM-Based Reranking**: Optional result reranking with ElBruno.Reranking integration
+- **CLI Search Enhancements**: `--bm25` and `--rerank` flags for semantic search command
+
+### 📚 Documentation
+- **Architecture Guide**: `docs/guides/bm25-reranking-integration.md` (complete integration walkthrough)
+- **5 Runnable Examples**: Demonstrating BM25, hybrid search, and LLM reranking workflows
+- **Updated CLI Help**: Search command reference with new flags & usage patterns
+
+### 🔒 Quality & Compatibility
+- **28+ New Tests**: BM25 integration, hybrid search fusion, reranking quality
+- **Full Backward Compatibility**: Zero breaking changes—all v0.7.0 code works unchanged
+- **Production-Ready Release Builds**: Optimized for performance & reliability
+
+---
+
 # v0.7.0: Production-Grade Search Foundation Ready
 
 ## What's New
