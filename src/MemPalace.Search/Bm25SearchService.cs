@@ -22,7 +22,7 @@ public sealed class Bm25SearchService : ISearchService
     private readonly ITokenizer _tokenizer;
     
     private Bm25Index<BM25Document>? _cachedIndex;
-    private DateTime? _indexTimestamp;
+    private DateTime _indexTimestamp = DateTime.MinValue;
     private readonly object _indexLock = new();
 
     /// <summary>
@@ -70,26 +70,25 @@ public sealed class Bm25SearchService : ISearchService
             return Array.Empty<SearchHit>();
 
         // Perform BM25 search
-        var bm25Results = await index.Search(query, topK: opts.TopK * 2, minScore: 0.0, ct);
+        // threshold parameter is minimum score (default: 0.0 means no minimum)
+        var bm25Results = index.Search(query, topK: opts.TopK * 2, threshold: 0.0, ct);
         
         if (!bm25Results.Any())
             return Array.Empty<SearchHit>();
 
         // Convert results back to SearchHits
         var hits = new List<SearchHit>();
-        foreach (var result in bm25Results)
+        foreach (var (doc, score) in bm25Results)
         {
-            var score = (float)result.Score;
+            var scoreFloat = (float)score;
             
-            if (opts.MinScore.HasValue && score < opts.MinScore.Value)
+            if (opts.MinScore.HasValue && scoreFloat < opts.MinScore.Value)
                 continue;
-
-            var doc = result.Document;
             
             hits.Add(new SearchHit(
                 Id: doc.Id,
                 Document: doc.Text,
-                Score: score,
+                Score: scoreFloat,
                 Metadata: doc.Metadata));
         }
 
@@ -106,7 +105,7 @@ public sealed class Bm25SearchService : ISearchService
         CancellationToken ct)
     {
         // Fast path: index is fresh and matches filters
-        if (_cachedIndex != null && _indexTimestamp.HasValue)
+        if (_cachedIndex != null && _indexTimestamp > DateTime.MinValue)
         {
             // For simplicity, rebuild if we're filtering by specific wing/where
             // (v1.1 will support filtered indices)
@@ -119,7 +118,7 @@ public sealed class Bm25SearchService : ISearchService
         // Rebuild index under lock
         lock (_indexLock)
         {
-            if (_cachedIndex != null && _indexTimestamp.HasValue && opts.Wing == null && opts.Where == null)
+            if (_cachedIndex != null && _indexTimestamp > DateTime.MinValue && opts.Wing == null && opts.Where == null)
                 return _cachedIndex;
 
             var whereClause = opts.Where ?? (opts.Wing != null ? new Eq("wing", opts.Wing) : null);
@@ -129,10 +128,10 @@ public sealed class Bm25SearchService : ISearchService
             var parameters = new Bm25Parameters();
             var index = new Bm25Index<BM25Document>(
                 documents: docs,
-                getText: d => d.Text,
+                contentSelector: d => d.Text,
                 tokenizer: _tokenizer,
                 parameters: parameters,
-                trackScores: true);
+                caseInsensitive: true);
             
             _cachedIndex = index;
             _indexTimestamp = DateTime.UtcNow;
@@ -164,16 +163,16 @@ public sealed class Bm25SearchService : ISearchService
             ct: ct);
 
         // Convert to BM25 documents
-        foreach (var record in results.Records)
+        for (int i = 0; i < results.Ids.Count; i++)
         {
-            var createdAtObj = record.Metadata?.TryGetValue("created_at", out var caObj) == true ? caObj : null;
+            var createdAtObj = results.Metadatas[i]?.TryGetValue("created_at", out var caObj) == true ? caObj : null;
             var createdAt = createdAtObj is DateTime dt ? dt : DateTime.UtcNow;
 
             docs.Add(new BM25Document
             {
-                Id = record.Id,
-                Text = record.Document,
-                Metadata = record.Metadata,
+                Id = results.Ids[i],
+                Text = results.Documents[i],
+                Metadata = results.Metadatas[i],
                 CreatedAt = createdAt
             });
         }
