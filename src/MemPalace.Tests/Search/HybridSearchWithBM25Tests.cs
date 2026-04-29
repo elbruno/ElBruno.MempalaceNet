@@ -440,7 +440,10 @@ public sealed class HybridSearchWithBM25Tests
             Arg.Any<bool>(),
             Arg.Any<IEmbedder?>(),
             Arg.Any<CancellationToken>()
-        ).Throws(new InvalidOperationException("Collection not found"));
+        ).Returns<ValueTask<ICollection>>(x => 
+            new ValueTask<ICollection>(
+                Task.FromException<ICollection>(
+                    new InvalidOperationException("Collection not found"))));
 
         var service = new HybridSearchService(backend, embedder);
 

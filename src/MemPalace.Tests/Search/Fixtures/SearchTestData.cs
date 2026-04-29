@@ -238,26 +238,4 @@ public static class SearchTestData
             Distances: new[] { dists });
     }
 
-    /// <summary>
-    /// Creates a collection of records for batch operations
-    /// </summary>
-    public static IReadOnlyList<Record> CreateMockRecords(
-        IReadOnlyList<string> documents,
-        string? wing = null,
-        bool includeCreatedAt = true)
-    {
-        var records = new List<Record>();
-        for (int i = 0; i < documents.Count; i++)
-        {
-            var metadata = new Dictionary<string, object?> { { "wing", wing ?? "default" } };
-            if (includeCreatedAt)
-                metadata["created_at"] = DateTime.UtcNow.AddHours(-i);
-
-            records.Add(new Record(
-                Id: $"doc-{i}",
-                Document: documents[i],
-                Metadata: metadata));
-        }
-        return records;
-    }
 }
