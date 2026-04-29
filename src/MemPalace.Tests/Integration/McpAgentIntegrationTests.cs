@@ -1,7 +1,7 @@
 using FluentAssertions;
 using MemPalace.Agents;
 using MemPalace.Core.Backends;
-using MemPalace.Core.Embedders;
+using MemPalace.Ai;
 using MemPalace.Core.Model;
 using MemPalace.Mcp.Tools;
 using Microsoft.Extensions.DependencyInjection;

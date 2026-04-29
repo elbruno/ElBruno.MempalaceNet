@@ -1,6 +1,6 @@
 using FluentAssertions;
 using MemPalace.Core.Backends;
-using MemPalace.Core.Embedders;
+using MemPalace.Ai;
 using MemPalace.Core.Model;
 using MemPalace.Mcp.Tools;
 using Microsoft.Extensions.DependencyInjection;
@@ -336,13 +336,14 @@ internal class DeterministicEmbedder : IEmbedder
         return Task.FromResult<ReadOnlyMemory<float>>(vector);
     }
 
-    public async Task<IReadOnlyList<ReadOnlyMemory<float>>> EmbedAsync(IReadOnlyList<string> texts, CancellationToken ct = default)
+    public ValueTask<IReadOnlyList<ReadOnlyMemory<float>>> EmbedAsync(IReadOnlyList<string> texts, CancellationToken ct = default)
     {
         var embeddings = new List<ReadOnlyMemory<float>>();
         foreach (var text in texts)
         {
-            embeddings.Add(await EmbedAsync(text, ct));
+            var embedding = EmbedAsync(text, ct).Result;
+            embeddings.Add(embedding);
         }
-        return embeddings;
+        return ValueTask.FromResult<IReadOnlyList<ReadOnlyMemory<float>>>(embeddings);
     }
 }

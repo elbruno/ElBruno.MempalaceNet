@@ -3,6 +3,7 @@ using MemPalace.Core.Model;
 using MemPalace.KnowledgeGraph;
 using MemPalace.Mcp.Security;
 using MemPalace.Mcp.Tools;
+using MemPalace.Ai;
 using Moq;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace MemPalace.Tests.Mcp;
 public class WriteOperationsTests
 {
     private readonly Mock<IBackend> _mockBackend;
-    private readonly Mock<Core.Ai.IEmbedder> _mockEmbedder;
+    private readonly Mock<IEmbedder> _mockEmbedder;
     private readonly Mock<SecurityValidator> _mockValidator;
     private readonly Mock<IConfirmationPrompt> _mockConfirmation;
     private readonly Mock<ICollection> _mockCollection;
