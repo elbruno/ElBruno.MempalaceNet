@@ -213,6 +213,39 @@
 
 ## Learnings
 
+### 2026-04-29: Issue #24 - PerformanceBenchmark Utilities
+
+**What I Built:**
+- Created `MemPalace.Diagnostics` namespace with performance tracking utilities
+- Implemented `PerformanceBenchmark` class for latency measurement and SLA validation
+- Added percentile calculation (P50, P95, P99, P100) with linear interpolation
+- Built report generation in both Markdown and JSON formats
+- Comprehensive test suite with 21 tests achieving 100% pass rate
+
+**Technical Decisions:**
+- Used linear interpolation for percentile calculation to handle edge cases smoothly
+- Separated concerns: `PercentileStats` for data, `BenchmarkReport` for formatting, `PerformanceBenchmark` for logic
+- Implemented custom `TimeSpanJsonConverter` for clean JSON output (milliseconds as numbers)
+- Made the library stateless-friendly: generate reports on-demand without mutating state
+
+**Testing Strategy:**
+- Edge cases: null/empty operation names, empty datasets, single samples, identical values
+- Accuracy tests: verified percentile calculations against known distributions
+- Integration tests: SLA validation pass/fail scenarios, multi-operation isolation
+- Format tests: validated Markdown table structure and JSON serialization
+- Performance: tested with 10,000 samples to ensure scalability
+
+**Key Learnings:**
+1. **Percentile interpolation matters**: Using position = (percentile/100) * (count-1) with floor/ceiling interpolation provides smooth results across all dataset sizes
+2. **SLA tracking pattern**: Store thresholds separately from latencies to support post-hoc report generation
+3. **Report formatting**: Markdown tables with check/cross marks (✓/✗) are more readable than boolean flags
+4. **Test coverage**: 21 tests might seem like overkill, but edge cases (empty, single, identical) caught 3 bugs during development
+
+**Reusable Patterns:**
+- Percentile calculation algorithm can be extracted for other statistical needs
+- Report dual-format pattern (Markdown + JSON) useful for CLI + API scenarios
+- SLA validation pattern: record measurements, validate threshold, generate report with status
+
 ### 2026-04-28: CLI UX Improvements & Documentation (Issues #16, #20, #7, #15)
 
 **What:** Implemented comprehensive CLI UX improvements with error messages, progress bars, and MCP tool documentation.
