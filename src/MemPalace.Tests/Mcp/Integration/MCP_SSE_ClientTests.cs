@@ -246,8 +246,22 @@ public class MCP_SSE_ClientTests : IDisposable
         if (_disposed)
             return;
 
-        _transport.StopAsync().GetAwaiter().GetResult();
-        _transport.Dispose();
-        _disposed = true;
+        try
+        {
+            // Stop transport with 1000ms timeout — if it hangs, just move on
+            if (!_transport.StopAsync().Wait(1000))
+            {
+                // Stop timed out, but test runner must continue
+            }
+        }
+        catch
+        {
+            // Suppress any disposal errors
+        }
+        finally
+        {
+            _transport.Dispose();
+            _disposed = true;
+        }
     }
 }

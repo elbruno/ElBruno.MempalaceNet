@@ -205,16 +205,48 @@ public sealed class HttpSseTransport : IMcpTransport, IDisposable
         if (_disposed)
             return;
 
-        _app?.DisposeAsync().AsTask().Wait();
-        _sessionManager.Dispose();
-        
-        foreach (var connection in _connections.Values)
+        try
         {
-            connection.CloseAsync().Wait();
-        }
-        _connections.Clear();
+            // Dispose app with 500ms timeout — if it hangs, just move on
+            if (_app != null)
+            {
+                try
+                {
+                    if (!_app.DisposeAsync().AsTask().Wait(500))
+                    {
+                        // Disposal timed out, but we can't force-kill it, just continue
+                    }
+                }
+                catch
+                {
+                    // Suppress disposal errors
+                }
+                _app = null;
+            }
 
-        _disposed = true;
+            _sessionManager.Dispose();
+            
+            // Close connections with timeout
+            foreach (var connection in _connections.Values)
+            {
+                try
+                {
+                    if (!connection.CloseAsync().Wait(500))
+                    {
+                        // Close timed out, just continue
+                    }
+                }
+                catch
+                {
+                    // Suppress close errors
+                }
+            }
+            _connections.Clear();
+        }
+        finally
+        {
+            _disposed = true;
+        }
     }
 
     private sealed class SseConnection

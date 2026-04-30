@@ -1,0 +1,6 @@
+MSBUILD : error MSB1001: Unknown switch.
+    Full command line: 'C:\Program Files\dotnet\sdk\10.0.300-preview.0.26177.108\MSBuild.exe -maxcpucount --verbosity:m -tlp:default=auto --property:VSTestNoBuild=true --property:VSTestNoLogo=true --property:NuGetInteractive=false --property:VSTestArtifactsProcessingMode=collect --property:VSTestSessionCorrelationId=44640_bf941c0b-38dd-42c7-b3ee-9b9d0a0122ae --target:VSTest --nologo -nodereuse:false --verbose -distributedlogger:Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildLogger,C:\Program Files\dotnet\sdk\10.0.300-preview.0.26177.108\dotnet.dll*Microsoft.DotNet.Cli.Commands.MSBuild.MSBuildForwardingLogger,C:\Program Files\dotnet\sdk\10.0.300-preview.0.26177.108\dotnet.dll'
+  Switches appended by response files:
+Switch: --verbose
+
+For switch syntax, type "MSBuild -help"
