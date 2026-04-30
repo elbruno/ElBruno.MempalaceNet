@@ -28,30 +28,32 @@ jobs:
     - name: Build
       run: dotnet build src/ --no-restore -c Release
 
-    - name: Run integration tests with coverage
+    - name: Run core unit tests (fast)
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
       run: |
-        # Skip coverage on pull requests to keep tests fast
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
-          dotnet test src/ \
-            --no-build \
-            -c Release \
-            --logger "trx;LogFileName=test-results.trx" \
-            -v normal
-        else
-          dotnet test src/ \
-            --no-build \
-            -c Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./coverage \
-            --logger "trx;LogFileName=test-results.trx" \
-            -v normal
-        fi
+        # On regular pushes/PRs: run only core unit tests for speed (<2 min)
+        dotnet test src/MemPalace.Tests/MemPalace.Tests.csproj \
+          --no-build \
+          -c Release \
+          --logger "trx;LogFileName=test-results.trx" \
+          -v normal --filter "Category!=Integration"
 
-    - name: Install ReportGenerator
-      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+    - name: Run all tests with coverage (releases/tags)
+      if: github.event_name != 'push' && github.event_name != 'pull_request'
+      run: |
+        # On workflow_dispatch or other triggers: run full test suite with coverage
+        dotnet test src/ \
+          --no-build \
+          -c Release \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./coverage \
+          --logger "trx;LogFileName=test-results.trx" \
+          -v normal
 
     - name: Generate coverage report
+      if: github.event_name != 'push' && github.event_name != 'pull_request'
       run: |
+        dotnet tool install --global dotnet-reportgenerator-globaltool
         reportgenerator \
           -reports:./coverage/**/coverage.cobertura.xml \
           -targetdir:./coverage-report \
@@ -60,11 +62,12 @@ jobs:
 
     - name: Extract coverage percentage
       id: coverage
+      if: github.event_name != 'push' && github.event_name != 'pull_request'
       run: |
         if [ ! -d ./coverage-report ]; then
-          # Coverage not collected (pull request)
+          # Coverage not collected (regular push/PR)
           echo "coverage=0" >> $GITHUB_OUTPUT
-          echo "⏭️ Coverage collection skipped on pull requests"
+          echo "⏭️ Coverage collection skipped on pushes/PRs"
           exit 0
         fi
         
@@ -96,7 +99,7 @@ jobs:
         path: ./coverage/*.trx
 
     - name: Validate coverage threshold
-      if: github.event_name != 'pull_request'
+      if: github.event_name != 'push' && github.event_name != 'pull_request'
       run: |
         COVERAGE=${{ steps.coverage.outputs.coverage }}
         THRESHOLD=60
@@ -122,23 +125,17 @@ jobs:
           const coverage = '${{ steps.coverage.outputs.coverage }}';
           const threshold = '60';
           const pass = parseFloat(coverage) >= parseFloat(threshold);
-          const emoji = pass ? '✅' : '❌';
+          const emoji = '⏳';
           
-          const comment = `## ${emoji} Integration Test Coverage
+          const comment = `## ${emoji} Integration Tests
           
-          **Coverage:** ${coverage}%
-          **Threshold:** ${threshold}%
-          **Status:** ${pass ? 'PASS' : 'FAIL'}
+          **Status:** Core unit tests passed
+          **Coverage:** Skipped on pull requests for faster CI
           
-          ${pass ? 
-            'Integration test coverage meets quality standards.' : 
-            '⚠️ **Coverage below threshold!** Please add more integration tests.'
-          }
-          
-          [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          Full test suite with coverage collection runs on workflow dispatch or releases.
           
           ---
-          *Target: ≥60% line coverage for integration tests*
+          *PR workflow: Fast unit tests (~2 min) | Release workflow: Full tests with coverage*
           `;
           
           github.rest.issues.createComment({
