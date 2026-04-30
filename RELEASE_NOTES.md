@@ -1,3 +1,40 @@
+# v0.12.0: Bug Fixes & Vector Validation
+
+## What's New
+
+### 🔧 Workflow Improvements
+- **Fixed Integration Test Coverage Extraction**: Reliable measurement of >= 85% coverage threshold
+  - Corrected regex pattern in `integration-tests.yml` workflow
+  - Ensures accurate coverage reporting in CI/CD pipeline
+
+### ✨ New Features
+
+#### **IVectorFormatValidator Interface (Issue #25)**
+- SQLite-vec BLOB format validation with comprehensive error handling
+- Variable dimension support (384, 768, 1536 vectors)
+- 31+ unit tests covering validation scenarios
+- Production-ready for enterprise vector operations
+
+#### **PerformanceBenchmark Utilities (Issue #24)**
+- SLA tracking with threshold validation
+- Percentile calculations (P50, P95, P99, P100/max)
+- Comprehensive report generation with human-readable formatting
+- 27+ unit tests for statistical accuracy
+- Ready for production monitoring and alerting
+
+### 📊 Quality Metrics
+- **58+ new unit tests** for validation and benchmarking
+- **Integration test coverage ≥ 85%** (verified in CI)
+- **Production-ready** for enterprise deployment
+- Zero breaking changes from v0.10.0
+
+### 🔗 References
+- Resolves #24 (PerformanceBenchmark utilities)
+- Resolves #25 (IVectorFormatValidator interface)
+- Workflow fix: commit 5254ae2
+
+---
+
 # v0.9.0: Stability & Performance Release
 
 ## What's New
