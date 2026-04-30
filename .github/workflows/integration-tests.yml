@@ -53,9 +53,13 @@ jobs:
       id: coverage
       run: |
         if [ -f ./coverage-report/Summary.md ]; then
-          COVERAGE=$(grep -oP 'Line coverage: \K[\d.]+' ./coverage-report/Summary.md || echo "0")
+          # Extract from markdown table format: | **Line coverage:** | 0% (0 of 5133) |
+          COVERAGE=$(grep -oP '\*\*Line coverage:\*\* \| \K[\d.]+(?=%)' ./coverage-report/Summary.md || echo "0")
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
-          echo "Coverage: $COVERAGE%"
+          echo "📊 Extracted coverage: $COVERAGE%"
+          
+          # Debug: show the matched line
+          grep "Line coverage:" ./coverage-report/Summary.md || echo "⚠️ Line coverage line not found"
         else
           echo "coverage=0" >> $GITHUB_OUTPUT
           echo "⚠️ Coverage report not generated"
