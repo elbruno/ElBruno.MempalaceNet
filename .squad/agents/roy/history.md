@@ -98,6 +98,69 @@
 - SecurityValidator validates collection names with regex to prevent SQL injection
 - Batch size limited to 100 items per palace_batch_store call
 - Audit log format: JSON lines with timestamp, operation, collection, memoryId, metadata
+
+### 2026-04-29: Issue #25 — IVectorFormatValidator for sqlite-vec BLOB standardization
+**What:** Implemented IVectorFormatValidator interface and SqliteVecBlobValidator for validating vector BLOB formats in SQLite storage. This supports OpenClawNet integration and prevents vector corruption bugs.
+
+**Implementation details:**
+1. **IVectorFormatValidator interface** — Located in `MemPalace.Backends.Sqlite/IVectorFormatValidator.cs`
+   - `IsValidBlobFormat(ReadOnlySpan<byte>)` — validates BLOB structure (non-empty, divisible by 4, no NaN/Infinity)
+   - `ValidateDimensions(ReadOnlySpan<float>, int)` — verifies dimension count matches expected
+   - `ValidateVector(VectorData)` — comprehensive validation returning ValidationResult with detailed errors
+
+2. **ValidationResult class** — Immutable result type with IsValid flag and error collection
+   - `Success()` factory for valid results
+   - `Failure(params string[])` factory with detailed error messages
+   - Empty errors array when IsValid is true
+
+3. **VectorData record struct** — Lightweight wrapper for validation input
+   - `ReadOnlyMemory<float> Data` — the vector to validate
+   - `int ExpectedDimensions` — dimension count for validation
+
+4. **SqliteVecBlobValidator implementation** — Concrete validator for SQLite BLOB format
+   - BLOB format: raw IEEE 754 float32 array (4 bytes per dimension)
+   - Validates: BLOB size divisibility by 4, NaN/Infinity rejection, dimension matching
+   - Additional `ValidateBlob()` helper for pre-serialized BLOBs with expected dimensions
+   - Reports byte offsets and float indices in error messages for debugging
+
+5. **Comprehensive test suite** — 31 tests in `VectorFormatValidatorTests.cs`
+   - IsValidBlobFormat: valid BLOBs, empty BLOBs, non-divisible sizes, NaN/Infinity values
+   - ValidateDimensions: matching/mismatched dimensions, zero/negative dimensions
+   - ValidateVector: valid vectors, empty vectors, dimension mismatches, multiple errors
+   - ValidateBlob: size mismatches, detailed error messages with byte offsets
+   - Edge cases: 1-dimensional vectors, 1536-dimensional vectors (OpenAI embedding size), zero values, negative values
+   - All 31 tests passing
+
+**Key design decisions:**
+- **No magic bytes**: Unlike full sqlite-vec format (which includes 8-byte magic header), we validate raw float32 arrays since MemPalace.NET stores vectors as simple BLOBs without additional metadata. This matches current SQLite backend implementation.
+- **ReadOnlySpan<byte> API**: Zero-copy validation using spans for performance
+- **Detailed error messages**: Include indices and byte offsets to help consumers debug validation failures
+- **Pluggable design**: Interface-based for dependency injection, consumers can provide custom validators
+
+**Integration points:**
+- Placed in `MemPalace.Backends.Sqlite` namespace (not MempalaceNet.Storage as originally specified) since it's backend-specific validation logic
+- Can be injected into PalaceConfig or backend constructors for optional validation
+- OpenClawNet and other consumers can use before upserting to sqlite-vec collections
+
+**sqlite-vec BLOB format details discovered:**
+- Standard format: 8-byte magic header + N * 4-byte float32 values
+- Our implementation validates the float32 array portion (since we store without magic bytes)
+- BLOB length must be exact multiple of 4 bytes (sizeof(float))
+- NaN and Infinity values are rejected as they indicate corruption
+- Variable dimensions supported (detected from BLOB size: dimensions = length / 4)
+
+**Validation edge cases handled:**
+- Empty BLOBs/vectors → explicit error message
+- Non-positive expected dimensions → validation failure
+- BLOB size mismatch with expected dimensions → detailed error with actual vs expected
+- Multiple validation errors → all collected and returned in single ValidationResult
+- Zero-valued and negative-valued vectors → considered valid (not corrupted)
+- Very large vectors (1536 dimensions) → validated efficiently with span-based iteration
+
+**Commit:** `44cc14c` — feat: Add IVectorFormatValidator, IEmbedderHealthCheck, PerformanceBenchmark (#23-25)
+- Merged with issues #23 (IEmbedderHealthCheck) and #24 (PerformanceBenchmark)
+- 71+ tests passing across all three features
+- QA approved by Bryant
 - Write operations use IEmbedder.EmbedAsync for embedding generation
 - Knowledge graph write operations create TemporalTriple with ValidFrom/ValidTo/RecordedAt
 - All write tools return simple response DTOs: StoreResponse, UpdateResponse, DeleteResponse, etc.

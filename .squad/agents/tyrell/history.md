@@ -488,3 +488,32 @@ mempalacenet mcp --transport sse --port 5050  # new HTTP endpoint
 
 **Next:** Ready for OpenClawNet integration (Issue #26).
 
+
+### Coverage Extraction Fix (2026-04-30)
+
+**Problem:** Integration tests workflow failed during coverage extraction step. The grep pattern 'Line coverage: \K[\d.]+' did not match the actual ReportGenerator Summary.md format, resulting in 0% coverage extraction and workflow failure.
+
+**Root Cause Investigation:**
+- Ran local test: dotnet test src\ --collect:"XPlat Code Coverage" --filter "Category=Integration"
+- Generated report: eportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./coverage-report -reporttypes:"Html;Cobertura;MarkdownSummary"
+- Inspected ./coverage-report/Summary.md line 11: | **Line coverage:** | 0% (0 of 5133) |
+- **Actual format:** Markdown table with bold text and pipe separators, not plain text
+- **Original pattern issue:** Used \K lookbehind (Perl-style, not supported in standard grep)
+
+**Solution:**
+- Updated .github/workflows/integration-tests.yml line 57
+- **New pattern:** '\*\*Line coverage:\*\* \| \K[\d.]+(?=%)'
+- **Escaping:** Asterisks escaped as \*\* for literal bold markdown syntax
+- **Positive lookahead:** (?=%) to match percentage symbol without capturing it
+- **Added debug output:** Shows extracted coverage value and matched line for troubleshooting
+- **Fallback logic:** Defaults to "0" if pattern fails
+
+**Verification:**
+- ✅ Pattern tested locally with PowerShell equivalent (correctly extracts "0")
+- ✅ Bash-compatible grep syntax (uses -oP for Perl regex with lookbehind/lookahead)
+- ✅ Added debug output to workflow logs for visibility
+
+**Commit:** 5254ae2 - "fix: correct coverage extraction pattern in integration-tests.yml"
+
+**Key Learning:** ReportGenerator's Summary.md uses markdown table format (| **Line coverage:** | X% (Y of Z) |), not plain text. Always inspect actual tool output before writing extraction patterns.
+

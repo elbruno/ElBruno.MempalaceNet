@@ -9,6 +9,50 @@
 
 ## Learnings
 
+### 2025-01-28: Issue #24 - PerformanceBenchmark Implementation
+
+**Context:** Implemented PerformanceBenchmark utilities for SLA tracking (latency percentiles, P95 threshold validation, markdown/JSON reporting).
+
+**Implementation Approach:**
+- **Percentile Calculation:** Linear interpolation method for accurate P50/P95/P99 percentiles on sorted latency arrays
+  - Single value edge case: return that value for all percentiles
+  - Interpolation formula: `lower + (position_fraction) * (upper - lower)`
+  - Handles exact percentile matches (no interpolation needed)
+- **Data Structure:** `Dictionary<string, List<TimeSpan>>` for per-operation latency storage
+- **SLA Validation:** P95 ≤ threshold check with batch validation via `ValidateSLAs()`
+- **Report Generation:** Markdown table format and JSON with TimeSpan serialization
+
+**Test Coverage Strategy (27 tests):**
+- **Input Validation (5 tests):** null/empty/whitespace operationName, null thresholds
+- **Single Operation (4 tests):** single sample, identical samples, two samples (interpolation)
+- **Multiple Operations (2 tests):** operation isolation, multiple operations in report
+- **Percentile Accuracy (2 tests):** 100-sample dataset, large 10k-sample dataset
+- **SLA Validation (5 tests):** pass case, fail case, exact threshold, batch pass, batch fail
+- **Edge Cases (3 tests):** nonexistent operation, empty report, no SLA defined
+- **Report Formats (4 tests):** markdown generation, JSON generation, pass/fail status display
+- **ValidationResult (2 tests):** Success() factory, Failure() factory
+
+**Edge Cases Identified:**
+1. **Empty dataset:** Throws ArgumentException when no latencies recorded
+2. **Single value:** All percentiles equal that value (no interpolation)
+3. **Identical values:** All percentiles equal (common in mock/test data)
+4. **Large datasets:** 10k samples with P50 < P95 < P99 ≤ P100 ordering verified
+5. **Nonexistent operations:** ValidateSLAs gracefully handles missing operations with error reporting
+6. **Exact threshold boundary:** P95 exactly at threshold should PASS (≤ operator)
+
+**Design Decisions:**
+- Batch validation returns `ValidationResult` with detailed errors, not just bool
+- Store SLA thresholds for report generation (future audit trail)
+- Linear interpolation over nearest-rank for smoother percentile curves
+- TimeSpan JSON serialization as milliseconds (double) for portability
+
+**Integration Notes:**
+- Used by OpenClawNet for hybrid search SLA tracking (<100ms P95 semantic rerank, <200ms total)
+- Can track multiple independent operations in one benchmark instance
+- Reports support both human (markdown) and machine (JSON) consumption
+
+---
+
 ### 2025-01-26: Issues #23-25 Integration Testing & QA
 
 **Context:** Reviewed three new features for MemPalace.NET:

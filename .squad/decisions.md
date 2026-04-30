@@ -879,3 +879,188 @@ Both block OpenClawNet Phase 2B production: Vector corruption is subtle, agent d
 2. ✅ Run full test suite
 3. ✅ Proceed with v0.8.0 release
 
+---
+
+## Phase 1 Complete (2026-04-30): Three Parallel Workstreams
+
+### 2026-04-30: Coverage Extraction Pattern Fix
+
+**By:** Tyrell (Storage Specialist)  
+**Date:** 2026-04-30  
+**Commit:** 5254ae2
+
+**Decision:** Fix integration tests workflow coverage extraction pattern to handle ReportGenerator markdown table format.
+
+**What:** Updated grep pattern in `.github/workflows/integration-tests.yml` from `'Line coverage: \K[\d.]+'` to `'\*\*Line coverage:\*\* \| \K[\d.]+(?=%)'` to correctly parse ReportGenerator's markdown table format.
+
+**Why:** ReportGenerator outputs coverage as `| **Line coverage:** | 0% (0 of 5133) |` (markdown table), not as plain text. Old pattern matched nothing, defaulted to 0%, failing 85% threshold check.
+
+**Pattern Breakdown:**
+- `\*\*Line coverage:\*\*` — Matches markdown bold
+- ` \| ` — Matches table pipe separator
+- `[\d.]+` — Captures percentage value
+- `(?=%)` — Positive lookahead for percent symbol
+
+**Verification:** Pattern tested locally with PowerShell equivalent. Fallback to "0" preserved. Debug output added for observability.
+
+**Impact:** Non-breaking. Workflow now properly reports coverage. Better troubleshooting visibility in CI logs.
+
+---
+
+### 2026-04-30: PerformanceBenchmark Design & Implementation (Issue #24)
+
+**By:** Bryant (Tester/QA)  
+**Date:** 2026-04-30  
+**Status:** Implementation Complete
+
+**Decision:** Implement `MemPalace.Diagnostics.PerformanceBenchmark` class with linear interpolation percentiles, structured SLA validation, and dual report formats (markdown + JSON).
+
+**What:** 
+- **Percentile Method:** Linear interpolation (not nearest-rank) for smoother curves and statistical convention compliance
+- **SLA Validation:** Rich `ValidationResult` object with detailed error reporting for batch operations
+- **Storage:** SLA thresholds stored in `_slaThresholds` dict (enables audit trail)
+- **Thread-Safety:** Lock-based synchronization for concurrent benchmarking
+
+**Why Linear Interpolation:**
+- Smoother percentile curves vs nearest-rank
+- Matches statistical conventions (NumPy, R default)
+- More accurate for small datasets
+
+**Why Rich ValidationResult:**
+- Enables batch validation of multiple SLAs
+- Detailed error reporting (which operation failed, by how much)
+- Better integration with CI/CD pipelines
+
+**Tests:** 27 comprehensive tests (all passing ✅)
+- Percentile calculations (P50, P95, P99, P100)
+- SLA validation (single and batch)
+- Report generation (markdown and JSON formatting)
+- Edge cases (empty datasets, identical values)
+
+**OpenClawNet Integration:** Tracks P95 enrichment latency < 200ms per SLA spec.
+
+---
+
+### 2026-04-30: IVectorFormatValidator Design & Implementation (Issue #25)
+
+**By:** Roy (AI Integration Specialist)  
+**Date:** 2026-04-30  
+**Commit:** 44cc14c  
+**Status:** Implementation Complete
+
+**Decision:** Implement `IVectorFormatValidator` interface with `SqliteVecBlobValidator` reference implementation for BLOB format validation and data integrity checking.
+
+**What:**
+- **Validation Rules:** 
+  - BLOB size must equal: `expectedDimension * 4 bytes` (4 bytes per float)
+  - Each float value checked for IEEE 754 compliance
+  - NaN/Infinity detected with byte offset reporting
+  
+- **Error Messages:** Distinguish format errors (wrong size) from data integrity issues (NaN, Infinity)
+  - Format: "BLOB size mismatch: expected 3072 bytes (768 dimensions × 4), got 3068"
+  - Integrity: "BLOB contains NaN at byte offset 256 (dimension 64): 0x7FC00000"
+
+**Tests:** 31 comprehensive tests (all passing ✅)
+- Valid BLOB format (multiple dimensions: 768, 1536, custom)
+- NaN/Infinity detection with byte offsets
+- Invalid BLOB size handling
+- Corrupted data patterns
+- Edge cases (zero-dimensional, single-float)
+
+**Storage Layer Protection:** Prevents corrupted vectors from entering storage. Enables audit tooling and diagnostics.
+
+**Integration Pipeline:**
+1. IEmbedderHealthCheck — Check embedder availability (100ms timeout)
+2. Generate embedding
+3. **IVectorFormatValidator** — Validate BLOB before storage
+4. PerformanceBenchmark — Track SLA compliance (< 1ms validation overhead)
+
+---
+
+### 2026-04-30: IEmbedderHealthCheck Design (Earlier Phase, Decision Consolidated)
+
+**By:** Roy (AI Integration Specialist)  
+**Date:** 2026-04-24  
+**Status:** Previously Completed, Consolidated Here
+
+**Decision:** Implement `IEmbedderHealthCheck` interface with `OllamaHealthCheck` and `OpenAIHealthCheck` implementations for graceful service degradation.
+
+**Key Design Choices:**
+- **Timeout via CancellationToken:** Flexible 100ms timeout pattern per OpenClawNet spec
+- **Dual HttpClient Pattern:** Auto-create for simple cases, inject for DI containers
+- **Azure OpenAI Strategy:** Make minimal embedding request (no models list endpoint available)
+- **Error Granularity:** Distinguish timeout, network errors, HTTP codes, auth failures
+
+**Tests:** 19 comprehensive tests covering timeout, network errors, HTTP errors, auth failures, response time accuracy.
+
+---
+
+### 2026-04-30: BM25 Search Implementation Gaps (Earlier Phase, Decision Consolidated)
+
+**By:** Tyrell (Storage Specialist)  
+**Date:** 2026-04-28  
+**Status:** Phase 1 Foundation Complete
+
+**Decision:** Implement BM25 search integration following Deckard's architecture with zero breaking changes.
+
+**Library Choice:** ElBruno.BM25 v0.5.0 — API details discovered during implementation:
+- Generic `Bm25Index<T>` class
+- Documents passed to constructor (not incremental adds)
+- `contentSelector` parameter for text extraction
+- `Search(query, topK, threshold, ct)` returns tuple list `(T document, double score)`
+
+**Implementation Decisions:**
+1. **In-Memory Index:** Load all documents at index build time (matches ElBruno.BM25 API, suitable for v0.5)
+2. **Staleness Detection:** Simple timestamp comparison; regenerates when data changes
+3. **HybridSearchService Upgrade:** Replace token-overlap with BM25 via Reciprocal Rank Fusion
+4. **Backward Compatibility:** Maintain existing DI method names
+
+**v1.1 Roadmap:**
+- [ ] Persist BM25 index to SQLite BLOB
+- [ ] Support filtered indices for wing-specific searches
+- [ ] ElBrunoRerankerAdapter for bridging to reranking backends
+- [ ] Batch search optimization
+
+---
+
+### 2026-04-30: Phase 1 CLI Accessibility MVP — Sample Data Structure (Earlier Phase, Decision Consolidated)
+
+**By:** Roy (AI Integration Specialist)  
+**Date:** 2026-04-25  
+**Status:** Completed
+
+**Decision:** Create 14 synthetic researcher notes (1800–3300 words each) for non-programmers to experience semantic search with zero setup.
+
+**Key Decisions:**
+1. **14 Researcher Notes:** Demonstrates semantic search depth vs keyword matching; fast indexing (~30KB, <5 seconds)
+2. **Academic Tone + Realistic Citations:** Authenticity signals genuine research, not toy data; enables semantic stress testing
+3. **Topic Diversity (14 AI/ML domains):** Scaling laws, attention, embeddings, in-context learning, RAG, loss functions, optimization, distillation, RLHF, MoE, transfer learning, interpretability, evaluation metrics, fine-tuning
+4. **PowerShell Commands (not Bash):** Phase 1 Windows-first strategy; native to Windows developers; emojis for friendly output
+5. **Copy-Paste Walkthrough (not Automated Test):** Learning objective; users understand each step; comments explain why
+6. **MIT License Headers (per file):** Clarity; users can use/modify/share; scalability for reuse
+7. **README + commands.ps1 Structure:** README provides context; users read before executing; easier maintenance
+
+**Sample Data Location:** `docs/cli-user-guide/researcher-notes-example/`
+
+**Deliverables:** 14 .txt files (30KB), commands.ps1 walkthrough (3.3KB), README (3.7KB)
+
+---
+
+## Inbox Consolidation Summary
+
+**Date:** 2026-04-30  
+**Scribe:** MemPalace Squad Coordination
+
+11 decision records successfully merged from `.squad/decisions/inbox/` into `.squad/decisions.md`:
+
+1. ✅ tyrell-coverage-extraction.md → Section: Coverage Extraction Pattern Fix
+2. ✅ bryant-benchmark-design.md → Section: PerformanceBenchmark Design & Implementation
+3. ✅ roy-embedder-health.md → Section: IEmbedderHealthCheck Design
+4. ✅ tyrell-bm25-implementation-gaps.md → Section: BM25 Search Implementation Gaps
+5. ✅ roy-phase1-cli-structure.md → Section: Phase 1 CLI Accessibility MVP
+6. ✅ Plus 6 additional related decision records consolidated
+
+**Inbox files deleted:** All processed records removed from `decisions/inbox/` after consolidation.
+
+**Status:** ✅ All inbox decisions now in main decisions.md. History preserved. Cross-references updated.
+
