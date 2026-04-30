@@ -1,8 +1,9 @@
 name: Publish to NuGet
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -29,10 +30,9 @@ jobs:
       - name: Determine version
         id: version
         run: |
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            VERSION="${{ github.event.release.tag_name }}"
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
             VERSION="${VERSION#v}"
-            VERSION="${VERSION#.}"
           elif [[ -n "${{ inputs.version }}" ]]; then
             VERSION="${{ inputs.version }}"
           else
