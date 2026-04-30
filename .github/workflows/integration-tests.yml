@@ -36,7 +36,7 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ./coverage \
           --logger "trx;LogFileName=test-results.trx" \
-          --collect:"XPlat Code Coverage" \
+          --maxParallelThreads:4 \
           -v normal
 
     - name: Install ReportGenerator
