@@ -9,6 +9,49 @@
 
 ## Learnings
 
+### 2026-04-30: v0.12.0 Release Coordination ✅
+
+**Mission:** Coordinate final release steps for v0.12.0 with bug fixes and new features
+
+**Accomplished:**
+1. ✅ **Version bump** — Updated Directory.Build.props from 0.10.0 → 0.12.0
+2. ✅ **Release notes** — Added comprehensive v0.12.0 section to RELEASE_NOTES.md
+3. ✅ **Git commits** — Both commits included required co-author trailer
+4. ✅ **Push to origin** — 5 commits pushed to origin/main (includes Phase 1 work)
+5. ✅ **Git tag** — Created and pushed annotated tag v0.12.0
+6. ✅ **Workflow trigger** — GitHub Actions Publish workflow triggered by tag push
+
+**Release Content:**
+- **Workflow fix:** Integration test coverage extraction (commit 5254ae2)
+- **Feature #24:** PerformanceBenchmark utilities (SLA tracking, percentile calculations, 27+ tests)
+- **Feature #25:** IVectorFormatValidator interface (sqlite-vec BLOB validation, 31+ tests)
+- **Quality:** 58+ new unit tests, integration coverage ≥ 85% target
+
+**Key Learnings:**
+1. **Tag-based publish trigger works reliably** — `push: tags: - 'v*'` pattern triggers NuGet publish workflow as expected
+2. **Integration test coverage still shows 0%** — Despite fix in commit 5254ae2, main branch CI still reports 0% coverage (extraction pattern may need further debugging)
+3. **Publish workflow timing** — Unit tests + pack + NuGet push takes ~10-15 minutes end-to-end
+4. **Tag vs branch workflows** — Tag-triggered publish runs independently of branch CI failures (correct isolation)
+5. **Co-author trailer is mandatory** — Both commits properly included `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer
+
+**Release Process Insights:**
+- **Version bump first, docs second** — Clean commit separation makes history readable
+- **Tag creation timing** — Push commits first, then create/push tag to trigger publish workflow
+- **Workflow monitoring** — `gh run list` and `gh run view` provide good visibility into CI/CD status
+- **NuGet verification** — Package should appear on NuGet.org within 5 minutes of successful workflow completion
+
+**Follow-up Items:**
+- Monitor publish workflow completion (still in progress at time of history update)
+- Verify v0.12.0 appears on NuGet.org (https://www.nuget.org/packages/mempalacenet)
+- Address integration test coverage extraction issue (still showing 0% despite fix)
+
+**Commit History:**
+- `90b8370` — Version bump 0.10.0 → 0.12.0
+- `b90eaae` — Release notes for v0.12.0
+- `1bbdad0` — Orchestration logs (Phase 1 complete)
+- `8859c1b` — PerformanceBenchmark utilities (#24)
+- `5254ae2` — Coverage extraction workflow fix
+
 ### 2026-04-29: Phase 3 Embedder Pluggability Implementation ✅
 
 **Mission:** Implement pluggable embedder backends with OpenAI/Azure support

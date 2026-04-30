@@ -100,7 +100,16 @@ public sealed class SessionManager : IDisposable
         if (_disposed)
             return;
 
-        _cleanupTimer.Dispose();
+        var waitHandle = new ManualResetEvent(false);
+        try
+        {
+            _cleanupTimer.Dispose(waitHandle);
+            waitHandle.WaitOne();
+        }
+        finally
+        {
+            waitHandle.Dispose();
+        }
         _sessions.Clear();
         _disposed = true;
     }
