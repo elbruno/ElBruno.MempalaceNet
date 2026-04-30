@@ -30,13 +30,22 @@ jobs:
 
     - name: Run integration tests with coverage
       run: |
-        dotnet test src/ \
-          --no-build \
-          -c Release \
-          --collect:"XPlat Code Coverage" \
-          --results-directory ./coverage \
-          --logger "trx;LogFileName=test-results.trx" \
-          -v normal
+        # Skip coverage on pull requests to keep tests fast
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          dotnet test src/ \
+            --no-build \
+            -c Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            -v normal
+        else
+          dotnet test src/ \
+            --no-build \
+            -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger "trx;LogFileName=test-results.trx" \
+            -v normal
+        fi
 
     - name: Install ReportGenerator
       run: dotnet tool install --global dotnet-reportgenerator-globaltool
@@ -52,6 +61,13 @@ jobs:
     - name: Extract coverage percentage
       id: coverage
       run: |
+        if [ ! -d ./coverage-report ]; then
+          # Coverage not collected (pull request)
+          echo "coverage=0" >> $GITHUB_OUTPUT
+          echo "⏭️ Coverage collection skipped on pull requests"
+          exit 0
+        fi
+        
         if [ -f ./coverage-report/Summary.md ]; then
           # Extract from markdown table format: | **Line coverage:** | 0% (0 of 5133) |
           COVERAGE=$(grep -oP '\*\*Line coverage:\*\* \| \K[\d.]+(?=%)' ./coverage-report/Summary.md || echo "0")
@@ -80,6 +96,7 @@ jobs:
         path: ./coverage/*.trx
 
     - name: Validate coverage threshold
+      if: github.event_name != 'pull_request'
       run: |
         COVERAGE=${{ steps.coverage.outputs.coverage }}
         THRESHOLD=60
