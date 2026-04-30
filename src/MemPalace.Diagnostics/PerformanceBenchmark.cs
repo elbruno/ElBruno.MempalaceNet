@@ -140,6 +140,75 @@ public class PerformanceBenchmark
     }
 
     /// <summary>
+    /// Validates multiple operations against their SLA thresholds and returns a detailed result.
+    /// </summary>
+    /// <param name="thresholds">Dictionary mapping operation names to their P95 thresholds.</param>
+    /// <returns>A ValidationResult indicating whether all operations met their SLAs.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when thresholds is null.</exception>
+    /// <example>
+    /// <code>
+    /// var thresholds = new Dictionary&lt;string, TimeSpan&gt;
+    /// {
+    ///     { "search", TimeSpan.FromMilliseconds(100) },
+    ///     { "enrichment", TimeSpan.FromMilliseconds(200) }
+    /// };
+    /// 
+    /// var result = benchmark.ValidateSLAs(thresholds);
+    /// if (!result.IsValid)
+    /// {
+    ///     foreach (var error in result.Errors)
+    ///     {
+    ///         Console.WriteLine($"ERROR: {error}");
+    ///     }
+    /// }
+    /// </code>
+    /// </example>
+    public ValidationResult ValidateSLAs(Dictionary<string, TimeSpan> thresholds)
+    {
+        if (thresholds == null)
+            throw new ArgumentNullException(nameof(thresholds));
+
+        var errors = new List<string>();
+        var operationResults = new Dictionary<string, bool>();
+
+        foreach (var kvp in thresholds)
+        {
+            var operationName = kvp.Key;
+            var threshold = kvp.Value;
+
+            try
+            {
+                var pass = ValidateSLA(operationName, threshold);
+                operationResults[operationName] = pass;
+
+                if (!pass)
+                {
+                    var stats = GetPercentiles(operationName);
+                    errors.Add($"Operation '{operationName}' failed SLA: P95={stats.P95.TotalMilliseconds:F2}ms exceeds threshold {threshold.TotalMilliseconds:F2}ms");
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                operationResults[operationName] = false;
+                errors.Add($"Operation '{operationName}' validation failed: {ex.Message}");
+            }
+        }
+
+        return errors.Count == 0
+            ? new ValidationResult
+            {
+                IsValid = true,
+                OperationResults = operationResults
+            }
+            : new ValidationResult
+            {
+                IsValid = false,
+                Errors = errors.ToArray(),
+                OperationResults = operationResults
+            };
+    }
+
+    /// <summary>
     /// Generates a comprehensive benchmark report with all operation statistics.
     /// </summary>
     /// <returns>A report containing percentile statistics and SLA validation results for all operations.</returns>

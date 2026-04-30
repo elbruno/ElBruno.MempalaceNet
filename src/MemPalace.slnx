@@ -5,6 +5,8 @@
   <Project Path="MemPalace.Benchmarks/MemPalace.Benchmarks.csproj" />
   <Project Path="MemPalace.Cli/MemPalace.Cli.csproj" />
   <Project Path="MemPalace.Core/MemPalace.Core.csproj" />
+  <Project Path="MemPalace.Diagnostics/MemPalace.Diagnostics.csproj" />
+  <Project Path="MemPalace.Diagnostics.Tests/MemPalace.Diagnostics.Tests.csproj" />
   <Project Path="MemPalace.KnowledgeGraph/MemPalace.KnowledgeGraph.csproj" />
   <Project Path="MemPalace.Mcp/MemPalace.Mcp.csproj" />
   <Project Path="MemPalace.Mining/MemPalace.Mining.csproj" />

@@ -394,4 +394,126 @@ public class PerformanceBenchmarkTests
         // Assert
         markdown.Should().Contain("N/A");
     }
+
+    [Fact]
+    public void ValidateSLAs_WithAllPassing_ReturnsSuccess()
+    {
+        // Arrange
+        var benchmark = new PerformanceBenchmark();
+        
+        for (int i = 1; i <= 100; i++)
+        {
+            benchmark.RecordLatency("op1", TimeSpan.FromMilliseconds(i));
+            benchmark.RecordLatency("op2", TimeSpan.FromMilliseconds(i * 0.5));
+        }
+
+        var thresholds = new Dictionary<string, TimeSpan>
+        {
+            { "op1", TimeSpan.FromMilliseconds(200) },
+            { "op2", TimeSpan.FromMilliseconds(100) }
+        };
+
+        // Act
+        var result = benchmark.ValidateSLAs(thresholds);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+        result.Errors.Should().BeEmpty();
+        result.OperationResults["op1"].Should().BeTrue();
+        result.OperationResults["op2"].Should().BeTrue();
+    }
+
+    [Fact]
+    public void ValidateSLAs_WithSomeFailures_ReturnsFailure()
+    {
+        // Arrange
+        var benchmark = new PerformanceBenchmark();
+        
+        for (int i = 1; i <= 100; i++)
+        {
+            benchmark.RecordLatency("fast-op", TimeSpan.FromMilliseconds(i));
+            benchmark.RecordLatency("slow-op", TimeSpan.FromMilliseconds(i * 3));
+        }
+
+        var thresholds = new Dictionary<string, TimeSpan>
+        {
+            { "fast-op", TimeSpan.FromMilliseconds(200) },
+            { "slow-op", TimeSpan.FromMilliseconds(100) }
+        };
+
+        // Act
+        var result = benchmark.ValidateSLAs(thresholds);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().Contain("slow-op");
+        result.Errors[0].Should().Contain("failed SLA");
+        result.OperationResults["fast-op"].Should().BeTrue();
+        result.OperationResults["slow-op"].Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateSLAs_WithNonexistentOperation_ReturnsFailure()
+    {
+        // Arrange
+        var benchmark = new PerformanceBenchmark();
+        benchmark.RecordLatency("existing-op", TimeSpan.FromMilliseconds(50));
+
+        var thresholds = new Dictionary<string, TimeSpan>
+        {
+            { "existing-op", TimeSpan.FromMilliseconds(100) },
+            { "nonexistent-op", TimeSpan.FromMilliseconds(100) }
+        };
+
+        // Act
+        var result = benchmark.ValidateSLAs(thresholds);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().HaveCountGreaterThan(0);
+        result.Errors.Should().Contain(e => e.Contains("nonexistent-op"));
+        result.OperationResults["existing-op"].Should().BeTrue();
+        result.OperationResults["nonexistent-op"].Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateSLAs_WithNullThresholds_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var benchmark = new PerformanceBenchmark();
+
+        // Act
+        var act = () => benchmark.ValidateSLAs(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>().WithParameterName("thresholds");
+    }
+
+    [Fact]
+    public void ValidationResult_Success_CreatesValidResult()
+    {
+        // Act
+        var result = ValidationResult.Success();
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ValidationResult_Failure_CreatesInvalidResult()
+    {
+        // Arrange
+        var errors = new[] { "Error 1", "Error 2" };
+
+        // Act
+        var result = ValidationResult.Failure(errors);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().HaveCount(2);
+        result.Errors.Should().Contain("Error 1");
+        result.Errors.Should().Contain("Error 2");
+    }
 }
