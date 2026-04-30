@@ -100,18 +100,39 @@ public sealed class SessionManager : IDisposable
         if (_disposed)
             return;
 
-        var waitHandle = new ManualResetEvent(false);
         try
         {
-            _cleanupTimer.Dispose(waitHandle);
-            waitHandle.WaitOne();
+            // Dispose the cleanup timer with a short timeout (500ms)
+            // If it doesn't complete, just move on — don't hang
+            if (_cleanupTimer != null)
+            {
+                var resetEvent = new ManualResetEvent(false);
+                try
+                {
+                    _cleanupTimer.Dispose(resetEvent);
+                    
+                    // Wait with timeout — don't wait forever
+                    if (!resetEvent.WaitOne(500))
+                    {
+                        // Timer disposal timed out, but that's OK
+                        // We can't force-kill it on all platforms, just move on
+                    }
+                }
+                finally
+                {
+                    resetEvent?.Dispose();
+                }
+            }
+        }
+        catch
+        {
+            // Suppress any disposal errors — cleanup failed gracefully
         }
         finally
         {
-            waitHandle.Dispose();
+            _sessions.Clear();
+            _disposed = true;
         }
-        _sessions.Clear();
-        _disposed = true;
     }
 
     private sealed class Session
