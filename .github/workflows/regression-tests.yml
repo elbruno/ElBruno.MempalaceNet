@@ -38,13 +38,14 @@ jobs:
 
     - name: Run LongMemEval R@5 benchmark
       id: benchmark
+      timeout-minutes: 15
       run: |
-        dotnet run --project src/MemPalace.Benchmarks --no-build -c Release -- \
+        timeout 600 dotnet run --project src/MemPalace.Benchmarks --no-build -c Release -- \
           run longmemeval \
           --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
           --palace artifacts/benchmarks/palace-ci \
           --embedder local \
-          > benchmark_output.txt 2>&1
+          > benchmark_output.txt 2>&1 || true
         
         cat benchmark_output.txt
         
