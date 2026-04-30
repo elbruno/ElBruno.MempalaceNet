@@ -38,14 +38,22 @@ jobs:
 
     - name: Run LongMemEval R@5 benchmark
       id: benchmark
-      timeout-minutes: 15
+      timeout-minutes: 5
       run: |
-        timeout 600 dotnet run --project src/MemPalace.Benchmarks --no-build -c Release -- \
+        # Hard timeout: 5 min with SIGKILL fallback after 4.5 min warn
+        timeout -k 270 300 dotnet run --project src/MemPalace.Benchmarks --no-build -c Release -- \
           run longmemeval \
           --dataset artifacts/benchmarks/longmemeval_s_cleaned.json \
           --palace artifacts/benchmarks/palace-ci \
           --embedder local \
-          > benchmark_output.txt 2>&1 || true
+          > benchmark_output.txt 2>&1 || {
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 124 ] || [ $EXIT_CODE -eq 137 ]; then
+              echo "Benchmark timeout — terminating."
+              echo "r5_score=0" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          }
         
         cat benchmark_output.txt
         
