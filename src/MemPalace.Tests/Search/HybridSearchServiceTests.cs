@@ -52,6 +52,29 @@ public sealed class HybridSearchServiceTests
             Arg.Any<CancellationToken>()
         ).Returns(queryResult);
 
+        var getResult = new GetResult(
+            Ids: new[] { "id1", "id2", "id3" },
+            Documents: new[] {
+                "machine learning algorithms",
+                "deep learning models",
+                "neural network architectures"
+            },
+            Metadatas: new[] {
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>(),
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>(),
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>()
+            }
+        );
+
+        collection.GetAsync(
+            Arg.Any<IReadOnlyList<string>?>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<int?>(),
+            Arg.Any<int>(),
+            Arg.Any<IncludeFields>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(getResult);
+
         var searchService = new HybridSearchService(backend, embedder);
         var options = new SearchOptions(TopK: 3);
 
@@ -61,7 +84,7 @@ public sealed class HybridSearchServiceTests
         // Assert
         results.Should().HaveCount(3);
         results.Should().AllSatisfy(r => r.Metadata.Should().ContainKey("sources"));
-        results[0].Metadata!["sources"].Should().BeEquivalentTo(new[] { "vector", "keyword" });
+        results[0].Metadata!["sources"].Should().BeEquivalentTo(new[] { "vector", "bm25" });
     }
 
     [Fact]
@@ -87,7 +110,7 @@ public sealed class HybridSearchServiceTests
 
         var docs = Enumerable.Range(1, 20).Select(i => $"document {i}").ToArray();
         var ids = Enumerable.Range(1, 20).Select(i => $"id{i}").ToArray();
-        var metas = Enumerable.Range(1, 20).Select(_ => new Dictionary<string, object?>()).ToArray();
+        var metas = Enumerable.Range(1, 20).Select(_ => (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>()).ToArray();
         var distances = Enumerable.Range(1, 20).Select(i => i * 0.05f).ToArray();
 
         var queryResult = new QueryResult(
@@ -104,6 +127,21 @@ public sealed class HybridSearchServiceTests
             Arg.Any<IncludeFields>(),
             Arg.Any<CancellationToken>()
         ).Returns(queryResult);
+
+        var getResult = new GetResult(
+            Ids: ids,
+            Documents: docs,
+            Metadatas: metas
+        );
+
+        collection.GetAsync(
+            Arg.Any<IReadOnlyList<string>?>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<int?>(),
+            Arg.Any<int>(),
+            Arg.Any<IncludeFields>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(getResult);
 
         var searchService = new HybridSearchService(backend, embedder);
         var options = new SearchOptions(TopK: 5);
@@ -140,8 +178,8 @@ public sealed class HybridSearchServiceTests
             Ids: new[] { new[] { "id1", "id2" } },
             Documents: new[] { new[] { "doc1", "doc2" } },
             Metadatas: new[] { new[] {
-                new Dictionary<string, object?>(),
-                new Dictionary<string, object?>()
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>(),
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>()
             } },
             Distances: new[] { new[] { 0.1f, 0.5f } }
         );
@@ -154,8 +192,26 @@ public sealed class HybridSearchServiceTests
             Arg.Any<CancellationToken>()
         ).Returns(queryResult);
 
+        var getResult = new GetResult(
+            Ids: new[] { "id1", "id2" },
+            Documents: new[] { "doc1", "doc2" },
+            Metadatas: new[] {
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>(),
+                (IReadOnlyDictionary<string, object?>)new Dictionary<string, object?>()
+            }
+        );
+
+        collection.GetAsync(
+            Arg.Any<IReadOnlyList<string>?>(),
+            Arg.Any<WhereClause?>(),
+            Arg.Any<int?>(),
+            Arg.Any<int>(),
+            Arg.Any<IncludeFields>(),
+            Arg.Any<CancellationToken>()
+        ).Returns(getResult);
+
         var searchService = new HybridSearchService(backend, embedder);
-        var options = new SearchOptions(MinScore: 0.02f); // RRF scores are typically small
+        var options = new SearchOptions(MinScore: 0.01f); // Lower threshold for RRF (1/(60+1) ≈ 0.0164)
 
         // Act
         var results = await searchService.SearchAsync("test", "test-collection", options);

@@ -115,15 +115,24 @@ public sealed class Bm25SearchService : ISearchService
             }
         }
 
-        // Rebuild index under lock
+        // Check if already building under lock (non-async check)
         lock (_indexLock)
         {
             if (_cachedIndex != null && _indexTimestamp > DateTime.MinValue && opts.Wing == null && opts.Where == null)
                 return _cachedIndex;
+        }
 
-            var whereClause = opts.Where ?? (opts.Wing != null ? new Eq("wing", opts.Wing) : null);
-            var docs = BuildIndexAsync(collection, whereClause, ct).GetAwaiter().GetResult();
-            
+        // Build index outside lock to avoid blocking async operations
+        var whereClause = opts.Where ?? (opts.Wing != null ? new Eq("wing", opts.Wing) : null);
+        var docs = await BuildIndexAsync(collection, whereClause, ct);
+        
+        // Update cache under lock
+        lock (_indexLock)
+        {
+            // Double-check: another thread might have built it while we were loading
+            if (_cachedIndex != null && _indexTimestamp > DateTime.MinValue && opts.Wing == null && opts.Where == null)
+                return _cachedIndex;
+
             // Create BM25 index with documents
             var parameters = new Bm25Parameters();
             var index = new Bm25Index<BM25Document>(
