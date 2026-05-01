@@ -757,3 +757,22 @@
 
 **Testing Outcome:** MemPalace.Ai project builds successfully with all new files. Test project has unrelated pre-existing compilation errors in other test files (not from health check implementation).
 
+
+### 2027-01-27: Phase 3D — Embedder Interface & OpenAI Integration Complete
+
+**What:** Delivered ICustomEmbedder interface, OpenAIEmbedder implementation, MCP embedder endpoints, and comprehensive test suite.
+
+**Implementation:**
+1. **ICustomEmbedder interface** — Extended IEmbedder with ProviderName and Metadata properties
+2. **OpenAIEmbedder** — Production-ready with rate limiting, retry logic, error handling  
+3. **MCP embedder endpoints** — embedder_info and embedder_list tools
+4. **Comprehensive tests** — 15 unit tests (10 passing, 5 skipped), 5 E2E journey tests
+
+**Key learnings:**
+- Rate limiting via SemaphoreSlim with RPM-based delays
+- Exponential backoff for 429 errors (500ms → 1s → 2s)
+- Clear error messages with remediation steps (401, 404, network)
+- MCP introspection via Metadata property enables runtime discovery
+- ICustomEmbedder extends IEmbedder (backward compatible)
+
+**Commit:** afdc6ba — Phase 3D: Embedder interface & OpenAI implementation
