@@ -1,0 +1,124 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'examples/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'examples/**'
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Restore dependencies
+      run: dotnet restore src/
+
+    - name: Build solution
+      run: dotnet build src/ --no-restore -c Release
+
+    - name: Run E2E and Integration tests
+      id: e2e_tests
+      run: |
+        dotnet test src/MemPalace.Tests/ \
+          --no-build \
+          -c Release \
+          --logger "trx;LogFileName=integration-results.trx" \
+          --logger "console;verbosity=normal" \
+          -v normal \
+          --filter "Category=Integration" \
+          --results-directory ./test-results
+        
+        TEST_EXIT_CODE=$?
+        echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $TEST_EXIT_CODE
+
+    - name: Upload E2E test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-test-results
+        path: ./test-results/
+        retention-days: 30
+
+    - name: Parse test results
+      id: parse_results
+      if: always()
+      run: |
+        if [ ! -f ./test-results/integration-results.trx ]; then
+          echo "test_count=0" >> $GITHUB_OUTPUT
+          echo "test_passed=0" >> $GITHUB_OUTPUT
+          echo "test_failed=0" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Extract test counts from TRX file
+        TOTAL=$(grep -oP 'total="\K[^"]*' ./test-results/integration-results.trx | head -1)
+        PASSED=$(grep -oP 'passed="\K[^"]*' ./test-results/integration-results.trx | head -1)
+        FAILED=$(grep -oP 'failed="\K[^"]*' ./test-results/integration-results.trx | head -1)
+        
+        echo "test_count=${TOTAL:-0}" >> $GITHUB_OUTPUT
+        echo "test_passed=${PASSED:-0}" >> $GITHUB_OUTPUT
+        echo "test_failed=${FAILED:-0}" >> $GITHUB_OUTPUT
+        
+        echo "📊 Test Results: Total=$TOTAL, Passed=$PASSED, Failed=$FAILED"
+
+    - name: Comment PR with test results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const exitCode = '${{ steps.e2e_tests.outputs.exit_code }}';
+          const testCount = '${{ steps.parse_results.outputs.test_count }}';
+          const testPassed = '${{ steps.parse_results.outputs.test_passed }}';
+          const testFailed = '${{ steps.parse_results.outputs.test_failed }}';
+          const pass = parseInt(exitCode) === 0;
+          const emoji = pass ? '✅' : '❌';
+          
+          const comment = `## ${emoji} Integration Tests
+          
+          **Status:** ${pass ? 'PASSED' : 'FAILED'}
+          **Tests:** ${testCount} total
+          **Passed:** ${testPassed}
+          **Failed:** ${testFailed}
+          
+          ${pass ? 
+            'All integration tests passed successfully.' : 
+            '⚠️ **Integration tests failed.** Check the test results artifact for details.'
+          }
+          
+          ---
+          *Integration tests validate: Palace backend operations, memory lifecycle, branch caching, and wake-up performance*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Fail workflow on test failure
+      if: failure() && steps.e2e_tests.outcome == 'failure'
+      run: |
+        echo "❌ E2E tests failed. See results for details."
+        exit 1

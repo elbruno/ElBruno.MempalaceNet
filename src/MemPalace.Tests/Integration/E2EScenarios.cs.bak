@@ -12,8 +12,11 @@ namespace MemPalace.Tests.Integration;
 /// <summary>
 /// End-to-end integration test scenarios for Phase 2 (v0.7.0).
 /// Validates MCP + Skills + Palace interactions work together correctly.
+/// These tests verify the complete workflow: Store → Search → Recall → Verify
+/// Each test is designed to be deterministic and run isolated in CI/CD environments.
 /// </summary>
 [Trait("Category", "Integration")]
+[Trait("Category", "E2E")]
 [Trait("Category", "v070")]
 public class E2EScenarios : IDisposable
 {

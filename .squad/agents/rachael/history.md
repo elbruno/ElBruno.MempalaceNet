@@ -933,3 +933,92 @@ Images enhance the v0.5.0 launch but aren't blocking for NuGet package functiona
 - ✅ GitHub Issue #24 ready for closure
 
 **Status:** ✅ COMPLETE
+
+---
+
+## Learnings: Phase 2E - User Workflow Documentation
+
+### Session: E2E Workflow Guide Creation
+
+**Date:** 2024-12-05
+
+**Task:** Write comprehensive Getting Started / User Workflow Guide for manual testing and learning.
+
+**Artifact:** `docs/guides/GETTING_STARTED.md` (created)
+
+### Key UX Observations
+
+1. **CLI Command Naming is Intuitive**
+   - `init`, `mine`, `search`, `wake-up` map naturally to mental model
+   - Verb-first pattern (actions > nouns) makes commands discoverable
+   - `mempalacenet agents chat scribe` feels natural for multi-turn interaction
+
+2. **Wing/Room Hierarchy is Clear for Users**
+   - "Documentation," "conversations," "code" are domain-natural wing names
+   - Wing parameter is optional for search (defaults to all wings) — good UX
+   - Metadata footprint per result (source file, timestamp) provides traceability
+
+3. **Embeddings + ONNX is a UX Win**
+   - No API keys required onboarding removes friction
+   - First-run model download happens silently (but ~50MB takes time)
+   - Users need visibility into model initialization latency
+
+4. **Semantic vs. Keyword Search**
+   - Hybrid mode important for users unfamiliar with semantic search
+   - Relevance scores (0–1) are concrete; users understand [0.892] better than "very relevant"
+   - BM25 fallback for keyword-only queries is valuable safety net
+
+5. **Agent Chat is Powerful but Requires Registration**
+   - IChatClient dependency not always obvious to CLI users
+   - Need clear setup instructions in troubleshooting section
+   - One-shot vs. interactive patterns cover both use cases well
+
+6. **Knowledge Graph UX is Minimal**
+   - `kg add` and `kg query` use simple triple patterns (intuitive)
+   - Temporal validity (`--valid-from`, `--valid-to`) is powerful but adds parameter complexity
+   - `kg timeline` command provides good visualization alternative
+
+### Usability Patterns Documented
+
+1. **Installation flow:** NuGet vs. source build (two clear paths)
+2. **Palace initialization:** Single command, clear directory structure output
+3. **Mining workflow:** Two modes (files + conversations) with sample data creation
+4. **Search discovery:** Semantic → hybrid → keyword progression
+5. **Agent interaction:** List → one-shot → interactive chat progression
+6. **Knowledge graph:** Simple triples → temporal queries → timeline views
+
+### Troubleshooting Coverage
+
+- Command not found (PATH issues)
+- Permission denied (directory ownership)
+- Database locked (concurrent access)
+- No results (empty palace, slow embedder, too-specific queries)
+- IChatClient missing (agent prerequisites)
+- Embedder model download failures (networking, antivirus)
+
+### Documentation Patterns
+
+- **Code blocks:** Bash commands with expected output in quote blocks
+- **Metadata:** ✅/❌ indicators, exit codes, timeouts, latencies
+- **Progressive complexity:** Start simple (init) → advance (agents, KG)
+- **Copy-paste ready:** Every command is standalone and testable
+- **Links:** Cross-references to CLI reference, examples, advanced guides
+
+### Suggestions for Future Enhancement
+
+1. **Add quick-start video link** (if available) in Prerequisites
+2. **Include memory limits/storage guidance** (palace.db size expectations)
+3. **Add section on backing up palaces** (SQLite .db snapshots)
+4. **Expand agent setup** (concrete OpenAI/Ollama registration examples)
+5. **CLI output colors:** Current guide assumes monochrome; note Spectre.Console richness
+
+### Quality Checks Performed
+
+- ✅ All commands are real (verified against Program.cs)
+- ✅ Expected outputs match actual CLI behavior
+- ✅ Troubleshooting covers 6 common failure modes
+- ✅ No broken links (all relative to docs/)
+- ✅ Professional tone, clear hierarchies
+- ✅ Read time 5–8 minutes (meets bar)
+
+**Status:** ✅ COMPLETE
