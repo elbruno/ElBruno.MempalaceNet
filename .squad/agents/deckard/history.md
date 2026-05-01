@@ -49,6 +49,60 @@
 4. **Testing mandate is clear** — Every public API must have unit tests, every user workflow must have E2E tests
 5. **Release checklist is the source of truth** — All Phase 3E work flows through the checklist (testing → docs → release artifacts)
 
+### 2026-05-01: v0.15.0 Release Execution ✅
+
+**Mission:** Publish Phase 3 complete release (v0.15.0 on GitHub, prepare NuGet publication)
+
+**Accomplished:**
+1. ✅ **Version Bump** — Updated Directory.Build.props from 0.13.0 → 0.15.0
+   - Aligned with existing git tag progression (v0.6.0 → v0.7.0 → v0.14.0)
+   - Follows semantic versioning for Phase 3 release
+   
+2. ✅ **GitHub Release Published** — v0.15.0 now public on GitHub
+   - **URL:** https://github.com/elbruno/ElBruno.MempalaceNet/releases/tag/v0.15.0
+   - **Title:** "v0.15.0: Phase 3 Complete - Embedder Interface & Comprehensive Testing"
+   - **Release notes:** Comprehensive Phase 3D & 3E documentation
+   - **Status:** Published (not draft), publicly visible
+
+3. ⚠️ **NuGet Publishing Issue Identified** — Workflow failed on test execution
+   - **Root cause:** publish.yml requires 100% test pass, but Phase 3E baseline is 85.9% (402/468 tests)
+   - **Test results:** 402 passing, 44 failing, 22 skipped (matches expected coverage)
+   - **Workflow behavior:** Hard fail on exit code 1 (test failure), not caught by timeout handler
+   - **Decision point:** Options documented for team decision (skip tests, update workflow, manual push, fix tests)
+
+4. 📝 **Release Documentation** — Created `.squad/decisions/inbox/deckard-v0.15.0-release-status.md`
+   - Release metrics and completion status
+   - NuGet publishing issue analysis with 4 resolution options
+   - Next steps for team (awaiting decision)
+   - Learning notes on release process insights
+
+**Key Learnings:**
+1. **Version sync required** — Directory.Build.props version (0.13.0) was out of sync with git tags
+   - Recommend pre-release verification that version increments align across files
+   
+2. **Workflow test gate misalignment** — CI/CD workflow enforces 100% pass rate
+   - But Phase 3E testing status documents 85.9% as acceptable baseline
+   - Workflow policy needs alignment with acceptance criteria OR test suite needs completion
+   
+3. **Test pass rate is consistent** — 402/468 ≈ 85.9% matches Phase 3E expectations
+   - Not a regression; expected test coverage level
+   - Workflow timeout handler doesn't catch regular test failures (only hangs)
+
+4. **Multi-target release coordination** — Publishing requires sync across:
+   - Git version tag (v0.15.0)
+   - NuGet package version (0.15.0)
+   - Directory.Build.props version (0.15.0)
+   - Release notes documentation
+   - GitHub Release publication
+
+5. **GitHub Release successfully separated from NuGet** — Can publish GitHub release without NuGet package
+   - Allows announcement while resolving publishing workflow issues
+   - Maintains public visibility of Phase 3 deliverables
+
+**Blockers:**
+- NuGet publication workflow failure (not architectural, workflow policy issue)
+- Awaiting team decision on how to proceed with NuGet publish
+
 **Architecture Insights:**
 - **Embedder pluggability is working** — EmbedderFactory pattern, EmbedderType enum, Microsoft.Extensions.AI abstraction
 - **Three provider implementations** — LocalEmbedder (ONNX), OpenAIEmbedder, AzureOpenAIEmbedder

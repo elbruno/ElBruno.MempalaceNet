@@ -1,4 +1,4 @@
-# v0.7.0: Phase 3 Complete - Embedder Interface & Comprehensive Testing
+# v0.15.0: Phase 3 Complete - Embedder Interface & Comprehensive Testing
 
 ## Overview
 
@@ -107,10 +107,9 @@ New features are purely additive. Existing code works unchanged.
 - **Documentation:** https://github.com/elbruno/ElBruno.MempalaceNet/tree/main/docs
 - **Embedder Guide:** https://github.com/elbruno/ElBruno.MempalaceNet/blob/main/docs/embedder-guide.md
 - **Examples:** https://github.com/elbruno/ElBruno.MempalaceNet/tree/main/examples
-- **NuGet:** https://www.nuget.org/packages/mempalacenet/0.7.0
-
----
+- **NuGet:** https://www.nuget.org/packages/mempalacenet/0.15.0
 
 **Release Date:** 2026-05-01
 **Target Framework:** .NET 10.0
 **License:** MIT
+**Version:** 0.15.0
