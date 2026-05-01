@@ -677,3 +677,37 @@ public void Dispose()
 
 **Key Learning:** ReportGenerator's Summary.md uses markdown table format (| **Line coverage:** | X% (Y of Z) |), not plain text. Always inspect actual tool output before writing extraction patterns.
 
+
+### Phase 2B — IVectorFormatValidator Implementation (2026-05-01)
+
+**Mission:** Implement semantic vector validation for storage layer integration (Issue #25).
+
+**Deliverables:**
+
+1. **IVectorFormatValidator Interface** (src/MemPalace.Core/Validation/IVectorFormatValidator.cs)
+   - Generic validation contract: `ValidationResult Validate(ReadOnlySpan<float> vector, ValidationContext context)`
+   - Three built-in validators: DimensionalityValidator, NanInfinityValidator, MagnitudeNormalizerValidator
+   - Composable validation chain (validators implement IVectorFormatValidator)
+   - Zero-copy vector access via ReadOnlySpan<float>
+
+2. **Core Validators** (src/MemPalace.Core/Validation/Validators/)
+   - **DimensionalityValidator:** Ensures vector dimension matches schema (5 tests)
+   - **NanInfinityValidator:** Rejects degenerate embeddings (6 tests)
+   - **MagnitudeNormalizerValidator:** L2 normalization with zero-magnitude detection (8 tests)
+
+3. **Test Coverage** (31 tests)
+   - Dimensionality validation, NaN/Infinity detection, Magnitude normalization
+   - Composition/chaining scenarios, Edge cases (empty, 1-element, 1000+, thread safety)
+
+4. **Integration Points**
+   - MemPalace.Ai.Embedders.IEmbedder: Validators called post-embedding
+   - MemPalace.Mcp.Search: Validators called on query vectors
+   - MemPalace.Backends.Memory: Validators called on insertion/upsert
+
+**Verification:**
+- ✅ All 31 tests passing
+- ✅ Build successful (no warnings)
+- ✅ Committed to main branch
+- ✅ GitHub Issue #25 ready for closure
+
+**Status:** ✅ COMPLETE
