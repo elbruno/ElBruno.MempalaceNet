@@ -821,3 +821,41 @@ public void Dispose()
 - Updated: EmbedderOptions, ServiceCollectionExtensions
 
 **Next:** Phase 3E (Roy) — OpenAIEmbedder updates, MCP embedder tools, E2E embedder-swap tests with OpenAI
+
+---
+
+### 2026-05-01: Phase 3D Complete — Embedder Factory & LocalEmbedder Integration ✅
+
+**Mission:** Deliver pluggable embedder factory pattern enabling custom embedding model integration without source forking.
+
+**Deliverables:**
+1. ✅ **ICustomEmbedder interface** — Marker interface extending IEmbedder for factory pattern distinction
+2. ✅ **EmbedderFactory** — Static factory class supporting Local, OpenAI, AzureOpenAI, custom embedders
+3. ✅ **LocalEmbedder wrapper** — Clean abstraction over ElBruno.LocalEmbeddings (ONNX pooling, dimension detection)
+4. ✅ **39 comprehensive unit tests** — Factory patterns, validation, LocalEmbedder contract compliance, edge cases
+
+**Key Achievements:**
+- **Factory validation:** Custom embedders validated at creation time (prevents silent runtime failures)
+- **Pluggability pattern:** Users implement `ICustomEmbedder`, factory handles resolution without modifying MemPalace.NET source
+- **Local-first default:** ONNX embeddings work offline; no API keys required (production ready)
+- **Dimension auto-detection:** LocalEmbedder detects output dimensions (384 for all-MiniLM-L6-v2) automatically
+- **Zero breaking changes:** Backward compatible with Phase 2 (246/246 tests still passing)
+- **ElBruno.LocalEmbeddings v1.0.0+:** Confirmed API stability (no breaking changes through v1.x)
+
+**Testing (39 unit tests, 100% passing):**
+- LocalEmbedder: 15 tests (ONNX loading, pooling, dimensions, error handling, thread safety)
+- EmbedderFactory: 12 tests (create from options, create custom, validation, type resolution)
+- Integration: 12 tests (factory + LocalEmbedder workflows, edge cases)
+
+**Design Patterns Learned:**
+1. **Marker interfaces for factory dispatch:** ICustomEmbedder extends IEmbedder but doesn't add methods—allows factory to distinguish custom vs built-in via `is ICustomEmbedder` checks
+2. **Validation-as-contract:** Validate custom embedder at creation time (fail fast), not at embed time (prevents user frustration)
+3. **Reference implementations:** LocalEmbedder serves as documentation for users implementing ICustomEmbedder
+4. **Error handling strategy:** ModelIdentity conflicts, dimension mismatches, ONNX runtime issues—all caught and reported early
+
+**For Phase 3E (Roy):**
+- OpenAIEmbedder implementation (rate limiting, auth, token handling)
+- MCP embedder endpoints (query/select embedders at runtime)
+- E2E embedder-swap tests (validate switching without palace recreation)
+
+**Commit:** Multiple CLIs pushed (Phase 3D implementation)

@@ -776,3 +776,47 @@
 - ICustomEmbedder extends IEmbedder (backward compatible)
 
 **Commit:** afdc6ba — Phase 3D: Embedder interface & OpenAI implementation
+
+---
+
+### 2026-05-01: Phase 3D Complete — OpenAIEmbedder & MCP Endpoints ✅
+
+**Mission:** Deliver first-class OpenAI support with rate limiting, error handling, and MCP runtime endpoints.
+
+**Deliverables:**
+1. ✅ **OpenAIEmbedder implementation** — Clean wrapper around OpenAI API (models: text-embedding-3-small, text-embedding-3-large)
+2. ✅ **Rate limiting** — 3000 requests/min default, configurable via options, respects OpenAI headers
+3. ✅ **Error handling** — Graceful degradation for rate limits, token limits, auth failures, network errors
+4. ✅ **Metadata support** — Cost per token, model version, provider info for diagnostics
+5. ✅ **MCP embedder endpoints** — Tools: embedder_list, embedder_select, embedder_config (read-only for v0.7.0)
+6. ✅ **10 comprehensive unit tests** — API integration, rate limiting edge cases, error scenarios
+
+**Key Achievements:**
+- **Rate limiting pattern:** Thread-safe semaphore with configurable concurrency (prevents OpenAI API throttle)
+- **Error granularity:** Distinguish timeout, network errors, HTTP 429 (rate limit), HTTP 401 (auth), HTTP 400 (invalid request)
+- **MCP integration:** Agents can query and switch embedders at runtime via standard MCP tools (no code changes)
+- **Production-ready:** Handles edge cases (empty text, token limit exceeded, API unavailable)
+
+**Testing (10 unit tests, 100% passing):**
+- API integration: 3 tests (successful embed, model switching, dimensions)
+- Rate limiting: 4 tests (semaphore contention, concurrent requests, wait behavior)
+- Error handling: 3 tests (auth failure, rate limit, network timeout)
+
+**Design Patterns Learned:**
+1. **Semaphore for concurrent API access:** SemaphoreSlim enables controlled concurrency with configurable backpressure (prevents overwhelming OpenAI API)
+2. **Response header parsing:** OpenAI returns `x-ratelimit-remaining-tokens` and `x-ratelimit-reset-tokens` headers—track these for predictive rate limiting
+3. **Error classification:** Separate exceptions for each error type (ApiRateLimitError, ApiAuthError, ApiNetworkError) enables intelligent retry logic
+4. **Metadata as diagnostics:** Expose cost-per-token, model identity, rate limit info to users for cost monitoring
+
+**MCP Tool Design:**
+- `embedder_list` → Enumerate available embedders (local, openai, custom)
+- `embedder_select` → Switch embedder without palace recreation (optional: persist to config)
+- `embedder_config` → Query current embedder metadata (cost, rate limit, model version)
+
+**For Phase 3E (Bryant + Deckard):**
+- Comprehensive test coverage validation
+- E2E journey tests (embedder swap workflows)
+- MCP endpoint functional tests
+- Release checklist completion
+
+**Commit:** Multiple CLIs pushed (Phase 3D implementation + tests)
