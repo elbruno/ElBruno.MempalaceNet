@@ -9,7 +9,7 @@ namespace MemPalace.Ai.Embedding;
 /// Local embedder wrapping ElBruno.LocalEmbeddings ONNX runtime.
 /// Provides offline-first embedding generation with no API keys required.
 /// </summary>
-public sealed class LocalEmbedder : IEmbedder, IDisposable
+public sealed class LocalEmbedder : ICustomEmbedder, IDisposable
 {
     private readonly IEmbeddingGenerator<string, Embedding<float>> _generator;
     private readonly string _modelName;
@@ -53,9 +53,14 @@ public sealed class LocalEmbedder : IEmbedder, IDisposable
     }
 
     /// <summary>
+    /// Provider name for factory resolution.
+    /// </summary>
+    public string ProviderName => "local";
+
+    /// <summary>
     /// Model identity: "local:{model-name}"
     /// </summary>
-    public string ModelIdentity => $"local:{_modelName}";
+    public string ModelIdentity => $"{ProviderName}:{_modelName}";
 
     /// <summary>
     /// Embedding dimensions (inferred from first embedding call).
@@ -72,6 +77,17 @@ public sealed class LocalEmbedder : IEmbedder, IDisposable
             return _dimensions.Value;
         }
     }
+
+    /// <summary>
+    /// Embedder metadata for runtime introspection.
+    /// </summary>
+    public IReadOnlyDictionary<string, object> Metadata => new Dictionary<string, object>
+    {
+        { "provider", ProviderName },
+        { "model", _modelName },
+        { "type", "local-onnx" },
+        { "requires_api_key", false }
+    };
 
     /// <summary>
     /// Embeds a batch of texts into vectors using the local ONNX model.
