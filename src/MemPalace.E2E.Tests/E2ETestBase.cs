@@ -58,7 +58,7 @@ public abstract class E2ETestBase : IAsyncDisposable
                     { "timestamp", DateTimeOffset.UtcNow.AddMinutes(-i).ToUnixTimeSeconds() },
                     { "source", "e2e-test" }
                 },
-                Embedding: embeddings[i]
+                Embedding: embeddings[i].ToArray()
             ));
         }
 

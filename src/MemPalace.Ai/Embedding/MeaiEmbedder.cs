@@ -4,9 +4,9 @@ using Microsoft.Extensions.AI;
 namespace MemPalace.Ai.Embedding;
 
 /// <summary>
-/// Adapter wrapping Microsoft.Extensions.AI IEmbeddingGenerator to implement MemPalace's IEmbedder.
+/// Adapter wrapping Microsoft.Extensions.AI IEmbeddingGenerator to implement MemPalace's ICustomEmbedder.
 /// </summary>
-public sealed class MeaiEmbedder : IEmbedder
+public sealed class MeaiEmbedder : ICustomEmbedder
 {
     private readonly IEmbeddingGenerator<string, Embedding<float>> _generator;
     private readonly string _providerName;
@@ -24,10 +24,25 @@ public sealed class MeaiEmbedder : IEmbedder
     }
 
     /// <summary>
+    /// Provider name for factory resolution (e.g., "local", "openai", "azureopenai").
+    /// </summary>
+    public string ProviderName => _providerName.ToLowerInvariant();
+
+    /// <summary>
     /// Model identity combining provider and model (e.g., "ollama:nomic-embed-text" or "local:sentence-transformers/all-MiniLM-L6-v2").
     /// For local provider, the full HuggingFace model ID is used.
     /// </summary>
-    public string ModelIdentity => $"{_providerName.ToLowerInvariant()}:{_modelName}";
+    public string ModelIdentity => $"{ProviderName}:{_modelName}";
+    
+    /// <summary>
+    /// Embedder metadata for runtime introspection.
+    /// </summary>
+    public IReadOnlyDictionary<string, object> Metadata => new Dictionary<string, object>
+    {
+        { "provider", ProviderName },
+        { "model", _modelName },
+        { "source", "Microsoft.Extensions.AI" }
+    };
 
     /// <summary>
     /// Embedding dimensions (inferred from first embedding call).

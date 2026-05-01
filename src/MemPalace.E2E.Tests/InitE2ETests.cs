@@ -1,6 +1,8 @@
 using FluentAssertions;
 using MemPalace.Backends.Sqlite;
+using MemPalace.Core.Backends;
 using MemPalace.Core.Model;
+using MemPalace.Tests.Backends;
 
 namespace MemPalace.E2E.Tests;
 
@@ -56,7 +58,7 @@ public sealed class InitE2ETests : IDisposable
 
         // Act
         var palace = new PalaceRef("test-palace");
-        var embedder = new FakeEmbedderForInit();
+        var embedder = new FakeEmbedder();
         var collection = await backend.GetCollectionAsync(palace, "default", create: true, embedder: embedder);
 
         // Assert
@@ -107,7 +109,7 @@ public sealed class InitE2ETests : IDisposable
         Directory.CreateDirectory(testDir);
         var backend = new SqliteBackend(testDir);
         var palace = new PalaceRef("multi-palace");
-        var embedder = new FakeEmbedderForInit();
+        var embedder = new FakeEmbedder();
 
         // Act
         var col1 = await backend.GetCollectionAsync(palace, "collection1", create: true, embedder: embedder);
@@ -133,16 +135,17 @@ public sealed class InitE2ETests : IDisposable
         _dirsToClean.Add(testDir);
         Directory.CreateDirectory(testDir);
         var palace = new PalaceRef("idempotent-test");
-        var embedder = new FakeEmbedderForInit();
+        var embedder = new FakeEmbedder();
 
         // Act - Create backend and collection twice
         var backend1 = new SqliteBackend(testDir);
         var col1 = await backend1.GetCollectionAsync(palace, "memories", create: true, embedder: embedder);
+        var embedding = (await embedder.EmbedAsync(new[] { "Test memory" }))[0].ToArray();
         var record1 = new EmbeddedRecord(
             Id: "test-1",
             Document: "Test memory",
             Metadata: new Dictionary<string, object?> { { "wing", "test" } },
-            Embedding: await embedder.EmbedAsync(new[] { "Test memory" }).ConfigureAwait(false)
+            Embedding: embedding
         );
         await col1.AddAsync(new[] { record1 });
         await col1.DisposeAsync();
@@ -184,21 +187,4 @@ public sealed class InitE2ETests : IDisposable
             catch { /* Best effort cleanup */ }
         }
     }
-}
-
-/// <summary>
-/// Minimal embedder for init tests that don't require real embeddings.
-/// </summary>
-internal sealed class FakeEmbedderForInit : IEmbedder
-{
-    public string Id => "fake-init";
-    public int Dimensions => 384;
-
-    public async Task<List<float[]>> EmbedAsync(List<string> texts, CancellationToken ct = default)
-    {
-        await Task.Delay(0, ct).ConfigureAwait(false);
-        return texts.Select(_ => new float[Dimensions]).ToList();
-    }
-
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

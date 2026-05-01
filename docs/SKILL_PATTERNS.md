@@ -781,7 +781,135 @@ Claude: I'll add Bob to the knowledge graph.
 
 ---
 
-## Pattern 5: Local-First Privacy
+## Pattern 5: Pluggable Embedder Backends (NEW in v0.7.0)
+
+### Description
+Use **pluggable embedders** to switch between local ONNX, OpenAI, or Azure OpenAI embeddings without code changes. This pattern demonstrates:
+1. Configure embedder at DI registration (no runtime switching required)
+2. Use `EmbedderType` enum for clean provider selection
+3. Validate embedder identity to prevent semantic inconsistencies
+4. Swap embedders for different environments (dev: Local, prod: OpenAI)
+
+### Code Example
+
+```csharp
+using MemPalace.Ai.Embedding;
+using MemPalace.Core.Backends;
+using Microsoft.Extensions.DependencyInjection;
+
+// Pattern: Environment-based embedder selection
+public class EmbedderConfigurationPattern
+{
+    public static void ConfigureEmbedder(IServiceCollection services, string environment)
+    {
+        switch (environment)
+        {
+            case "development":
+                // Local ONNX: privacy-first, no API keys
+                services.AddMemPalaceAi();
+                break;
+
+            case "staging":
+                // OpenAI: balance of cost and quality
+                services.AddMemPalaceAi(options =>
+                {
+                    options.Type = EmbedderType.OpenAI;
+                    options.Model = "text-embedding-3-small";
+                    options.ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                });
+                break;
+
+            case "production":
+                // Azure OpenAI: enterprise SLA and data residency
+                services.AddMemPalaceAi(options =>
+                {
+                    options.Type = EmbedderType.AzureOpenAI;
+                    options.Endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")!;
+                    options.ApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY")!;
+                    options.DeploymentName = "text-embedding-ada-002";
+                });
+                break;
+
+            default:
+                throw new InvalidOperationException($"Unknown environment: {environment}");
+        }
+    }
+}
+
+// Usage: Configure embedder at startup
+var services = new ServiceCollection();
+var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "development";
+EmbedderConfigurationPattern.ConfigureEmbedder(services, env);
+
+// Add backend
+services.AddMemPalaceBackends(backend =>
+{
+    backend.Backend = BackendType.Sqlite;
+    backend.SqliteConnectionString = "Data Source=palace.db";
+});
+
+var provider = services.BuildServiceProvider();
+var embedder = provider.GetRequiredService<IEmbedder>();
+var backend = provider.GetRequiredService<IBackend>();
+
+// Embedder identity is automatically validated by backend
+Console.WriteLine($"Embedder: {embedder.Identity}");
+Console.WriteLine($"Dimensions: {embedder.Dimensions}");
+```
+
+### CLI Usage
+
+```bash
+# Local embeddings (default)
+mempalacenet init ~/my-palace
+mempalacenet mine ~/docs --wing documentation
+
+# OpenAI embeddings (via environment variable)
+export MEMPALACE_EMBEDDER_TYPE="OpenAI"
+export OPENAI_API_KEY="sk-..."
+mempalacenet init ~/prod-palace
+mempalacenet mine ~/docs --wing documentation
+
+# Azure OpenAI embeddings
+export MEMPALACE_EMBEDDER_TYPE="AzureOpenAI"
+export AZURE_OPENAI_ENDPOINT="https://YOUR_RESOURCE.openai.azure.com"
+export AZURE_OPENAI_API_KEY="..."
+export AZURE_OPENAI_DEPLOYMENT="text-embedding-ada-002"
+mempalacenet init ~/enterprise-palace
+```
+
+### Use Cases
+- **Local Development:** Use ONNX embeddings (no API keys, fast iteration)
+- **Multi-Cloud Deployment:** Switch between OpenAI (AWS/GCP) and Azure OpenAI (Azure) based on infrastructure
+- **Cost Optimization:** Use Local embeddings for large batch mining, OpenAI for production search
+- **Data Residency Compliance:** Use Azure OpenAI with specific region deployments for GDPR/HIPAA
+- **Hybrid Approach:** Local embeddings for sensitive data, cloud embeddings for general-purpose search
+
+### Best Practices
+- **Embedder identity enforcement:** Backends validate embedder identity to prevent mixing incompatible vectors
+- **Migration strategy:** When switching embedders, re-embed existing memories (use `mempalacenet migrate-embedder` CLI)
+- **Dimension consistency:** Ensure embedder dimensions match backend schema (SQLite backend adapts automatically)
+- **API key security:** Use environment variables or Azure Key Vault (never hardcode API keys)
+- **Cost monitoring:** Track OpenAI token usage (1 memory ≈ 50-200 tokens depending on content length)
+
+### Performance Recommendations
+- **Local (ONNX):** 50-100 embeddings/sec (CPU), 200-500 embeddings/sec (GPU)
+- **OpenAI:** 1000+ embeddings/sec (rate-limited by API), 3000 requests/min default
+- **Azure OpenAI:** 1000+ embeddings/sec (rate-limited by deployment tier)
+- **Batch embedding:** Use batch APIs for mining (50-100x faster than single calls)
+- **Caching:** Embeddings are idempotent — cache vectors in backend to avoid re-embedding
+
+### Provider Comparison
+
+| Provider | API Key | Offline | Cost | Latency | Quality |
+|----------|---------|---------|------|---------|---------|
+| **Local (ONNX)** | ❌ No | ✅ Yes | Free | ~10-20ms/embedding (CPU) | Good (384-768d) |
+| **OpenAI** | ✅ Required | ❌ No | $0.02-$0.13 per 1M tokens | ~50-100ms/embedding | Excellent (1536-3072d) |
+| **Azure OpenAI** | ✅ Required | ❌ No | Usage-based | ~50-100ms/embedding | Excellent (1536d) |
+
+---
+
+## Pattern 6: Local-First Privacy
 
 ### Description
 Run MemPalace.NET entirely **locally** without external API calls using ONNX embeddings. This pattern ensures:

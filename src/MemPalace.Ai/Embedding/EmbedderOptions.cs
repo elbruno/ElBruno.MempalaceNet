@@ -72,4 +72,10 @@ public sealed record EmbedderOptions
     /// Default is 256 for all-MiniLM-L6-v2.
     /// </summary>
     public int MaxSequenceLength { get; set; } = 256;
+
+    /// <summary>
+    /// Custom embedder instance. When set, overrides Type property.
+    /// Use this to plug in proprietary or specialized embedding models.
+    /// </summary>
+    public MemPalace.Core.Backends.ICustomEmbedder? CustomEmbedder { get; set; }
 }

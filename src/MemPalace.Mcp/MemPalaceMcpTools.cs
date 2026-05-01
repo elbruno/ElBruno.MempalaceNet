@@ -646,6 +646,63 @@ public class MemPalaceMcpTools
         );
     }
 
+    // ========== EMBEDDER INTROSPECTION ==========
+    
+    /// <summary>
+    /// Get information about the current embedder.
+    /// </summary>
+    [McpServerTool]
+    [Description("Get information about the current embedder (provider, model, dimensions, metadata).")]
+    public EmbedderInfoResponse EmbedderInfo()
+    {
+        var providerName = _embedder is ICustomEmbedder custom 
+            ? custom.ProviderName 
+            : "unknown";
+            
+        var metadata = _embedder is ICustomEmbedder customEmbed 
+            ? customEmbed.Metadata 
+            : new Dictionary<string, object>();
+        
+        return new EmbedderInfoResponse(
+            ModelIdentity: _embedder.ModelIdentity,
+            Dimensions: _embedder.Dimensions,
+            ProviderName: providerName,
+            Metadata: metadata
+        );
+    }
+    
+    /// <summary>
+    /// List all available embedder providers.
+    /// </summary>
+    [McpServerTool]
+    [Description("List all available embedder providers (Local, OpenAI, AzureOpenAI) with their capabilities.")]
+    public EmbedderListResponse EmbedderList()
+    {
+        return new EmbedderListResponse(
+            Embedders: new[]
+            {
+                new EmbedderDescriptor(
+                    ProviderName: "Local",
+                    DefaultModel: "sentence-transformers/all-MiniLM-L6-v2",
+                    Dimensions: 384,
+                    RequiresApiKey: false,
+                    Description: "Local ONNX embeddings (ElBruno.LocalEmbeddings). No API key required, runs offline."),
+                new EmbedderDescriptor(
+                    ProviderName: "OpenAI",
+                    DefaultModel: "text-embedding-3-small",
+                    Dimensions: 1536,
+                    RequiresApiKey: true,
+                    Description: "OpenAI embedding API. Requires OPENAI_API_KEY. High quality, low latency."),
+                new EmbedderDescriptor(
+                    ProviderName: "AzureOpenAI",
+                    DefaultModel: "text-embedding-ada-002",
+                    Dimensions: 1536,
+                    RequiresApiKey: true,
+                    Description: "Azure OpenAI embedding API. Requires Azure endpoint, API key, and deployment name.")
+            }
+        );
+    }
+
     // ========== HELPER METHODS ==========
 
     private static string EscapeCsv(string value)
@@ -692,3 +749,17 @@ public record PalaceStatsResponse(
     IReadOnlyDictionary<string, long> WingStats,
     string Embedder,
     string Backend);
+
+// Embedder introspection
+public record EmbedderInfoResponse(
+    string ModelIdentity,
+    int Dimensions,
+    string ProviderName,
+    IReadOnlyDictionary<string, object> Metadata);
+public record EmbedderListResponse(EmbedderDescriptor[] Embedders);
+public record EmbedderDescriptor(
+    string ProviderName,
+    string DefaultModel,
+    int Dimensions,
+    bool RequiresApiKey,
+    string Description);
