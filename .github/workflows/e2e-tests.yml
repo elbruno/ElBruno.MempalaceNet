@@ -45,7 +45,6 @@ jobs:
           --logger "trx;LogFileName=integration-results.trx" \
           --logger "console;verbosity=normal" \
           -v normal \
-          --filter "Category=Integration" \
           --results-directory ./test-results
         
         TEST_EXIT_CODE=$?

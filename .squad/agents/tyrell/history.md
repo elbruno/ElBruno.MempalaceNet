@@ -711,3 +711,55 @@ public void Dispose()
 - ✅ GitHub Issue #25 ready for closure
 
 **Status:** ✅ COMPLETE
+
+### Phase 2 Extension — E2E Test CI/CD Integration (2026-04-30)
+
+**Objective:** Automate E2E and integration test execution on every push/PR to ensure early regression detection.
+
+**Implementation:**
+- Created `.github/workflows/e2e-tests.yml` — consolidated GitHub Actions workflow
+- Triggers: push to main/develop, PRs, manual dispatch
+- Steps: checkout → setup .NET 10.0 → restore → build (Release) → test → artifact upload → PR comment
+- Execution time: ~10-15 min (includes all tests in MemPalace.Tests project)
+- Test results: TRX XML format, parsed for PR comments, artifact retention 30 days
+
+**CI/CD Design Decisions:**
+- **Single consolidated workflow:** Avoids duplication; E2E tests (currently .bak) can be added incrementally
+- **No test filtering on CI:** Run all tests (unit + integration + regression); allows early catch of unexpected interactions
+- **Release configuration:** Build and test in Release mode (matches performance-critical regressions)
+- **TRX results format:** Built-in xUnit output, no extra tooling; GitHub Actions native support
+- **PR comments:** Automated pass/fail summary; human-readable counts (total, passed, failed)
+
+**Known Gaps:**
+- E2E tests not yet active (E2EScenarios.cs.bak has compilation errors due to API mismatches)
+- Bryant (QA) to refactor E2E tests to use public Palace APIs and fix type references
+- Current workflow runs full test suite including expensive LongMemEval benchmark (~8 min)
+
+**CI/CD Patterns Observed:**
+1. Workflow triggers should skip doc-only changes (paths-ignore) to save cycles
+2. Test results must be always uploaded (`if: always()`) for post-mortem analysis
+3. PR comments require `github.event_name == 'pull_request'` guard to avoid errors on branch pushes
+4. Explicit `exit 1` failure step clarifies intent (vs. relying on implicit step failures)
+5. Release build config consistent across workflows (ci.yml, integration-tests.yml)
+
+**Performance Implications:**
+- CI time increased by ~10 min per PR (new workflow runs all tests)
+- Potential bottleneck: LongMemEval regression benchmark (8+ min)
+- Future optimization: Split into fast (unit) + slow (integration/regression) workflows with separate triggers
+
+**Coordination:**
+- Bryant: E2E test implementation (owns test code refinement)
+- Roy/Deckard: No action needed; workflow is self-contained
+- Tyrell: Infrastructure ready; can adjust workflow based on feedback
+
+**Verification:**
+- ✅ YAML syntax valid (no yamllint errors)
+- ✅ Workflow compiles against GitHub Actions schema
+- ⚠️ End-to-end test pending (needs merge to main or manual dispatch)
+- ⚠️ Current test suite has pre-existing failures (8 tests) unrelated to this work
+
+**Decision Document:** `.squad/decisions/inbox/tyrell-e2e-ci-integration.md`
+
+**Commit:** Pending; includes workflow file + decision doc
+
+**Status:** ✅ INFRASTRUCTURE COMPLETE (test implementation by Bryant pending)
