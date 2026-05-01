@@ -763,3 +763,61 @@ public void Dispose()
 **Commit:** Pending; includes workflow file + decision doc
 
 **Status:** ✅ INFRASTRUCTURE COMPLETE (test implementation by Bryant pending)
+
+### Phase 3D — Embedder Interface & Factory Pattern (2026-04-27)
+
+**Scope:** Implemented pluggable embedder factory pattern for v0.7.0 Phase 3D:
+- **ICustomEmbedder interface** — Extended IEmbedder with ProviderName and Metadata properties for runtime introspection
+- **EmbedderFactory** — Static factory creates embedders from EmbedderOptions or custom instances
+- **LocalEmbedder** — Standalone wrapper for ElBruno.LocalEmbeddings with ICustomEmbedder implementation
+- **Comprehensive testing** — 39 unit tests (Factory: 14, LocalEmbedder: 17, Contract: 8), 7 E2E journey tests
+
+**Architecture Decisions:**
+
+1. **ICustomEmbedder Properties**
+   - ProviderName property added for factory resolution ("local", "openai", "azureopenai")
+   - Metadata property (IReadOnlyDictionary) for runtime introspection
+   - Pattern: MeaiEmbedder already implemented ICustomEmbedder; LocalEmbedder followed same pattern
+
+2. **EmbedderFactory Design**
+   - Static factory (`EmbedderFactory.Create(options)`) — no DI coupling, simplifies CLI usage
+   - Custom embedder precedence: `options.CustomEmbedder` overrides `options.Type`
+   - Validation: Factory validates ModelIdentity (non-empty) and Dimensions (positive)
+   - Built-in embedders: LocalEmbedder (ONNX), OpenAIEmbedder, AzureOpenAIEmbedder
+
+3. **LocalEmbedder Implementation**
+   - Standalone ServiceProvider: Creates own DI container for ElBruno.LocalEmbeddings
+   - Lazy dimensions: Inferred from first embedding call (matches M.E.AI pattern)
+   - IDisposable: Properly releases ONNX resources via ServiceProvider.Dispose()
+   - ModelIdentity format: `local:{model-name}`
+   - Metadata: `{ "provider": "local", "type": "local-onnx", "requires_api_key": false }`
+
+4. **ServiceCollectionExtensions Simplification**
+   - Before: Complex conditional branching for Local/OpenAI/Azure
+   - After: Single factory call (`EmbedderFactory.Create(options)`)
+
+**Testing Strategy:**
+- Unit Tests: 39 total (14 Factory, 17 LocalEmbedder, 8 Contract), 1 skipped
+- E2E Journey Tests: 7 tests (palace integration, custom embedders, validation)
+- Key learnings: ElBruno.LocalEmbeddings embeddings are NOT normalized (magnitude > 1.0)
+
+**API Evolution:**
+- New: `MemPalace.Core.Backends.ICustomEmbedder`
+- New: `MemPalace.Ai.Embedding.EmbedderFactory`
+- New: `MemPalace.Ai.Embedding.LocalEmbedder`
+- Modified: `EmbedderOptions` (added CustomEmbedder property)
+- Modified: `ServiceCollectionExtensions.AddMemPalaceAi()` (simplified to use factory)
+
+**Success Metrics:**
+- ✅ ICustomEmbedder interface defined with ProviderName, Metadata
+- ✅ EmbedderFactory functional (Local, OpenAI, Azure, Custom)
+- ✅ LocalEmbedder wraps ElBruno.LocalEmbeddings cleanly
+- ✅ 39/40 tests pass (1 skipped: custom model requires download)
+- ✅ No regressions (build succeeded, 0 errors)
+
+**Documentation:**
+- Created: `.squad/decisions/inbox/tyrell-phase3d-embedder-design.md` (22KB design doc)
+- Created: Interface, factory, and implementation with XML docs
+- Updated: EmbedderOptions, ServiceCollectionExtensions
+
+**Next:** Phase 3E (Roy) — OpenAIEmbedder updates, MCP embedder tools, E2E embedder-swap tests with OpenAI
