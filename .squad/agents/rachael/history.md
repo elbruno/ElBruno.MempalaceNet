@@ -804,4 +804,87 @@ Images enhance the v0.5.0 launch but aren't blocking for NuGet package functiona
 - Test pattern code examples in Phase 2 (v0.6)
 - Update promotional materials with skill announcement
 - Prepare for marketplace submission at v1.0
+## 2026-04-28: GitHub Issue #24 — PerformanceBenchmark for SLA Tracking
 
+**Mission:** Verify and validate the PerformanceBenchmark utilities implementation for OpenClawNet SLA tracking requirements.
+
+**What I verified:**
+
+1. **Complete Implementation** (src/MemPalace.Diagnostics/):
+   - PerformanceBenchmark.cs: Core benchmark class with RecordLatency, GetPercentiles, ValidateSLA(s), GenerateReport
+   - PercentileStats.cs: Result type with P50, P95, P99, P100 properties + SampleCount
+   - BenchmarkReport.cs: Report output with ToMarkdown() and ToJson() methods
+   - ValidationResult.cs: SLA validation result with IsValid, Errors[], OperationResults
+
+2. **Advanced Features:**
+   - **Deterministic percentile calculation** using linear interpolation (no randomness)
+   - **Multiple operation tracking** with isolated latency collections per operation name
+   - **Batch SLA validation** via ValidateSLAs() method with detailed error reporting
+   - **Rich markdown output** with status indicators (✓ PASS, ✗ FAIL, N/A)
+   - **JSON export** with custom TimeSpanJsonConverter (milliseconds as numbers)
+   - **TimeSpan formatting** in reports: microseconds (<1ms), milliseconds (<1s), seconds (≥1s)
+
+3. **Comprehensive Test Suite** (src/MemPalace.Diagnostics.Tests/PerformanceBenchmarkTests.cs):
+   - **27 unit tests** covering all acceptance criteria (exceeds 10+ requirement)
+   - **Edge cases:** empty datasets, single sample, identical samples, two samples, large datasets (10K samples)
+   - **Percentile accuracy:** verified with 100-sample linear distribution
+   - **SLA validation:** passing, failing, exact threshold, batch validation
+   - **Error handling:** null/empty/whitespace operation names, nonexistent operations
+   - **Report generation:** markdown format, JSON format, multi-operation isolation
+   - **ValidationResult factories:** Success() and Failure() static methods
+
+4. **OpenClawNet SLA Patterns** (as documented in XML examples):
+   - Semantic re-rank: <100ms P95
+   - Health check: <50ms P95
+   - Total enrichment: <200ms P95 (40% of 500ms agent spawn budget)
+
+**Build & Test Results:**
+- ✅ dotnet build MemPalace.Diagnostics.csproj — succeeded
+- ✅ dotnet test MemPalace.Diagnostics.Tests.csproj — 27/27 tests passed
+- ✅ All acceptance criteria met
+- ✅ Code already committed to repository
+
+**Architecture Learnings:**
+
+1. **Pure Diagnostics Layer:**
+   - No dependencies on storage (MemPalace.Core) or AI (MemPalace.Ai)
+   - Only uses System namespaces + System.Text.Json
+   - Fully reusable across all MempalaceNet consumers (OpenClawNet, future projects)
+
+2. **Percentile Algorithm Design:**
+   - Used "R-7" (Excel) percentile method with linear interpolation
+   - Deterministic for consistent test results and reproducible benchmarks
+   - Handles edge cases gracefully (1 sample, identical samples, unsorted input)
+
+3. **SLA Validation Pattern:**
+   - Single operation: ool ValidateSLA(name, threshold) for inline checks
+   - Batch validation: ValidationResult ValidateSLAs(Dictionary<name, threshold>) for comprehensive test suites
+   - Stores thresholds for report generation (couples validation with reporting)
+
+4. **Report Flexibility:**
+   - Markdown for human consumption (CI logs, documentation, debugging)
+   - JSON for machine consumption (dashboards, alerts, trend analysis)
+   - TimeSpan serialization as milliseconds (standard for performance metrics)
+
+5. **Test Coverage Strategy:**
+   - Mathematical correctness: verified percentile calculations against known distributions
+   - Edge case resilience: empty, single, identical, large datasets
+   - API contract validation: null checks, whitespace, nonexistent operations
+   - Integration scenarios: multi-operation tracking, batch SLA validation, report generation
+
+**Key File Paths:**
+- Core: src/MemPalace.Diagnostics/*.cs
+- Tests: src/MemPalace.Diagnostics.Tests/PerformanceBenchmarkTests.cs
+- Project: src/MemPalace.Diagnostics/MemPalace.Diagnostics.csproj
+
+**Team Patterns:**
+- Diagnostics utilities belong in MemPalace.Diagnostics namespace (not in Core or Cli)
+- FluentAssertions preferred for test assertions
+- XML docs required on all public members with usage examples
+- TimeSpan used for latency measurements (never milliseconds as primitives)
+
+**OpenClawNet Integration Notes:**
+- OpenClawNet can now reference MemPalace.Diagnostics package
+- Use RecordLatency("semantic-rerank", elapsed) in HybridSearchService tests
+- Use ValidateSLA("semantic-rerank", TimeSpan.FromMilliseconds(100)) for P95 checks
+- Use GenerateReport().ToMarkdown() for CI build summaries
