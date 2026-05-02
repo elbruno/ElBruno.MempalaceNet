@@ -1374,3 +1374,75 @@ gh issue edit 23 --add-label "squad,squad:roy,feature,high-priority"
 
 **Commit:** Multiple CLIs pushed (Phase 3E implementation + comprehensive tests)
 
+---
+
+### 2026-05-02: v0.15.0 Release — Option A: CI Workflow Update ✅
+
+**Mission:** Execute v0.15.0 release with Option A (update CI workflow to accept 85.9%+ pass rate, publish to NuGet)
+
+**Accomplished:**
+1. ✅ **Workflow Update** — Modified `.github/workflows/publish.yml`
+   - Added `--logger "trx;LogFileName=test-results.trx"` to Unit Tests step for structured test result output
+   - Added `continue-on-error: true` to Unit Tests to allow job continuation on test failures
+   - Created new "Parse test results and check pass rate" step with 85.9% threshold gate
+   - Preserves OIDC trusted publishing and NuGet upload logic
+
+2. ✅ **Workflow Testing & Iteration**
+   - First run (25252321059): Failed initially—Unit Tests failure blocked job progression
+   - Root cause: Unit Tests step was failing the job before pass rate could be evaluated
+   - Fix: Added `continue-on-error: true` to allow pass rate gate to determine success/failure
+   - Second run (25252359379): All steps passed ✓
+
+3. ✅ **NuGet Publish Success**
+   - Version determined from `Directory.Build.props`: v0.15.0
+   - All 11 packages published successfully (MemPalace.Agents, Ai, Backends.Sqlite, Core, Diagnostics, KnowledgeGraph, Mcp, Mining, Cli, root packages)
+   - OIDC authentication successful (no manual API keys)
+   - nuget.org indexing in progress (typically 5-10 minutes)
+
+4. ✅ **Commits + Documentation**
+   - Commit 7364acb: Initial workflow update (added test pass rate threshold)
+   - Commit 4217a92: Workflow fix (added continue-on-error: true)
+   - Decision doc: `.squad/decisions/inbox/deckard-v0.15.0-published.md` (6.6KB)
+   - Workflow run logs: Complete audit trail at GitHub Actions
+
+**Key Learnings:**
+
+1. **CI Gate Architecture:** Separating test execution from test evaluation enables flexible pass rate policies
+   - Old model: Test step fails job if any test fails (all-or-nothing gate)
+   - New model: Test step runs to completion (continue-on-error: true), evaluation step gates based on pass rate
+   - Implication: Can now publish with known failures if quality threshold (85.9%) met
+
+2. **TRX Format for Structured Results:** XML parsing of xUnit TRX files is more reliable than regex on console output
+   - TRX format includes `total="N" passed="P"` attributes—easy to extract via grep
+   - Alternative (parsing console output) is fragile—affected by verbosity levels, localization
+   - Pattern: Always request structured logs (`--logger "trx;LogFileName=..."`) for deterministic parsing
+
+3. **GitHub Actions Step Dependencies:** `continue-on-error: true` + `if: always()` enables sophisticated gates
+   - `continue-on-error: true` — Allows step to "fail softly" (returns non-zero but doesn't stop job)
+   - `if: always()` — Ensures gate step runs regardless of previous step status
+   - Combination: Gate step sees actual test results and makes final pass/fail decision
+
+4. **OIDC Trusted Publishing Success:** No manual API keys needed for NuGet
+   - `NuGet/login@v1` action handles OIDC token → API key exchange automatically
+   - Secret required: Only `NUGET_USER` (username), no API key in secrets
+   - Result: Secure, audit-friendly, no credential rotation needed
+
+5. **Multi-Package Publishing Automation:** Single workflow handles 11 packages seamlessly
+   - `dotnet pack` generates all packages in single operation
+   - `dotnet nuget push artifacts/*.nupkg` publishes all packages with one command
+   - Each package receives individual success confirmation ("Your package was pushed.")
+   - Edge case: `--skip-duplicate` flag allows re-runs without error on duplicate uploads
+
+6. **Release Automation Maturity:** v0.15.0 release required zero manual steps
+   - Version auto-detected from Directory.Build.props
+   - Tests auto-evaluated with configurable pass rate gate
+   - NuGet auth automated via OIDC
+   - Multi-package push automated
+   - Implication: Can trigger full release via `gh workflow run` from CLI—fully CI/CD-driven
+
+**Release Status:**
+- v0.15.0 published to NuGet.org ✅
+- Packages in GitHub Actions artifacts ✅
+- Indexing on nuget.org (pending, ~5-10 min) ⏳
+- Installation: `dotnet add package mempalacenet --version 0.15.0` (once indexed)
+
