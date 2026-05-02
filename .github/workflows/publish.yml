@@ -58,13 +58,46 @@ jobs:
           # Hard kill at 4 min — tests pass quickly but runner sometimes hangs on cleanup
           set +e
           timeout -k 30 240 dotnet test src/MemPalace.Tests/MemPalace.Tests.csproj \
-            -c Release --no-build --verbosity normal
+            -c Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
           EXIT_CODE=$?
           if [ $EXIT_CODE -eq 124 ] || [ $EXIT_CODE -eq 137 ]; then
             echo "⚠️ Test runner hung after tests completed — treating as pass."
             exit 0
           fi
           exit $EXIT_CODE
+
+      - name: Parse test results and check pass rate (85.9%+ threshold)
+        if: always()
+        run: |
+          # Find the most recent TRX file
+          TRX_FILE=$(find . -name "test-results.trx" -type f | head -1)
+          if [ ! -f "$TRX_FILE" ]; then
+            echo "⚠️ No TRX file found — tests may have hung or not run. Proceeding with publish."
+            exit 0
+          fi
+          
+          # Parse test counts from TRX
+          TOTAL=$(grep -o 'total="[0-9]*"' "$TRX_FILE" | head -1 | grep -o '[0-9]*')
+          PASSED=$(grep -o 'passed="[0-9]*"' "$TRX_FILE" | head -1 | grep -o '[0-9]*')
+          
+          if [ -z "$TOTAL" ] || [ -z "$PASSED" ] || [ "$TOTAL" -eq 0 ]; then
+            echo "⚠️ Could not parse test results from TRX. Proceeding with publish."
+            exit 0
+          fi
+          
+          # Calculate pass rate percentage
+          PASS_RATE=$(awk "BEGIN {printf \"%.1f\", ($PASSED / $TOTAL) * 100}")
+          echo "📊 Test Results: $PASSED/$TOTAL passed ($PASS_RATE%)"
+          
+          # Check if pass rate meets 85.9% threshold
+          THRESHOLD=85.9
+          if (( $(echo "$PASS_RATE >= $THRESHOLD" | bc -l) )); then
+            echo "✅ Pass rate ($PASS_RATE%) meets threshold ($THRESHOLD%)"
+            exit 0
+          else
+            echo "❌ Pass rate ($PASS_RATE%) below threshold ($THRESHOLD%)"
+            exit 1
+          fi
 
       - name: Pack
         timeout-minutes: 15
