@@ -36,7 +36,7 @@ public sealed class FullJourneyTests : IDisposable
         // Phase 1: Initialize palace
         var palaceRef = new PalaceRef("journey-palace");
         var embedder = new FakeEmbedder();
-        using var backend = new SqliteBackend(_testDir);
+        await using var backend = new SqliteBackend(_testDir);
 
         var collection = await backend.GetCollectionAsync(
             palaceRef,
@@ -87,15 +87,29 @@ public sealed class FullJourneyTests : IDisposable
         wakeUpResults.Documents.Should().HaveCount(documents.Length);
 
         // Phase 5: Knowledge Graph operations
-        var kg = new SqliteKnowledgeGraph(Path.Combine(_testDir, "kg.db"));
+        await using var kg = new SqliteKnowledgeGraph(Path.Combine(_testDir, "kg.db"));
         
-        await kg.AddEntityAsync("alice", "person", new { name = "Alice", role = "engineer" });
-        await kg.AddEntityAsync("auth-module", "project");
-        await kg.AddRelationshipAsync("alice", "auth-module", "works_on");
+        var now = DateTimeOffset.UtcNow;
+        
+        // Add relationship: alice works_on auth-module
+        var triple = new Triple(
+            new EntityRef("person", "alice"),
+            "works_on",
+            new EntityRef("project", "auth-module"),
+            new Dictionary<string, object> { { "name", "Alice" }, { "role", "engineer" } }
+        );
+        var temporal = new TemporalTriple(triple, now, null, now);
+        await kg.AddAsync(temporal);
 
-        var relationships = await kg.QueryAsync("alice", "works_on");
+        // Query relationships
+        var pattern = new TriplePattern(
+            Subject: new EntityRef("person", "alice"),
+            Predicate: "works_on",
+            Object: null
+        );
+        var relationships = await kg.QueryAsync(pattern);
         relationships.Should().HaveCount(1);
-        relationships[0].Object.Should().Be("auth-module");
+        relationships[0].Triple.Object.Id.Should().Be("auth-module");
 
         await kg.DisposeAsync();
         await collection.DisposeAsync();
@@ -108,7 +122,7 @@ public sealed class FullJourneyTests : IDisposable
         // Phase 1: Initialize
         var palaceRef = new PalaceRef("multi-wing-palace");
         var embedder = new FakeEmbedder();
-        using var backend = new SqliteBackend(_testDir);
+        await using var backend = new SqliteBackend(_testDir);
 
         // Phase 2: Create separate wings (collections)
         var workCollection = await backend.GetCollectionAsync(palaceRef, "work", create: true, embedder: embedder);

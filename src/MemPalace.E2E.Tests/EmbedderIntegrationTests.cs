@@ -34,14 +34,13 @@ public sealed class EmbedderIntegrationTests : IDisposable
         // Arrange
         var palaceRef = new PalaceRef("test-local", Path.Combine(_testDir, "local"));
         using var embedder = new LocalEmbedder();
-        using var backend = await SqliteBackend.CreateAsync(embedder);
+        await using var backend = new SqliteBackend(_testDir);
 
         var collection = await backend.GetCollectionAsync(
             palaceRef,
             "default",
-            dimensions: embedder.Dimensions,
-            embedder: embedder,
-            create: true);
+            create: true,
+            embedder: embedder);
 
         // Act - store memories
         await collection.AddAsync(
@@ -66,14 +65,13 @@ public sealed class EmbedderIntegrationTests : IDisposable
         // Arrange
         var palaceRef = new PalaceRef("test-custom", Path.Combine(_testDir, "custom"));
         var customEmbedder = new TestCustomEmbedder();
-        using var backend = await SqliteBackend.CreateAsync(customEmbedder);
+        await using var backend = new SqliteBackend(_testDir);
 
         var collection = await backend.GetCollectionAsync(
             palaceRef,
             "default",
-            dimensions: customEmbedder.Dimensions,
-            embedder: customEmbedder,
-            create: true);
+            create: true,
+            embedder: customEmbedder);
 
         // Act - store memories
         await collection.AddAsync(
@@ -252,6 +250,12 @@ public sealed class EmbedderIntegrationTests : IDisposable
 
         public string ModelIdentity => _modelIdentity;
         public int Dimensions => _dimensions;
+        public string ProviderName => "test-custom-integration";
+        public IReadOnlyDictionary<string, object> Metadata => new Dictionary<string, object>
+        {
+            { "test_mode", true },
+            { "dimensions", _dimensions }
+        };
 
         public ValueTask<IReadOnlyList<ReadOnlyMemory<float>>> EmbedAsync(
             IReadOnlyList<string> texts,

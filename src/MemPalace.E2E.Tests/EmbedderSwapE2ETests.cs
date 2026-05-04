@@ -34,14 +34,13 @@ public sealed class EmbedderSwapE2ETests : IDisposable
         // Phase 1: Initialize palace with LocalEmbedder
         var palaceRef = new PalaceRef("journey-palace", Path.Combine(_testDir, "journey"));
         using var localEmbedder = new LocalEmbedder();
-        using var backend = await SqliteBackend.CreateAsync(localEmbedder);
+        await using var backend = new SqliteBackend(_testDir);
 
         var collection = await backend.GetCollectionAsync(
             palaceRef,
             "documents",
-            dimensions: localEmbedder.Dimensions,
-            embedder: localEmbedder,
-            create: true);
+            create: true,
+            embedder: localEmbedder);
 
         // Phase 2: Mine content (simulate document storage)
         var documents = new[]
@@ -248,6 +247,12 @@ public sealed class EmbedderSwapE2ETests : IDisposable
 
         public string ModelIdentity => _modelIdentity;
         public int Dimensions => _dimensions;
+        public string ProviderName => "test-custom";
+        public IReadOnlyDictionary<string, object> Metadata => new Dictionary<string, object>
+        {
+            { "test_mode", true },
+            { "dimensions", _dimensions }
+        };
 
         public ValueTask<IReadOnlyList<ReadOnlyMemory<float>>> EmbedAsync(
             IReadOnlyList<string> texts,
@@ -294,6 +299,12 @@ public sealed class EmbedderSwapE2ETests : IDisposable
 
         public string ModelIdentity => "disposable-test-v1";
         public int Dimensions => 64;
+        public string ProviderName => "test-disposable";
+        public IReadOnlyDictionary<string, object> Metadata => new Dictionary<string, object>
+        {
+            { "test_mode", true },
+            { "disposable", true }
+        };
 
         public ValueTask<IReadOnlyList<ReadOnlyMemory<float>>> EmbedAsync(
             IReadOnlyList<string> texts,

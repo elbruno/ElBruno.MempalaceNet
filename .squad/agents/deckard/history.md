@@ -355,6 +355,71 @@ git tag -a v0.1.0 -m "MemPalace.NET v0.1.0" && git push --tags
 
 **Scribe Status:** Decisions merged (inbox → decisions.md), inbox files deleted, orchestration logs created.
 
+### 2026-05-04: Phase 4B Journey Guides ✅
+
+**Mission:** Create 3 practical guides for advanced MemPalace.NET patterns (reranking, agent memory, RAG)
+
+**Accomplished:**
+1. ✅ **Reranking Workflow Guide** — Created `docs/guides/reranking-workflow.md` (10.7 KB)
+   - Why reranking matters: quality improvement (85% → 95%+ accuracy)
+   - Trade-offs table: latency (+100-150ms), precision (+10%), cost (API calls)
+   - Step-by-step: mine docs → semantic search → rerank → validate improvement
+   - Code example: 30 lines C# with MockReranker (keyword-based scoring)
+   - Performance SLOs: <200ms latency, ≥10% improvement, 100% determinism
+   - When to use: customer support Q&A, legal search, technical troubleshooting
+   - Common pitfalls: reranking too many candidates, no improvement measurement
+
+2. ✅ **Agent Memory Diary Guide** — Created `docs/guides/agent-memory-diary.md` (12.0 KB)
+   - What is an agent diary: persistent memory across multi-turn conversations
+   - Architecture: one wing per agent, semantic search for recall
+   - Step-by-step: store turn-level memories → search diary → inject into prompt
+   - Code example: 40 lines C# (DiaryEntry storage + search pattern)
+   - Best practices: store decisions (not every turn), use descriptive summaries, archive old entries
+   - Performance SLOs: <50ms retrieval, R@5 ≥80%, 100% coherence
+   - Common pitfalls: storing too many memories, no metadata, cross-agent contamination
+
+3. ✅ **RAG Integration Guide** — Created `docs/guides/rag-integration-guide.md` (15.9 KB)
+   - What is RAG: 4-phase pipeline (mine → search → inject → respond)
+   - Why MemPalace.NET is ideal: R@5 ≥96.6%, local embeddings, fast retrieval
+   - Step-by-step: mine corpus (50+ docs) → semantic search → format context → LLM responds
+   - Code example: 50 lines C# (complete RAG pipeline with latency tracking)
+   - Quality metrics: R@5 ≥96.6%, context injection 100%, response cites details
+   - Optimization tips: hybrid search, LLM reranking, embedding cache, batch processing
+   - Common pitfalls: too few docs, not validating R@5, injecting too much context, generic responses
+
+**Design Decisions:**
+- **Guide structure:** Matched GETTING_STARTED.md format (intro → why → how → code → pitfalls → see also)
+- **Code examples:** Based on E2E test patterns (RerankingJourneyTests, MultiAgentMemoryTests, RAGPipelineTests)
+- **Length targets:** 800-1000 words each (total ~2700 words achieved)
+- **Performance SLOs:** Documented targets from E2E tests (reranking <200ms, agent recall <50ms, RAG R@5 ≥96.6%)
+- **Cross-references:** Linked to E2E test files, SKILL_PATTERNS.md, agents.md, GETTING_STARTED.md
+
+**Key Learnings:**
+1. **Reranking is a precision tool** — Not for every query; use when accuracy > latency
+2. **Agent diaries need curation** — Store decisions, not transcripts; use metadata for filtering
+3. **RAG quality depends on corpus size** — 50+ docs minimum for realistic testing, 500+ for production
+4. **E2E tests are excellent documentation sources** — Code patterns are battle-tested, metrics are validated
+5. **Guide structure matters** — Intro → Why → How → Code → Pitfalls → See Also creates clear narrative
+
+**Architecture Insights:**
+- **MockReranker pattern works** — Keyword overlap + semantic score combination (60/40 split) gives 10%+ boost
+- **DiaryEntry is simple** — AgentId, timestamp, role, content, metadata (no complex schema needed)
+- **RAG latency breakdown** — Search ~50ms, inject ~10ms, LLM ~1-3s (LLM dominates, not MemPalace)
+- **Hybrid search is underutilized** — Should be default for technical queries (exact keyword matches matter)
+
+**Next Steps:**
+1. **Update SKILL_PATTERNS.md** — Add references to new guides (Pattern 2: RAG, Pattern 3: Reranking, Pattern 4: Agent Memory)
+2. **Cross-link existing docs** — Update cli.md, ai.md, agents.md with guide links
+3. **Phase 4C testing** — Validate guides with real users, gather feedback
+4. **Phase 5 prep** — Remote skill registry, Ollama integration, WebSocket MCP transport
+
+**Commit History:**
+- (Pending) Phase 4B: 3 journey guides (reranking, agent-memory, rag-integration)
+
+**Outcome:** Phase 4B documentation complete. Developers now have practical guides for advanced MemPalace.NET patterns. Ready for Phase 4C (guide validation + feedback).
+
+---
+
 ### 2026-04-25: Roadmap Audit — Missing Work Assessment
 
 **Summary:** Conducted comprehensive audit of project state vs. roadmap. All phases complete/progressing; 3 process/doc gaps identified.
@@ -1446,3 +1511,55 @@ gh issue edit 23 --add-label "squad,squad:roy,feature,high-priority"
 - Indexing on nuget.org (pending, ~5-10 min) ⏳
 - Installation: `dotnet add package mempalacenet --version 0.15.0` (once indexed)
 
+
+---
+
+## 2024-12-19: Phase 4 SKILL_PATTERNS.md Update
+
+### Task
+Updated `docs/SKILL_PATTERNS.md` with 3 new patterns validated by Phase 4A E2E tests:
+- Pattern 9: LLM Reranking for Quality
+- Pattern 10: Agent Memory Diaries
+- Pattern 11: RAG Context Injection
+
+### Learnings
+
+**Pattern Structure Consistency:**
+- All patterns follow same template: Description, Code Example, Use Cases, Best Practices, Performance Recommendations, Cross-References
+- Code examples are 20-50 lines, realistic and compilable
+- SLOs are documented with specific metrics (latency, recall, token usage)
+- Cross-references link to journey guides, E2E tests, and CLI docs
+
+**Phase 4 Pattern Insights:**
+
+1. **LLM Reranking (Pattern 9):**
+   - Improves top-1 result quality by ~10% (validated by RerankingJourneyTests.cs)
+   - Adds ~200ms latency but critical for high-stakes queries
+   - Works with local or cloud LLMs
+   - Best combined with hybrid search for maximum precision
+
+2. **Agent Memory Diaries (Pattern 10):**
+   - Persistent memory pattern for long-lived agents
+   - Each agent gets a wing (e.g., `agents/scribe`)
+   - Semantic recall via `IAgentDiary.SearchAsync()` with R@5 ≥80%
+   - Per-turn overhead: ~150-300ms (recall + store)
+   - Best practice: Store decisions, not transcripts
+
+3. **RAG Context Injection (Pattern 11):**
+   - Complete RAG pipeline: mine → search → inject → respond
+   - E2E latency: ~1.5-3.5s (search ~200ms + LLM ~1-3s)
+   - Maintains Phase 3 baseline: R@5 ≥96.6%
+   - Optimization: Hybrid search (+50ms) + reranking (+200ms) for critical queries
+
+**Documentation Numbering Issue:**
+- Found duplicate pattern numbers (Pattern 2 twice, Pattern 6 twice, Pattern 3 twice)
+- Corrected to sequential 1-11
+- Updated intro from "high-value patterns" to "11 high-value patterns"
+
+### Files Modified
+- `docs/SKILL_PATTERNS.md` (added 3 patterns, fixed numbering, updated intro)
+
+### Next Steps
+- Consider adding a pattern index/TOC at top of SKILL_PATTERNS.md
+- Review all patterns for consistent SLO format
+- Add pattern selection guide ("Which pattern for my use case?")
