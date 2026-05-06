@@ -28,6 +28,7 @@ All project documentation lives under this folder.
 ### Tools & Benchmarks
 - [cli.md](cli.md) — command reference (`mempalacenet init`, `mine`, `search`, `agents`, `kg`, `mcp`)
 - [benchmarks.md](benchmarks.md) — LongMemEval / LoCoMo / ConvoMem harnesses, R@5 validation
+- [troubleshooting.md](troubleshooting.md) — common CLI/build issues and remediation
 
 ### Guides & Tutorials
 - **Library Development:**
