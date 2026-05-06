@@ -89,6 +89,11 @@ Full documentation lives in [`docs/`](docs/):
 - **[Benchmarks](docs/benchmarks.md)** — reproducibility, dataset sources, R@5 parity
 - **[GitHub Copilot Skill](docs/COPILOT_SKILL.md)** — integration guide, pattern library, code generation hints
 
+## Compatibility
+
+- ✅ .NET 10 (`net10.0`) projects are supported.
+- ⚠️ NativeAOT (`PublishAot=true`) is not supported yet.
+
 ## Building Custom Integrations
 
 Integrating MemPalace.NET into your .NET projects? Start with our developer guides:

@@ -212,6 +212,20 @@ This guide covers common issues and their remediation steps for MemPalace.NET CL
 
 ---
 
+## Build & Publish Issues
+
+### NativeAOT Publish Fails
+
+**Error:** `IL3050` and/or `IL2026` errors when publishing with `PublishAot=true`
+
+**Remediation:**
+1. Use standard publish without NativeAOT for now.
+2. If you control the app project, remove or disable `<PublishAot>true</PublishAot>`.
+
+**Cause:** NativeAOT is not supported yet.
+
+---
+
 ## Performance Issues
 
 ### Slow Search
